@@ -86,8 +86,8 @@ $$ \Phi = \int_{\sigma} S \cdot \hat{n} \ \mathrm{d} A = \int_{\sigma} \left| S 
 </div>
 </header>
 <div class="post-content markdown-body">
-<p>在<a href=../basic-shading>图形学入门（三）：基础着色</a>中，我们讨论了 Phong 反射模型，当时我们提到过 Phong 反射模型不是一个物理模型，而是一个经验模型，这意味着这个模型对光照效果的模拟是不准确的。即便在简单情况下它能近似出一些不错的效果，但随着场景的复杂度提升（例如复杂的光照、复杂的材质等），要想继续用 Phong 反射模型达到很强的真实感就变得越来越困难。例如下面的这幅图<sup id=fnref:1><a href=#fn:1 class=footnote-ref role=doc-noteref>1</a></sup>中，士兵和长官的铠甲上都投影出了电梯里非常复杂的灯光，在后面的长官的铠甲上还能看到前面两个士兵的投影：</p>
-<p><img src=../../images/2021-08-03-22-22-34.png alt="UE Demo"></p>
+<p>在<a href=/posts/basic-shading>图形学入门（三）：基础着色</a>中，我们讨论了 Phong 反射模型，当时我们提到过 Phong 反射模型不是一个物理模型，而是一个经验模型，这意味着这个模型对光照效果的模拟是不准确的。即便在简单情况下它能近似出一些不错的效果，但随着场景的复杂度提升（例如复杂的光照、复杂的材质等），要想继续用 Phong 反射模型达到很强的真实感就变得越来越困难。例如下面的这幅图<sup id=fnref:1><a href=#fn:1 class=footnote-ref role=doc-noteref>1</a></sup>中，士兵和长官的铠甲上都投影出了电梯里非常复杂的灯光，在后面的长官的铠甲上还能看到前面两个士兵的投影：</p>
+<p><img src=/images/2021-08-03-22-22-34.png alt="UE Demo"></p>
 <p>要想在计算机中模拟出这样真实的效果，我们首先要知道真实世界中的光线和物体是如何作用的，例如一束光线照射到物体表面，这束光线的量有多少，光线照射到物体表面后发生了什么，最后光线反射的方向和量又有多少，我们用什么物理单位来衡量这些量等等。这些准确定义的信息是计算出正确的结果的前提，只有先理解这些内容，我们才能更好地模拟光与物体相互作用的过程。</p>
 <p>接下来我们会讨论关于辐射度量学（Radiometry）<sup id=fnref:2><a href=#fn:2 class=footnote-ref role=doc-noteref>2</a></sup>的内容，这是一个研究各种电磁辐射强弱的学科。在本文后面我们将会看到，基于辐射度量学构建的渲染方程（Rendering Equation）<sup id=fnref:3><a href=#fn:3 class=footnote-ref role=doc-noteref>3</a></sup>可以准确描述光如何在场景中流动，并在理论上给出了一个完美的结果。而各种各样的渲染技术，就是这个理想结果的一个近似。事实上，只要涉足高质量的实时渲染，渲染方程几乎是绕不开的前置知识。深入理解渲染方程包含的物理意义可以使我们更好地学习高质量真实感渲染的进阶内容。</p>
 <p>在正式开始讨论前，我们首先明确要讨论的对象，也就是光的性质。我们知道，光其实有波粒二象性<sup id=fnref:4><a href=#fn:4 class=footnote-ref role=doc-noteref>4</a></sup>，但我们后面的讨论会基于几何光学<sup id=fnref:5><a href=#fn:5 class=footnote-ref role=doc-noteref>5</a></sup>，既不考虑其波动性，也不考虑其粒子性，仍然认为光沿直线传播。</p>
@@ -102,8 +102,8 @@ $$</p>
 <p>$$
 \Phi = \int_{\sigma} S \cdot \hat{n} \ \mathrm{d} A = \int_{\sigma} \left| S \right| \cos{} \theta \ \mathrm{d} A
 $$</p>
-<p>有没有觉得这个说法听起来很熟悉？没错，这正是我们在<a href=../basic-shading>图形学入门（三）：基础着色</a>中计算漫反射分量时提到的内容。当时我们通过下图<sup id=fnref:9><a href=#fn:9 class=footnote-ref role=doc-noteref>9</a></sup>直观了解入射光和表面法线存在 $\theta$ 夹角时，漫反射能量的减少情况：</p>
-<p><img src=../../images/2021-08-03-06-22-40.png alt="Lambert’s Cosine Law"></p>
+<p>有没有觉得这个说法听起来很熟悉？没错，这正是我们在<a href=/posts/basic-shading>图形学入门（三）：基础着色</a>中计算漫反射分量时提到的内容。当时我们通过下图<sup id=fnref:9><a href=#fn:9 class=footnote-ref role=doc-noteref>9</a></sup>直观了解入射光和表面法线存在 $\theta$ 夹角时，漫反射能量的减少情况：</p>
+<p><img src=/images/2021-08-03-06-22-40.png alt="Lambert’s Cosine Law"></p>
 <p>通过刚刚的讨论，我们就可以明确其中的物理意义了，即光作为一个有向的能量流流过一个表面的时候表面通过的能量并不是光全部的能量，而和角度有关。如果光的能量流比较抽象，我们可以将其想象为水流，如果一块平面平行于水流方向，那么它不会受到水流的力的作用，随着角度倾斜，受到的力会增大，直到垂直于水流方向，此时受到的力最大。</p>
 <p>除了辐射通量之外，我们常关注的物理量还有如下三个：</p>
 <ul>
@@ -118,21 +118,21 @@ $$</p>
 I(\omega) \equiv \frac{\mathrm{d} \Phi}{\mathrm{d} \omega}
 $$</p>
 <p>这里提到了「立体角」这个概念，这是一个物体对特定点的三维空间的角度，如下图<sup id=fnref:11><a href=#fn:11 class=footnote-ref role=doc-noteref>11</a></sup>所示：</p>
-<p><img src=../../images/2021-08-05-22-49-36.png alt="Solid Angle"></p>
+<p><img src=/images/2021-08-05-22-49-36.png alt="Solid Angle"></p>
 <p>这描述看起来就非常难理解，怎么这个角度是「一个物体相对于一个点」的角度？这和我们在二维空间中认知的角度定义很不一样，在二维空间中角度似乎和别的东西没关系，我们不会说角度是一个形状相对于一个点的角度。而且，如果这角度是个圆锥之类的形状可能还比较好理解，上图中这个物体居然具有不规则的形状，那它张开的角度到底应该怎么理解和计算呢？</p>
 <p>理解这个概念的关键在于，我们不要把它理解为是类似二维空间那样张开的角度。而应该将计量立体角的球面度作为二维空间中弧度的延伸。在二维空间中我们是如何定义弧度的呢？是用弧长除以半径。对于半径为 $r$ 的圆上的一段圆弧 $l$ 而言，其对应的弧度 $\theta$ 表示为：</p>
 <p>$$
 \theta = \frac{l}{r}
 $$</p>
 <p>一个圆的总弧度是 $2\pi$，即周长与半径的比例。对于单位圆来说，由于 $r = 1$，因此在单位圆上，我们有 $\theta = l$，我们可以说：「平面角是单位圆上的一段弧长」。如果你已经回忆起来了上面说的这个知识，那么应该可以很容易将这个概念推广到三维空间中，得出这样的定义：「立体角是单位球面上的一块面积」。对于上面的定义公式，我们也可以将「弧长」变为「面积」，将「半径」变为「半径的平方」，如下图<sup id=fnref:12><a href=#fn:12 class=footnote-ref role=doc-noteref>12</a></sup>所示：</p>
-<p><img src=../../images/2021-08-05-23-10-44.png alt="Angle to Solid Angle"></p>
+<p><img src=/images/2021-08-05-23-10-44.png alt="Angle to Solid Angle"></p>
 <p>那么，我们就可以得出：</p>
 <p>$$
 \Omega = \frac{A}{r^2}
 $$</p>
 <p>类似于圆的总弧度，一个球的总球面度是 $4 \pi$，这也就是球的表面积 $4 \pi r^2$ 和 $r^2$ 的比值。另外可以一提的是，球面度的英文 Steradian 是希腊语「立体」（Stereos）和弧度（Radian）的组合，从字面上也可以了解到它们之间的关联。</p>
 <p>回到辐射强度的定义公式 $I(\omega) \equiv \mathrm{d} \Phi / \mathrm{d} \omega$。从这个定义中可以知道，为了求辐射强度，我们需要求球面度的微分，那么这个微分又应该怎么求呢？根据立体角的定义，我们知道，要想求球面度的微分，就需要求球面上面积的微分。参考下图<sup id=fnref:12><a href=#fn:12 class=footnote-ref role=doc-noteref>12</a></sup>，我们可以用球坐标 $(r,\ \theta,\ \varphi)$ 表示三维空间中的一个点<sup id=fnref:13><a href=#fn:13 class=footnote-ref role=doc-noteref>13</a></sup>，其中，$r$ 为点到原点的径向距离（Radial Distance），$\theta$ 为点与原点连线和 $z$ 轴形成的极角（Polar Angle），$\varphi$ 为点与原点连线在 $xy$ 平面的投影与 $x$ 轴形成的方位角（Polar Angle）。那么球面上面积的微分就相当于让 $\theta$ 和 $\varphi$ 都产生极小的变化（$\mathrm{d} \theta$ 和 $\mathrm{d} \varphi$），此时这个变化会在球面上形成一个极小的矩形区域。因为它在纵向上角度的变化是 $\mathrm{d} \theta$，根据弧长和弧度的关系我们知道，它的高为 $r \ \mathrm{d} \theta$，又由于这是一个单位球，因此 $r = 1$，也就是这个矩形区域实际的高度就是 $\mathrm{d} \theta$。同理，它的宽为 $r \sin{} \theta \ \mathrm{d} \varphi$。这里的宽度之所以会多一个 $r \sin{} \theta$ 是因为随着球面上的点从「极点」移动到「赤道」的过程中，球的横切面的圆的半径是不同的，这使得每张开单位大小的 $\varphi$ 角度，它在球面上对应的长度不同，在「极点」时最小，在「赤道」时最大，而这个切面的半径长度就是 $r \sin{} \theta$：</p>
-<p><img src=../../images/2021-08-06-13-07-21.png alt="Differential Solid Angles"></p>
+<p><img src=/images/2021-08-06-13-07-21.png alt="Differential Solid Angles"></p>
 <p>因此我们知道球面上面积的微分为：</p>
 <p>$$
 \begin{align}
@@ -153,10 +153,10 @@ $$</p>
 <p>其中，$\mathrm{x}$ 表示物体表面上的一个点。从辐照度的定义我们也可以看出，在针对物体表面的一点计算辐照度的时候，也需要像计算辐射通量的时候一样，乘上光照方向和物体表面法线之间的夹角的余弦值。</p>
 <p>辐照度常被称为「强度」（Intensity），但为了和前面我们讨论的「辐射强度」（Radiation Intensity）区分开来，因此起了「Irradiance」这个名字<sup id=fnref:15><a href=#fn:15 class=footnote-ref role=doc-noteref>15</a></sup>。</p>
 <p>使用辐照度可以很容易解释我们日常生活中一些常见的现象。例如，我们可以观察到灯泡的亮度会随着距离的增加而逐渐衰减，那么这个衰减的东西是什么呢？是能量消失了么？其实这里衰减的量就是辐照度。对于一个点光源来说，我们可以以其为球心作球面，那么，只要功率不变，那么每个球面上的总辐射通量就是不变的，从下图中我们可以很明显地看出，当辐射通量相同的时候，随着照亮的距离增大，由于球面的表面积增大，因此单位面积的辐射通量（即辐照度）就减少了，这就使得我们感受到灯的亮度降低。由于球面的面积和 $r^2$ 成正比，因此这个亮度的变化就与 $r^2$ 成反比：</p>
-<p><img src=../../images/2021-08-06-21-49-42.png alt="Irradiance Falloff"></p>
+<p><img src=/images/2021-08-06-21-49-42.png alt="Irradiance Falloff"></p>
 <h2 id=辐射率radiance>辐射率（Radiance）</h2>
 <p>辐射率 $L$ 用于描述光源为非点光源时，光源单位面积的辐射强度，它的定义是在指定方向上的单位立体角和垂直此方向的单位面积上的辐射通量<sup id=fnref:16><a href=#fn:16 class=footnote-ref role=doc-noteref>16</a></sup>，单位是瓦特每球面度每平方米 $\mathrm{W} / (\mathrm{sr} \cdot \mathrm{m^2})$。我们看到，这里描述的是一个极小的面积上对某一个方向一个极小的夹角的辐射，这意味着事实上我们可以认为它描述的就是一条「光线」。我们可以从下图<sup id=fnref:17><a href=#fn:17 class=footnote-ref role=doc-noteref>17</a></sup>中直观了解辐射率描述的内容：</p>
-<p><img src=../../images/2021-08-06-22-22-44.png alt=Radiance></p>
+<p><img src=/images/2021-08-06-22-22-44.png alt=Radiance></p>
 <p>对于点 $\mathrm{x}$ 和辐射方向 $\omega$ 而言，若表面法线方向和 $\omega$ 夹角为 $\theta$，那么我们定义辐射率 $L(\mathrm{x}, \ \omega)$ 如下：</p>
 <p>$$
 L(\mathrm{x}, \ \omega) \equiv \frac{\mathrm{d}^2 \Phi (\mathrm{x}, \ \omega)}{\mathrm{d}\omega \ \mathrm{d}A \cos{}\theta}
@@ -177,25 +177,25 @@ $$</p>
 L_i(\mathrm{x},\ \omega) = \frac{\mathrm{d}E(\mathrm{x})}{\mathrm{d}\omega \cos{}\theta}
 $$</p>
 <p>如下图所示，辐照度 $E$ 指一个单位面积上收到的辐射通量，那么如果我们考虑这个单位面积收到的来自某一个方向上的辐射通量，我们就可以得到这个方向上的入射辐射率：</p>
-<p><img src=../../images/2021-08-07-11-30-23.png alt="Incident Radiance"></p>
+<p><img src=/images/2021-08-07-11-30-23.png alt="Incident Radiance"></p>
 <p>类似地，我们可以说「辐射率是每单位面积的辐射强度」：</p>
 <p>$$
 L_e(\mathrm{x},\ \omega) = \frac{\mathrm{d}I(\mathrm{x},\ \omega)}{\mathrm{d}A \cos{}\theta}
 $$</p>
 <p>如下图所示，辐射强度 $I$ 是每单位立体角的辐射通量。那么如果我们只考虑光源某个单位面积上对这个立体角方向上发射的辐射通量，我们就可以得到这个方向上的出射辐射率：</p>
-<p><img src=../../images/2021-08-06-22-22-44.png alt="Exiting Radiance"></p>
+<p><img src=/images/2021-08-06-22-22-44.png alt="Exiting Radiance"></p>
 <p>这样一来，我们就可以将几个物理概念联系在一起，更好地理解其中的意义。</p>
 <h1 id=双向反射分布函数brdf>双向反射分布函数（BRDF）</h1>
 <p>有了上面的基本物理量的定义之后，我们就可以讨论如何更准确地来描述反射这件事了。前面提到，在 Phong 反射模型中，我们对反射进行了简单的近似处理，但这个近似不具有物理意义。这种不精确的近似手段导致了 Phong 反射模型无法达到更真实的渲染效果，尤其是对于复杂的表面材质和复杂的光照情况。那么，我们应该如何精确地描述光的反射呢？</p>
 <p>对于反射这个过程，我们既可以将其理解为光线照射到物体表面后发生弹射，也可以将其理解为是物体表面吸收了某个方向来的入射光的能量后，向某个方向辐射出这个能量的过程。根据前面讨论的内容，我们知道我们可以使用辐照度 $E$ 来描述物体表面某个单位面积上从四面八方接收到的光，那么从 $\omega_i$ 这个方向接收到的光就可以用 $\mathrm{d}E(\omega_i)$ 表示，类似地，由于这个单位面积上接收到光后，可能会向各个方向发射光，那么由于入射 $\mathrm{d}E$ 而在 $\omega_r$ 方向发射出的反射光我们可以用 $\mathrm{d}L_r(\omega_r)$ 来描述。如果我们以这种形式理解反射，那么我们就可以将反射和前面讨论的辐照度 $E$ 以及辐射率 $L$ 的物理概念联系在一起了，如下图<sup id=fnref:17><a href=#fn:17 class=footnote-ref role=doc-noteref>17</a></sup>所示：</p>
-<p><img src=../../images/2021-08-07-12-48-40.png alt="Reflection at a Point"></p>
+<p><img src=/images/2021-08-07-12-48-40.png alt="Reflection at a Point"></p>
 <p>我们前面提到，可以认为「辐射率是每单位立体角的辐照度」。那么根据前面讨论的公式 $L_i(\mathrm{x},\ \omega) = \mathrm{d}E(\mathrm{x}) / (\mathrm{d}\omega \cos{}\theta)$，我们可以得知图中位置 $\mathrm{x}$ 的 $\mathrm{d}E(\omega_i)$ 可以表示为：</p>
 <p>$$
 \mathrm{d}E(\mathrm{x},\ \omega_i) = L_i(\mathrm{x},\ \omega_i) \cos{}\theta_i \ \mathrm{d}\omega_i
 $$</p>
 <p>而这样一个「如何在某个 $\omega_r$ 方向上分配 $\omega_i$ 方向来的入射光」方式，我们可以用一个函数 $f_r(\omega_i \rightarrow \omega_r)$ 来描述，这就是「双向反射分布函数」（Bidirectional Reflectance Distribution Function, BRDF）<sup id=fnref:19><a href=#fn:19 class=footnote-ref role=doc-noteref>19</a></sup>。</p>
 <p>BRDF 描述了光在一个不透明物体表面上反射时的性质，它本质上是一个四元函数，参数中的入射方向 $\omega_i$ 和反射方向 $\omega_r$ 本身是用 $\theta$ 和 $\varphi$ 表示的。除此之外，我们用 $\hat{n}$ 表示表面的法线。如下图<sup id=fnref:17><a href=#fn:17 class=footnote-ref role=doc-noteref>17</a></sup>所示：</p>
-<p><img src=../../images/2021-08-07-17-46-01.png alt=BRDF></p>
+<p><img src=/images/2021-08-07-17-46-01.png alt=BRDF></p>
 <p>BRDF 的意义是在 $\omega_r$ 方向上反射光线的辐射率和同一点上从 $\omega_i$ 方向上入射的辐照度的比值，它的单位是 $1 / \mathrm{sr}$，即：</p>
 <p>$$
 f_r(\omega_i \rightarrow \omega_r) = \frac{\mathrm{d}L_r(\omega_r)}{\mathrm{d}E_i(\omega_i)} = \frac{\mathrm{d}L_r(\omega_r)}{L_i(\omega_i) \cos{}\theta_i \ \mathrm{d}\omega_i}

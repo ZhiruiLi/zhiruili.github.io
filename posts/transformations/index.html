@@ -449,7 +449,7 @@ $$</p>
 \vec{v}<em>{clip} = M</em>{projection} \ M_{view} \ M_{model} \ \vec{v}_{model}
 $$</p>
 <p>根据这三个变换的首字母，这个过程又被称为 MVP 变换，如下图<sup id=fnref:2><a href=#fn:2 class=footnote-ref role=doc-noteref>2</a></sup>所示：</p>
-<p><img src=../../images/2021-07-18-19-21-56.png alt="MVP Transformation"></p>
+<p><img src=/images/2021-07-18-19-21-56.png alt="MVP Transformation"></p>
 <h2 id=模型变换>模型变换</h2>
 <p>模型空间到世界空间是比较简单的情况，它其实就是一些基础的变换或者是基础变换的组合，将物体的顶点从模型中定义的坐标系移动到世界坐标系中，例如一个正方体的盒子的一个顶点在 $(1,\ 1,\ 1)$ 的位置上，那么当这个正方体移动到了 $(2,\ 3,\ 5)$ 位置上时，这个顶点也自然应该被移动到 $(3,\ 4,\ 6)$ 位置上了。</p>
 <p>前文已经说明如何对二维情况下的点和向量进行变换，对于三维情况，我们也可以做类似的处理<sup id=fnref:3><a href=#fn:3 class=footnote-ref role=doc-noteref>3</a></sup>。我们首先通过齐次坐标将三维空间中的点 $p = (x,\ y,\ z)^\mathrm{T}$ 扩充为 $p = (x,\ y,\ z,\ 1)^\mathrm{T}$，将三维空间中的向量 $\vec{v} = (x,\ y,\ z)^\mathrm{T}$ 扩充为 $\vec{v} = (x,\ y,\ z,\ 0)^\mathrm{T}$。然后，对应的变换矩阵就变为：</p>
@@ -604,11 +604,11 @@ x_{-g} & y_{-g} & z_{-g} & 0 \newline
 $$</p>
 <h2 id=投影变换>投影变换</h2>
 <p>从观察空间到裁剪空间这个过程是定义了一个区域，最终这个区域外的内容都在图像中不可见（被裁剪了），而区域内的内容会被投影到一个平面上形成图像。在说这个投影矩阵之前，我们需要先区分两种不同的投影方式，一种是透视投影（Perspective Projection），另一种是正交投影（Orthographic Projection）<sup id=fnref:4><a href=#fn:4 class=footnote-ref role=doc-noteref>4</a></sup>：</p>
-<p><img src=../../images/2021-07-18-18-55-05.png alt="Different Projection"></p>
+<p><img src=/images/2021-07-18-18-55-05.png alt="Different Projection"></p>
 <p>所谓透视投影就是符合我们一般视觉规律的投影，也就是画面中的物体会近大远小，而正交投影中无论物体远近，在最终成像的结果中都是一样大。从上图中可以看出，投影变换定义了一个近裁剪平面（Near Clip Plane）和远裁剪平面（Far Clip Plane），当我们的相机看向场景的时候，可以将相机所在的点和远裁剪平面的四个顶点连线形成一个四棱锥，近裁剪平面则进一步将这个锥体切成一个平截头体，在近裁剪平面和远裁剪平面中间的截头体内部的物体就是最终会被投影到近裁剪平面的物体。当相机离近裁剪平面越近，则近裁剪平面越小，透视效果越明显，反之，当相机离得越远，近裁剪平面越大，透视效果越不明显，当相机离得无穷远时，近裁剪平面将和远裁剪平面一样大，此时的投影就是正交投影。对于投影变换而言，我们需要做的事情，就是将裁剪空间这个平截头体转换为标准正方体 $[-1,\ 1]^3$，这个正方体以坐标原点为中心，边与坐标轴平行，边长为 $2$。在这步操作完成后，我们之后就可以很容易地将这个标准正方体中的坐标映射到屏幕空间上了。</p>
 <h3 id=正交投影>正交投影</h3>
 <p>虽然透视投影比较符合我们的视觉直觉，但是我们将先描述正交投影，因为它相对而言比较简单。下图描述了正交投影所需要做的变换<sup id=fnref:4><a href=#fn:4 class=footnote-ref role=doc-noteref>4</a></sup>：</p>
-<p><img src=../../images/2021-07-18-19-17-40.png alt="Orthographic Projection"></p>
+<p><img src=/images/2021-07-18-19-17-40.png alt="Orthographic Projection"></p>
 <p>由于正交投影所形成的平截头体是一个长方体，因此我们可以用六个平面的坐标值来描述这个长方体，分别是左右（$l$ $r$），上下（$t$ $b$）和远近（$f$ $n$）。从上图中可以看出，我们需要先对这个长方体应用一个平移变换，再应用一个缩放变换。根据我们之前的知识，可以很容易得到这两个矩阵：</p>
 <ul>
 <li>
@@ -662,7 +662,7 @@ $$</p>
 <li>远裁剪平面上的中点经过「挤压」后不变</li>
 </ol>
 <p>我们要求一个矩阵 $M_{persp \rightarrow ortho}$，使得在满足这些约束的条件下，将平截头体「挤压」成长方体。我们先看 $x$ 和 $y$ 会怎么改变。首先，我们将平截头体中的任意一点 $(x,\ y,\ z)$ 与相机所在位置连一条线，这条线会与近裁剪平面相交于一点 $(x^\prime,\ y^\prime,\ z^\prime)$。此时从侧面看过去，我们可以看到一个相似三角形<sup id=fnref:4><a href=#fn:4 class=footnote-ref role=doc-noteref>4</a></sup>：</p>
-<p><img src=../../images/2021-07-18-19-59-17.png alt="Perspective Projection Y"></p>
+<p><img src=/images/2021-07-18-19-59-17.png alt="Perspective Projection Y"></p>
 <p>由此我们可以得出：</p>
 <p>$$
 y^\prime = \frac{n}{z} \ y

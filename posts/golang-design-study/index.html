@@ -187,7 +187,7 @@
 6
 24
 </code></pre><p>相比于直接使用递归函数调用，这个实现方式非常不直观。下面这个图可能能帮助理解：</p>
-<p><img src=../../images/2021-07-11-11-47-56.png alt=factorial></p>
+<p><img src=/images/2021-07-11-11-47-56.png alt=factorial></p>
 <p>这里的圆形为调用者，每一个矩形都为一个 goroutine，当我们尝试计算 <code>fact(3)</code> 时，会将 3 写入最前面的 in channel 中，数据开始从第一个 goroutine 向后流动。第一个 goroutine 会从这个 channel 中读到这个 3，它将 <code>3 - 1</code> 写入下一个 in channel 中，然后开始阻塞等待 out channel 出现第二个 goroutine 计算的结果，第二个、第三个 goroutine 的计算是类似的，等到第 4 个 goroutine 从 in channel 中读取输入时，它发现这是一个 0，于是直接向 out channel 写入一个 1，此时数据开始从最后一个 goroutine 往回流动，经过第三个和第二个 goroutine 的计算后，第一个 goroutine 会获得 2，然后将 <code>2 * 3</code> 输出。</p>
 <p>注意到这里进行阶乘计算的实体并不是递归的函数，而是并发的 goroutine，它们之间通过 channel 进行通信， 每个 goroutine 都将计算拆分并发送给其他 goroutine 进行处理，直到计算变为 trivial 的情况。当然了，这个实现相比简单的递归函数会显得很啰嗦，我们在实际使用中也不会这么做，但这个例子说明了如何在 CSP 模型下，利用数据的流动实现我们常见的递归。</p>
 <h1 id=素数筛>素数筛</h1>
@@ -264,7 +264,7 @@
 </code></pre></td></tr></table>
 </div>
 </div><p>可以看到，我们的素数筛由三个部分组成，首先，<code>Counter</code> 从 2 开始依次产生自然数。<code>PrimeFilter</code> 就是每一层素数的过滤器，每一层过滤器只持有一个输入 channel 一个输出 channel 和一个素数 <code>prime</code>，它将不断从输入 channel 中读入数字，并将其中无法被 <code>prime</code> 整除的部分输出。<code>PrimeSieve</code> 则是一个完整的素数筛，它每获得一个素数，都将素数输出，并创建一个新一层的过滤器，因此整个过程大概是这样的：</p>
-<p><img src=../../images/2021-07-11-11-51-26.png alt=prime></p>
+<p><img src=/images/2021-07-11-11-51-26.png alt=prime></p>
 <p><code>PrimeSieve</code> 可以向 out channel 中依次输出被筛出来的素数，这个过程是惰性的，直到我们从 out channel 中取出素数，下一个素数才会被计算。我们可以这样去使用它：</p>
 <div class=highlight><div style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4>
 <table style=border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block><tr><td style=vertical-align:top;padding:0;margin:0;border:0>
