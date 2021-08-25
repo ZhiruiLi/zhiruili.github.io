@@ -137,23 +137,22 @@ $$</p>
 <p>类似地，空间中的点也能用类似这一的表示。这里需要略微说明的是，由于坐标系中的一个点本身可以看作是一个从原点开始指向该点的向量，因此，在许多图形库中也常直接用向量来表示顶点。多数情况下，我们并不需要区分这两个概念，但是，在一些特定的场合（如后文将提到的平移变换）下，我们还是要严格区分点和向量的。</p>
 <p>对于一个矩阵 $A$ 而言，我们用 $A_{ij}$ 表示这个矩阵第 $i$ 行第 $j$ 列的值。</p>
 <p>矩阵之间可以进行加法和乘法运算，加法运算要求矩阵有相同的行数和列数，然后进行对应位置的相加：</p>
-<h1 id=endbmatrix>$$
+<p>$$
 \begin{bmatrix}
 A_{11} & A_{12} & A_{13} \newline
 A_{21} & A_{22} & A_{23}
-\end{bmatrix}
-+
+\end{bmatrix} +
 \begin{bmatrix}
 B_{11} & B_{12} & B_{13} \newline
 B_{21} & B_{22} & B_{23}
-\end{bmatrix}</h1>
-<p>\begin{bmatrix}
+\end{bmatrix} =
+\begin{bmatrix}
 A_{11} + B_{11} & A_{12} + B_{12} & A_{13} + B_{13} \newline
 A_{21} + B_{21} & A_{22} + B_{22} & A_{23} + B_{23}
 \end{bmatrix}
 $$</p>
 <p>乘法运算则稍微复杂一点，对于 $A$、$B$ 两个矩阵相乘，我们需要确保 $A$ 的列数等于 $B$ 的行数。假设 $A$ 是一个 $3 \times 2$ 的矩阵，而 $B$ 是一个 $2 \times 1$ 的矩阵，则 $A B$ 的结果就是一个 $3 \times 1$ 的矩阵：</p>
-<h1 id=endbmatrix-1>$$
+<p>$$
 \begin{bmatrix}
 A_{11} & A_{12} \newline
 A_{21} & A_{22} \newline
@@ -162,8 +161,8 @@ A_{31} & A_{32}
 \begin{bmatrix}
 B_{11} \newline
 B_{12}
-\end{bmatrix}</h1>
-<p>\begin{bmatrix}
+\end{bmatrix} =
+\begin{bmatrix}
 A_{11} B_{11} + A_{12} B_{12} \newline
 A_{21} B_{11} + A_{22} B_{12} \newline
 A_{31} B_{11} + A_{32} B_{12}
@@ -187,11 +186,11 @@ z^\prime &= 6x
 \end{align}
 $$</p>
 <p>可以用矩阵乘法表示为：</p>
-<h1 id=endbmatrixmathrmt>$$
+<p>$$
 \begin{bmatrix}
 x^\prime & y^\prime & z^\prime
-\end{bmatrix}^\mathrm{T}</h1>
-<p>\begin{bmatrix}
+\end{bmatrix}^\mathrm{T} =
+\begin{bmatrix}
 1 & 1 & 1 \newline
 3 & 0 & 5 \newline
 6 & 0 & 0
@@ -212,11 +211,11 @@ y^\prime &= 3y
 \end{align}
 $$</p>
 <p>将其写成矩阵形式：</p>
-<h1 id=endbmatrixmathrmt-1>$$
+<p>$$
 \begin{bmatrix}
 x^\prime & y^\prime
-\end{bmatrix}^\mathrm{T}</h1>
-<p>\begin{bmatrix}
+\end{bmatrix}^\mathrm{T} =
+\begin{bmatrix}
 2 & 0 \newline
 0 & 3
 \end{bmatrix}
@@ -225,29 +224,29 @@ x & y
 \end{bmatrix}^\mathrm{T}
 $$</p>
 <p>也就是通用情况下，我们有：</p>
-<h1 id=endbmatrixmathrmt-2>$$
+<p>$$
 \begin{bmatrix}
 s_x & 0 \newline
 0 & s_y
 \end{bmatrix}
 \begin{bmatrix}
 x & y
-\end{bmatrix}^\mathrm{T}</h1>
-<p>\begin{bmatrix}
+\end{bmatrix}^\mathrm{T} =
+\begin{bmatrix}
 s_x x & s_y y
 \end{bmatrix}^\mathrm{T}
 $$</p>
 <h2 id=二维旋转>二维旋转</h2>
 <p>相比于缩放，旋转要稍微复杂一点。对于一个二维的图形的每一个顶点 $p = (x,\ y)^\mathrm{T}$ 我们希望对其应用一个 $2 \times 2$ 的矩阵，使得其绕原点逆时针旋转一个 $\theta$ 角后得到 $(x^\prime,\ y^\prime)$：</p>
-<h1 id=endbmatrixmathrmt-3>$$
+<p>$$
 \begin{bmatrix}
 a & b \newline
 c & d
 \end{bmatrix}
 \begin{bmatrix}
 x & y
-\end{bmatrix}^\mathrm{T}</h1>
-<p>\begin{bmatrix}
+\end{bmatrix}^\mathrm{T} =
+\begin{bmatrix}
 x^\prime & y^\prime
 \end{bmatrix}^\mathrm{T}
 $$</p>
@@ -334,37 +333,36 @@ y^\prime &= y + 2
 \end{align}
 $$</p>
 <p>这看起来比前面的两种变换都要简单，但事实上，我们却无法用上面的 $2 \times 2$ 矩阵乘以一个向量的方式表示这样的运算。这是因为对于任意的 $2 \times 2$ 矩阵而言，当其应用于一个向量的时候，它的结果总为如下形式：</p>
-<h1 id=endbmatrixmathrmt-4>$$
+<p>$$
 \begin{bmatrix}
 a & b \newline
 c & d
 \end{bmatrix}
 \begin{bmatrix}
 x & y
-\end{bmatrix}^\mathrm{T}</h1>
-<p>\begin{bmatrix}
+\end{bmatrix}^\mathrm{T} =
+\begin{bmatrix}
 a x + b y & c x + d y
 \end{bmatrix}^\mathrm{T}
 $$</p>
 <p>我们会发现，这里并没有任何地方能放下一个与 $x$ 和 $y$ 都无关的值，因此，我们只能将其写为：</p>
-<h1 id=endbmatrixmathrmt-5>$$
+<p>$$
 \begin{bmatrix}
 a & b \newline
 c & d
 \end{bmatrix}
 \begin{bmatrix}
 x & y
-\end{bmatrix}^\mathrm{T}
-+
+\end{bmatrix}^\mathrm{T} +
 \begin{bmatrix}
 t_x & t_y
-\end{bmatrix}^\mathrm{T}</h1>
-<p>\begin{bmatrix}
+\end{bmatrix}^\mathrm{T} =
+\begin{bmatrix}
 a x + b y + t_x & c x + d y + t_y
 \end{bmatrix}^\mathrm{T}
 $$</p>
 <p>这看起来似乎没什么问题，但是它导致了一个巨大的灾难，就是我们无法将若干矩阵变换应用结合律合成一个矩阵了，这是我们不想看到的。因此我们需要引入一个新的数学工具：齐次坐标（Homogeneous Coordinates）。在齐次坐标下，一个点 $p = (x,\ y)^\mathrm{T}$ 将被表示为 $p = (x,\ y,\ 1)^\mathrm{T}$，向量 $\vec{v} = (x,\ y)^\mathrm{T}$ 将被表示为：$\vec{v} = (x,\ y,\ 0)^\mathrm{T}$。在引入其次坐标后，我们对点的平移就可以用如下的矩阵乘法实现了：</p>
-<h1 id=endbmatrixmathrmt-6>$$
+<p>$$
 \begin{bmatrix}
 1 & 0 & t_x \newline
 0 & 1 & t_y \newline
@@ -372,13 +370,13 @@ $$</p>
 \end{bmatrix}
 \begin{bmatrix}
 x & y & 1
-\end{bmatrix}^\mathrm{T}</h1>
-<p>\begin{bmatrix}
+\end{bmatrix}^\mathrm{T} =
+\begin{bmatrix}
 x + t_x & y + t_y & 1
 \end{bmatrix}^\mathrm{T}
 $$</p>
 <p>我们可以看到，此时，这个向量的前两个值恰好就是我们要的结果。前面提到，我们大多数情况下并不严格区分点和向量，这里之所以需要严格区分，是因为向量具有平移不变性。当一个向量应用了上述变换后，则变为：</p>
-<h1 id=endbmatrixmathrmt-7>$$
+<p>$$
 \begin{bmatrix}
 1 & 0 & t_x \newline
 0 & 1 & t_y \newline
@@ -386,8 +384,8 @@ $$</p>
 \end{bmatrix}
 \begin{bmatrix}
 x & y & 0
-\end{bmatrix}^\mathrm{T}</h1>
-<p>\begin{bmatrix}
+\end{bmatrix}^\mathrm{T} =
+\begin{bmatrix}
 x & y & 0
 \end{bmatrix}^\mathrm{T}
 $$</p>
@@ -544,25 +542,25 @@ T_{view} =
 $$</p>
 <p>在这个基础上，我们再应用旋转变换，使相机的 $\hat{g}$ 和 $\hat{t}$ 符合我们的需求。在这里，由于这个过程并不直观，也不好求解，因此我们需要应用一个小技巧。旋转矩阵是一个正交矩阵，根据前面给出的定义，一个方阵 $A$ 如果是一个正交矩阵，那么 $A^\mathrm{T} = A^{-1}$。</p>
 <p>也就是说，假设我们要求的旋转矩阵是 $R_{view}$，那么我们可以先计算这个旋转变换的逆变换对应的矩阵 $R_{view}^{-1}$，再通过其转置得到该旋转变换矩阵。那么，这个 $R_{view}^{-1}$ 是什么呢？显然，将单位向量 $\hat{t}$ 从任意方向转到 $y$ 轴的正方向的逆变换就是将 $y$ 轴正方向的单位向量 $\hat{y} = (0,\ 1,\ 0,\ 0)^\mathrm{T}$（注意向量的齐次坐标表示最后一个元素是 $0$）转到 $\hat{t}$ 方向。也就是说，这个 $R_{view}^{-1}$ 矩阵需要满足：</p>
-<h1 id=-hatt>$$
+<p>$$
 R_{view}^{-1}
 \ \begin{bmatrix}
 0 & 1 & 0 & 0
-\end{bmatrix}^\mathrm{T}
-= \hat{t}</h1>
-<p>\begin{bmatrix}
+\end{bmatrix}^\mathrm{T} =
+\hat{t} =
+\begin{bmatrix}
 x_t & y_t & z_t & 0
 \end{bmatrix}^\mathrm{T}
 $$</p>
 <p>根据矩阵乘法的计算方式我们可以知道，这个 $R_{view}^{-1}$ 矩阵的第二列必然为 $(x_t,\ y_t,\ z_t,\ 0)^\mathrm{T}$，否则就无法得出这样的结果。</p>
 <p>类似地，这个矩阵也需要满足：</p>
-<h1 id=--hatg>$$
+<p>$$
 R_{view}^{-1}
 \ \begin{bmatrix}
 0 & 0 & 1 & 0
-\end{bmatrix}^\mathrm{T}
-= -\hat{g}</h1>
-<p>\begin{bmatrix}
+\end{bmatrix}^\mathrm{T} =
+-\hat{g} =
+\begin{bmatrix}
 x_{-g} & y_{-g} & z_{-g} & 0
 \end{bmatrix}^\mathrm{T}
 $$</p>
@@ -674,15 +672,15 @@ $$</p>
 x^\prime = \frac{n}{z} \ x
 $$</p>
 <p>因此，我们现在已经知道了变化后坐标值中的两个元素，我们可以得出这样的等式（其中 $\square$ 是未知待填入的值）：</p>
-<h1 id=endbmatrixmathrmt-8>$$
+<p>$$
 M_{persp \rightarrow ortho}
 \ \begin{bmatrix}
 x & y & z & 1
-\end{bmatrix}^\mathrm{T}</h1>
-<h1 id=endbmatrixmathrmt-9>\begin{bmatrix}
+\end{bmatrix}^\mathrm{T} =
+\begin{bmatrix}
 \frac{n}{z} \ x & \frac{n}{z} \ y & \square & 1
-\end{bmatrix}^\mathrm{T}</h1>
-<p>\begin{bmatrix}
+\end{bmatrix}^\mathrm{T} =
+\begin{bmatrix}
 nx & ny & \square & z
 \end{bmatrix}^\mathrm{T}
 $$</p>
@@ -698,15 +696,15 @@ a & b & c & d \newline
 \end{bmatrix}
 $$</p>
 <p>根据前面提到的约束 1 我们可知：</p>
-<h1 id=endbmatrixmathrmt-10>$$
+<p>$$
 M_{persp \rightarrow ortho}
 \ \begin{bmatrix}
 x & y & n & 1
-\end{bmatrix}^\mathrm{T}</h1>
-<h1 id=endbmatrixmathrmt-11>\begin{bmatrix}
+\end{bmatrix}^\mathrm{T} =
+\begin{bmatrix}
 \frac{n}{n} \ x & \frac{n}{n} \ y & n & 1
-\end{bmatrix}^\mathrm{T}</h1>
-<p>\begin{bmatrix}
+\end{bmatrix}^\mathrm{T} =
+\begin{bmatrix}
 nx & ny & n^2 & n
 \end{bmatrix}^\mathrm{T}
 $$</p>
@@ -727,19 +725,19 @@ $$</p>
 \end{bmatrix}
 \begin{bmatrix}
 x & y & n & 1
-\end{bmatrix}^\mathrm{T}
-= cn + d = n^2
+\end{bmatrix}^\mathrm{T} =
+cn + d = n^2
 $$</p>
 <p>根据约束 3，我们还可以知道：</p>
-<h1 id=endbmatrixmathrmt-12>$$
+<p>$$
 M_{persp \rightarrow ortho}
 \begin{bmatrix}
 0 & 0 & f & 1
-\end{bmatrix}^\mathrm{T}</h1>
-<h1 id=endbmatrixmathrmt-13>\begin{bmatrix}
+\end{bmatrix}^\mathrm{T} =
+\begin{bmatrix}
 0 & 0 & f & 1
-\end{bmatrix}^\mathrm{T}</h1>
-<p>\begin{bmatrix}
+\end{bmatrix}^\mathrm{T} =
+\begin{bmatrix}
 0 & 0 & f^2 & f
 \end{bmatrix}^\mathrm{T}
 $$</p>
@@ -750,8 +748,8 @@ $$</p>
 \end{bmatrix}
 \begin{bmatrix}
 0 & 0 & f & 1
-\end{bmatrix}^\mathrm{T}
-= cf + d = f^2
+\end{bmatrix}^\mathrm{T} =
+cf + d = f^2
 $$</p>
 <p>联立两个式子可得：</p>
 <p>$$
