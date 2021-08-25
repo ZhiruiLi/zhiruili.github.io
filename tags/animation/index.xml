@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Animation on 简单易懂的现代魔法 - Zhirui Li</title><link>https://zhiruili.github.io/tags/animation/</link><description>Recent content in Animation on 简单易懂的现代魔法 - Zhirui Li</description><generator>Hugo -- gohugo.io</generator><language>zh-cn</language><lastBuildDate>Tue, 25 Jul 2017 00:00:00 +0000</lastBuildDate><atom:link href="https://zhiruili.github.io/tags/animation/index.xml" rel="self" type="application/rss+xml"/><item><title>Android 动画笔记</title><link>https://zhiruili.github.io/posts/2017-07-25-android-animation/</link><pubDate>Tue, 25 Jul 2017 00:00:00 +0000</pubDate><guid>https://zhiruili.github.io/posts/2017-07-25-android-animation/</guid><description>动画分类 属性动画 Property Animation
+最为方便强大，推荐使用。
+视图动画 View Animation
+旧版本的动画方式。
+绘制动画 Drawable Animation
+即一帧帧绘制画面，万能但仅在必要时使用。
+属性动画和视图动画的区别 视图动画只能作用于 View 对象，属性动画没有这个限制。 视图动画只能操纵少数几个属性，例如缩放比例、旋转角度等，许多属性，例如背景颜色，就没法通过视图动画进行操作，属性动画更加通用。 视图动画仅仅修改了绘制位置，并没有实际修改属性值，例如用视图动画实现一个按钮移动的效果，按钮可以正确移动，但是用户点按按钮的位置却没有改变。 属性动画相对于视图动画而言要复杂一些，对于一些简单情形可以考虑用视图动画解决。 属性动画 属性动画几乎可以实现任何想要的动画效果，非常具有可扩展性并且非常稳健。属性动画可供设定的选项包括了：
+持续时间（默认 300 ms）
+时间插值（Time interpolation）
+即指定一个关于时间的函数，使得属性值的计算依赖于这个函数。
+重复播放、逆向播放
+动画集合
+可以将一组动画合并成一个集合，然后同时播放或是顺序播放或是延时播放。
+帧刷新间隔
+默认是 10 ms，可以改成别的值，但最终取决于系统状态。
+属性动画的工作方式 属性动画通过指定一个对象的属性的改变方式来实现动画，举例来说，如果想要实现一个对象在 x 轴上的横向移动动画，那就让这个对象的 x 轴坐标每隔一个时间间隔变化一点即可。例如下图表示了一个对象在 40 ms 内沿 x 轴移动了 40 px 的动画：</description></item></channel></rss>
