@@ -1,0 +1,899 @@
+<!doctype html><html lang=en>
+<head>
+<meta charset=utf-8>
+<meta name=generator content="Hugo 0.87.0">
+<meta http-equiv=x-ua-compatible content="IE=edge">
+<meta name=viewport content="width=device-width,initial-scale=1">
+<meta name=author content="Zhirui Li">
+<meta property="og:url" content="https://zhiruili.github.io/posts/transformations/">
+<link rel=canonical href=https://zhiruili.github.io/posts/transformations/><link rel=alternate type=application/atom+xml href=https://zhiruili.github.ioindex.xml title="简单易懂的现代魔法 - Zhirui Li">
+<script type=application/ld+json>{"@context":"http://schema.org","@type":"BlogPosting","mainEntityOfPage":{"@type":"WebPage","@id":"https:\/\/zhiruili.github.io"},"articleSection":"posts","name":"图形学入门（一）：坐标变换","headline":"图形学入门（一）：坐标变换","description":"将一个物体显示到屏幕上，这个事情似乎非常简单，以至于我们基本上认为它已经天经地义到直接告诉计算机我们要显示什么物体它就会自动显示出来，毕竟我们拍照的时候就是举起相机按下快门就会出现一张图片了。但事实上，相机是基于物理感光元件实现了从三维世界到二维图片的投影，在计算机的程序世界中一切都需要被计算出来，也就是说，我们只有一堆图形的描述信息，我们需要自己将这些图形在二维的平面上绘制的方式告诉操作系统，操作系统才能最终在屏幕上绘制出我们想要的图形。\n那么，我们究竟要进行怎样的一些计算呢？我们可以将这个过程和拍照进行类比，物体的位置、角度，相机的位置、角度以及相机本身设置的一些参数都会对拍照的结果产生影响，相机离物体近，物体就显得大一些，相机往左偏，物体在最终相片上的位置就会往右。显然，光有场景中物体本身的模型信息还不足以让我们知道最终呈现在屏幕上的图像的样子，我们还需要考虑上述的种种信息才能最终得出在二维的平面上这个场景最终的形态，这些计算主要分为三部分：\n  模型空间到世界空间的变换\n这个过程将物体的每个顶点坐标从自己模型空间移动到世界空间，也就是将物体移动到世界的对应位置摆放好。\n  世界空间到观察空间的变换\n这个过程将物体的每个顶点坐标从世界空间移动到相机的观察空间，由于位置的移动是相对的，这也就相当于把相机移动到对应位置摆放好。只不过为了计算方便，我们一般假设相机的位置就在原点的位置，看向 $z$ 轴负方向。\n  观察空间到裁剪空间的变换\n这个过程就是将物体的每个顶点坐标从三维空间投影到相机的二维成像平面上，这也就相当于相机拍照时在胶片上记录下当时的画面。\n  数学基础 为了说明这三种变换在计算机中是如何进行的，这里需要先补充一点相关的基础知识。在计算机中，为了进行快速的计算，采用了矩阵（Matrix）这一数学工具。下面是一个 $3 \\times 2$ 的矩阵（即 $3$ 行 $2$ 列的矩阵）：\n$$ A = \\begin{bmatrix} 1 \u0026amp; 2 \\newline 3 \u0026amp; 4 \\newline 5 \u0026amp; 6 \\end{bmatrix} $$\n矩阵有一个操作叫转置（Transpose），矩阵 $A$ 的转置写作 $A^\\mathrm{T}$，这个过程其实就是将矩阵沿着左上到右下的对角线翻转，即把 $A$ 的每一行写 $A^\\mathrm{T}$ 的列，把 $A$ 的每一列写 $A^\\mathrm{T}$ 的行，对于上面的矩阵 $A$ 来说，我们有：\n$$ A^\\mathrm{T} = \\begin{bmatrix} 1 \u0026amp; 3 \u0026amp; 5 \\newline 2 \u0026amp; 4 \u0026amp; 6 \\end{bmatrix} $$","inLanguage":"en-US","author":"Zhirui Li","creator":"Zhirui Li","publisher":"Zhirui Li","accountablePerson":"Zhirui Li","copyrightHolder":"Zhirui Li","copyrightYear":"2021","datePublished":"2021-07-17 00:00:00 \u002b0000 UTC","dateModified":"2021-07-17 00:00:00 \u002b0000 UTC","url":"https:\/\/zhiruili.github.io\/posts\/transformations\/","keywords":["Computer Graphics"]}</script>
+<title>图形学入门（一）：坐标变换</title>
+<meta property="og:title" content="图形学入门（一）：坐标变换">
+<meta property="og:type" content="article">
+<meta property="og:description" content="将一个物体显示到屏幕上，这个事情似乎非常简单，以至于我们基本上认为它已经天经地义到直接告诉计算机我们要显示什么物体它就会自动显示出来，毕竟我们拍照的时候就是举起相机按下快门就会出现一张图片了。但事实上，相机是基于物理感光元件实现了从三维世界到二维图片的投影，在计算机的程序世界中一切都需要被计算出来，也就是说，我们只有一堆图形的描述信息，我们需要自己将这些图形在二维的平面上绘制的方式告诉操作系统，操作系统才能最终在屏幕上绘制出我们想要的图形。
+那么，我们究竟要进行怎样的一些计算呢？我们可以将这个过程和拍照进行类比，物体的位置、角度，相机的位置、角度以及相机本身设置的一些参数都会对拍照的结果产生影响，相机离物体近，物体就显得大一些，相机往左偏，物体在最终相片上的位置就会往右。显然，光有场景中物体本身的模型信息还不足以让我们知道最终呈现在屏幕上的图像的样子，我们还需要考虑上述的种种信息才能最终得出在二维的平面上这个场景最终的形态，这些计算主要分为三部分：
+  模型空间到世界空间的变换
+这个过程将物体的每个顶点坐标从自己模型空间移动到世界空间，也就是将物体移动到世界的对应位置摆放好。
+  世界空间到观察空间的变换
+这个过程将物体的每个顶点坐标从世界空间移动到相机的观察空间，由于位置的移动是相对的，这也就相当于把相机移动到对应位置摆放好。只不过为了计算方便，我们一般假设相机的位置就在原点的位置，看向 $z$ 轴负方向。
+  观察空间到裁剪空间的变换
+这个过程就是将物体的每个顶点坐标从三维空间投影到相机的二维成像平面上，这也就相当于相机拍照时在胶片上记录下当时的画面。
+  数学基础 为了说明这三种变换在计算机中是如何进行的，这里需要先补充一点相关的基础知识。在计算机中，为了进行快速的计算，采用了矩阵（Matrix）这一数学工具。下面是一个 $3 \times 2$ 的矩阵（即 $3$ 行 $2$ 列的矩阵）：
+$$ A = \begin{bmatrix} 1 &amp;amp; 2 \newline 3 &amp;amp; 4 \newline 5 &amp;amp; 6 \end{bmatrix} $$
+矩阵有一个操作叫转置（Transpose），矩阵 $A$ 的转置写作 $A^\mathrm{T}$，这个过程其实就是将矩阵沿着左上到右下的对角线翻转，即把 $A$ 的每一行写 $A^\mathrm{T}$ 的列，把 $A$ 的每一列写 $A^\mathrm{T}$ 的行，对于上面的矩阵 $A$ 来说，我们有：
+$$ A^\mathrm{T} = \begin{bmatrix} 1 &amp;amp; 3 &amp;amp; 5 \newline 2 &amp;amp; 4 &amp;amp; 6 \end{bmatrix} $$">
+<meta name=description content="将一个物体显示到屏幕上，这个事情似乎非常简单，以至于我们基本上认为它已经天经地义到直接告诉计算机我们要显示什么物体它就会自动显示出来，毕竟我们拍照的时候就是举起相机按下快门就会出现一张图片了。但事实上，相机是基于物理感光元件实现了从三维世界到二维图片的投影，在计算机的程序世界中一切都需要被计算出来，也就是说，我们只有一堆图形的描述信息，我们需要自己将这些图形在二维的平面上绘制的方式告诉操作系统，操作系统才能最终在屏幕上绘制出我们想要的图形。
+那么，我们究竟要进行怎样的一些计算呢？我们可以将这个过程和拍照进行类比，物体的位置、角度，相机的位置、角度以及相机本身设置的一些参数都会对拍照的结果产生影响，相机离物体近，物体就显得大一些，相机往左偏，物体在最终相片上的位置就会往右。显然，光有场景中物体本身的模型信息还不足以让我们知道最终呈现在屏幕上的图像的样子，我们还需要考虑上述的种种信息才能最终得出在二维的平面上这个场景最终的形态，这些计算主要分为三部分：
+  模型空间到世界空间的变换
+这个过程将物体的每个顶点坐标从自己模型空间移动到世界空间，也就是将物体移动到世界的对应位置摆放好。
+  世界空间到观察空间的变换
+这个过程将物体的每个顶点坐标从世界空间移动到相机的观察空间，由于位置的移动是相对的，这也就相当于把相机移动到对应位置摆放好。只不过为了计算方便，我们一般假设相机的位置就在原点的位置，看向 $z$ 轴负方向。
+  观察空间到裁剪空间的变换
+这个过程就是将物体的每个顶点坐标从三维空间投影到相机的二维成像平面上，这也就相当于相机拍照时在胶片上记录下当时的画面。
+  数学基础 为了说明这三种变换在计算机中是如何进行的，这里需要先补充一点相关的基础知识。在计算机中，为了进行快速的计算，采用了矩阵（Matrix）这一数学工具。下面是一个 $3 \times 2$ 的矩阵（即 $3$ 行 $2$ 列的矩阵）：
+$$ A = \begin{bmatrix} 1 &amp;amp; 2 \newline 3 &amp;amp; 4 \newline 5 &amp;amp; 6 \end{bmatrix} $$
+矩阵有一个操作叫转置（Transpose），矩阵 $A$ 的转置写作 $A^\mathrm{T}$，这个过程其实就是将矩阵沿着左上到右下的对角线翻转，即把 $A$ 的每一行写 $A^\mathrm{T}$ 的列，把 $A$ 的每一列写 $A^\mathrm{T}$ 的行，对于上面的矩阵 $A$ 来说，我们有：
+$$ A^\mathrm{T} = \begin{bmatrix} 1 &amp;amp; 3 &amp;amp; 5 \newline 2 &amp;amp; 4 &amp;amp; 6 \end{bmatrix} $$">
+<meta property="og:locale" content="zh-cn">
+<style>body{font-family:bree serif,sans-serif;-webkit-font-smoothing:antialiased;margin:0 20px}article{max-width:800px;margin-left:auto;margin-right:auto}a{color:#000;text-decoration:none}a:hover{font-weight:600;text-decoration:underline}.post-ads{margin:50px 0}.markdown-body{font-size:18px;max-width:100%}.markdown-body a{text-decoration:underline;text-decoration-color:#000}.markdown-body pre{padding:16px;overflow:auto;border-radius:10px}.markdown-body code{padding:.2em .4em;font-size:85%;background-color:#f6f8fa;border-radius:6px}.markdown-body pre>code{padding:0;font-size:100%;background-color:inherit;border:0}.Chinese .markdown-body{line-height:200%}.site-date-catalog{font-size:2rem}.header-title{font-size:2rem;font-weight:700;margin-top:32px;font-family:bungee shade,sans-serif}.header-title a{text-decoration:none}.header-subtitle{color:#666}.header-items{margin:10px 0}.header-item{margin:0 5px}.header-line{width:100%;border-width:2px;border-color:#482936;border-style:solid none none none}.lang-switch{font-weight:600}#posts-list{min-height:600px}.posts-line{font-size:1.2rem;margin:12px 0}.posts-categories{font-size:.8rem;margin:auto;text-align:center}.posts-category{padding:3px 0;border:#000 2px solid;border-radius:5px}.site-footer{margin-top:50px}.site-footer-item{margin-right:12px}.post-content img{max-width:100%;display:block;margin-right:auto;margin-top:12px}.post-header{margin-bottom:50px}.post-title{font-size:2rem;font-weight:600}.post-tags{display:inline;font-weight:600;padding:2px 5px;margin-right:6px;border:#000 2px solid;border-radius:5px}.post-date{font-weight:800;font-style:italic}.post-author{float:right;font-weight:600}.page-content{min-height:60%}.post-content{margin-bottom:50px}.post-content p{hyphens:auto;line-height:1.8;text-justify:ideographic;margin-bottom:1em}.related-content{border-width:3px;border-style:solid;border-color:#000;padding:0 10px;margin-bottom:50px;margin-top:100px}.related-content li{margin:5px 0}.taxonomy-term{font-size:3rem}.gallery-img{text-align:center}.gallery-img span{text-align:center}.gallery-img-desc{font-size:.8em;font-weight:800}#disqus_thread{position:relative}#disqus_thread:after{content:"";display:block;height:55px;width:100%;position:absolute;bottom:0;background:#fff}@media screen and (max-width:600px){.header-title,.header-subtitle,.header-items{text-align:center}.posts-line{font-size:16px}.markdown-body{font-size:16px}.post-title{font-size:2rem}.post-content p{letter-spacing:.05em}}@media screen and (max-width:48em){.posts-category{display:none}}</style>
+<style>.container,.container-fluid{margin-right:auto;margin-left:auto}.container-fluid{padding-right:2rem;padding-left:2rem}.row{box-sizing:border-box;display:-webkit-box;display:-ms-flexbox;display:flex;-webkit-box-flex:0;-ms-flex:0 1 auto;flex:initial;-webkit-box-orient:horizontal;-webkit-box-direction:normal;-ms-flex-direction:row;flex-direction:row;-ms-flex-wrap:wrap;flex-wrap:wrap;margin-right:-.5rem;margin-left:-.5rem}.row.reverse{-webkit-box-orient:horizontal;-webkit-box-direction:reverse;-ms-flex-direction:row-reverse;flex-direction:row-reverse}.col.reverse{-webkit-box-orient:vertical;-webkit-box-direction:reverse;-ms-flex-direction:column-reverse;flex-direction:column-reverse}.col-xs,.col-xs-1,.col-xs-10,.col-xs-11,.col-xs-12,.col-xs-2,.col-xs-3,.col-xs-4,.col-xs-5,.col-xs-6,.col-xs-7,.col-xs-8,.col-xs-9,.col-xs-offset-0,.col-xs-offset-1,.col-xs-offset-10,.col-xs-offset-11,.col-xs-offset-12,.col-xs-offset-2,.col-xs-offset-3,.col-xs-offset-4,.col-xs-offset-5,.col-xs-offset-6,.col-xs-offset-7,.col-xs-offset-8,.col-xs-offset-9{box-sizing:border-box;-webkit-box-flex:0;-ms-flex:0 0 auto;flex:none;padding-right:.5rem;padding-left:.5rem}.col-xs{-webkit-box-flex:1;-ms-flex-positive:1;flex-grow:1;-ms-flex-preferred-size:0;flex-basis:0;max-width:100%}.col-xs-1{-ms-flex-preferred-size:8.33333333%;flex-basis:8.33333333%;max-width:8.33333333%}.col-xs-2{-ms-flex-preferred-size:16.66666667%;flex-basis:16.66666667%;max-width:16.66666667%}.col-xs-3{-ms-flex-preferred-size:25%;flex-basis:25%;max-width:25%}.col-xs-4{-ms-flex-preferred-size:33.33333333%;flex-basis:33.33333333%;max-width:33.33333333%}.col-xs-5{-ms-flex-preferred-size:41.66666667%;flex-basis:41.66666667%;max-width:41.66666667%}.col-xs-6{-ms-flex-preferred-size:50%;flex-basis:50%;max-width:50%}.col-xs-7{-ms-flex-preferred-size:58.33333333%;flex-basis:58.33333333%;max-width:58.33333333%}.col-xs-8{-ms-flex-preferred-size:66.66666667%;flex-basis:66.66666667%;max-width:66.66666667%}.col-xs-9{-ms-flex-preferred-size:75%;flex-basis:75%;max-width:75%}.col-xs-10{-ms-flex-preferred-size:83.33333333%;flex-basis:83.33333333%;max-width:83.33333333%}.col-xs-11{-ms-flex-preferred-size:91.66666667%;flex-basis:91.66666667%;max-width:91.66666667%}.col-xs-12{-ms-flex-preferred-size:100%;flex-basis:100%;max-width:100%}.col-xs-offset-0{margin-left:0}.col-xs-offset-1{margin-left:8.33333333%}.col-xs-offset-2{margin-left:16.66666667%}.col-xs-offset-3{margin-left:25%}.col-xs-offset-4{margin-left:33.33333333%}.col-xs-offset-5{margin-left:41.66666667%}.col-xs-offset-6{margin-left:50%}.col-xs-offset-7{margin-left:58.33333333%}.col-xs-offset-8{margin-left:66.66666667%}.col-xs-offset-9{margin-left:75%}.col-xs-offset-10{margin-left:83.33333333%}.col-xs-offset-11{margin-left:91.66666667%}.start-xs{-webkit-box-pack:start;-ms-flex-pack:start;justify-content:flex-start;text-align:start}.center-xs{-webkit-box-pack:center;-ms-flex-pack:center;justify-content:center;text-align:center}.end-xs{-webkit-box-pack:end;-ms-flex-pack:end;justify-content:flex-end;text-align:end}.top-xs{-webkit-box-align:start;-ms-flex-align:start;align-items:flex-start}.middle-xs{-webkit-box-align:center;-ms-flex-align:center;align-items:center}.bottom-xs{-webkit-box-align:end;-ms-flex-align:end;align-items:flex-end}.around-xs{-ms-flex-pack:distribute;justify-content:space-around}.between-xs{-webkit-box-pack:justify;-ms-flex-pack:justify;justify-content:space-between}.first-xs{-webkit-box-ordinal-group:0;-ms-flex-order:-1;order:-1}.last-xs{-webkit-box-ordinal-group:2;-ms-flex-order:1;order:1}@media only screen and (min-width:48em){.container{width:49rem}.col-sm,.col-sm-1,.col-sm-10,.col-sm-11,.col-sm-12,.col-sm-2,.col-sm-3,.col-sm-4,.col-sm-5,.col-sm-6,.col-sm-7,.col-sm-8,.col-sm-9,.col-sm-offset-0,.col-sm-offset-1,.col-sm-offset-10,.col-sm-offset-11,.col-sm-offset-12,.col-sm-offset-2,.col-sm-offset-3,.col-sm-offset-4,.col-sm-offset-5,.col-sm-offset-6,.col-sm-offset-7,.col-sm-offset-8,.col-sm-offset-9{box-sizing:border-box;-webkit-box-flex:0;-ms-flex:0 0 auto;flex:none;padding-right:.5rem;padding-left:.5rem}.col-sm{-webkit-box-flex:1;-ms-flex-positive:1;flex-grow:1;-ms-flex-preferred-size:0;flex-basis:0;max-width:100%}.col-sm-1{-ms-flex-preferred-size:8.33333333%;flex-basis:8.33333333%;max-width:8.33333333%}.col-sm-2{-ms-flex-preferred-size:16.66666667%;flex-basis:16.66666667%;max-width:16.66666667%}.col-sm-3{-ms-flex-preferred-size:25%;flex-basis:25%;max-width:25%}.col-sm-4{-ms-flex-preferred-size:33.33333333%;flex-basis:33.33333333%;max-width:33.33333333%}.col-sm-5{-ms-flex-preferred-size:41.66666667%;flex-basis:41.66666667%;max-width:41.66666667%}.col-sm-6{-ms-flex-preferred-size:50%;flex-basis:50%;max-width:50%}.col-sm-7{-ms-flex-preferred-size:58.33333333%;flex-basis:58.33333333%;max-width:58.33333333%}.col-sm-8{-ms-flex-preferred-size:66.66666667%;flex-basis:66.66666667%;max-width:66.66666667%}.col-sm-9{-ms-flex-preferred-size:75%;flex-basis:75%;max-width:75%}.col-sm-10{-ms-flex-preferred-size:83.33333333%;flex-basis:83.33333333%;max-width:83.33333333%}.col-sm-11{-ms-flex-preferred-size:91.66666667%;flex-basis:91.66666667%;max-width:91.66666667%}.col-sm-12{-ms-flex-preferred-size:100%;flex-basis:100%;max-width:100%}.col-sm-offset-0{margin-left:0}.col-sm-offset-1{margin-left:8.33333333%}.col-sm-offset-2{margin-left:16.66666667%}.col-sm-offset-3{margin-left:25%}.col-sm-offset-4{margin-left:33.33333333%}.col-sm-offset-5{margin-left:41.66666667%}.col-sm-offset-6{margin-left:50%}.col-sm-offset-7{margin-left:58.33333333%}.col-sm-offset-8{margin-left:66.66666667%}.col-sm-offset-9{margin-left:75%}.col-sm-offset-10{margin-left:83.33333333%}.col-sm-offset-11{margin-left:91.66666667%}.start-sm{-webkit-box-pack:start;-ms-flex-pack:start;justify-content:flex-start;text-align:start}.center-sm{-webkit-box-pack:center;-ms-flex-pack:center;justify-content:center;text-align:center}.end-sm{-webkit-box-pack:end;-ms-flex-pack:end;justify-content:flex-end;text-align:end}.top-sm{-webkit-box-align:start;-ms-flex-align:start;align-items:flex-start}.middle-sm{-webkit-box-align:center;-ms-flex-align:center;align-items:center}.bottom-sm{-webkit-box-align:end;-ms-flex-align:end;align-items:flex-end}.around-sm{-ms-flex-pack:distribute;justify-content:space-around}.between-sm{-webkit-box-pack:justify;-ms-flex-pack:justify;justify-content:space-between}.first-sm{-webkit-box-ordinal-group:0;-ms-flex-order:-1;order:-1}.last-sm{-webkit-box-ordinal-group:2;-ms-flex-order:1;order:1}}@media only screen and (min-width:64em){.container{width:65rem}.col-md,.col-md-1,.col-md-10,.col-md-11,.col-md-12,.col-md-2,.col-md-3,.col-md-4,.col-md-5,.col-md-6,.col-md-7,.col-md-8,.col-md-9,.col-md-offset-0,.col-md-offset-1,.col-md-offset-10,.col-md-offset-11,.col-md-offset-12,.col-md-offset-2,.col-md-offset-3,.col-md-offset-4,.col-md-offset-5,.col-md-offset-6,.col-md-offset-7,.col-md-offset-8,.col-md-offset-9{box-sizing:border-box;-webkit-box-flex:0;-ms-flex:0 0 auto;flex:none;padding-right:.5rem;padding-left:.5rem}.col-md{-webkit-box-flex:1;-ms-flex-positive:1;flex-grow:1;-ms-flex-preferred-size:0;flex-basis:0;max-width:100%}.col-md-1{-ms-flex-preferred-size:8.33333333%;flex-basis:8.33333333%;max-width:8.33333333%}.col-md-2{-ms-flex-preferred-size:16.66666667%;flex-basis:16.66666667%;max-width:16.66666667%}.col-md-3{-ms-flex-preferred-size:25%;flex-basis:25%;max-width:25%}.col-md-4{-ms-flex-preferred-size:33.33333333%;flex-basis:33.33333333%;max-width:33.33333333%}.col-md-5{-ms-flex-preferred-size:41.66666667%;flex-basis:41.66666667%;max-width:41.66666667%}.col-md-6{-ms-flex-preferred-size:50%;flex-basis:50%;max-width:50%}.col-md-7{-ms-flex-preferred-size:58.33333333%;flex-basis:58.33333333%;max-width:58.33333333%}.col-md-8{-ms-flex-preferred-size:66.66666667%;flex-basis:66.66666667%;max-width:66.66666667%}.col-md-9{-ms-flex-preferred-size:75%;flex-basis:75%;max-width:75%}.col-md-10{-ms-flex-preferred-size:83.33333333%;flex-basis:83.33333333%;max-width:83.33333333%}.col-md-11{-ms-flex-preferred-size:91.66666667%;flex-basis:91.66666667%;max-width:91.66666667%}.col-md-12{-ms-flex-preferred-size:100%;flex-basis:100%;max-width:100%}.col-md-offset-0{margin-left:0}.col-md-offset-1{margin-left:8.33333333%}.col-md-offset-2{margin-left:16.66666667%}.col-md-offset-3{margin-left:25%}.col-md-offset-4{margin-left:33.33333333%}.col-md-offset-5{margin-left:41.66666667%}.col-md-offset-6{margin-left:50%}.col-md-offset-7{margin-left:58.33333333%}.col-md-offset-8{margin-left:66.66666667%}.col-md-offset-9{margin-left:75%}.col-md-offset-10{margin-left:83.33333333%}.col-md-offset-11{margin-left:91.66666667%}.start-md{-webkit-box-pack:start;-ms-flex-pack:start;justify-content:flex-start;text-align:start}.center-md{-webkit-box-pack:center;-ms-flex-pack:center;justify-content:center;text-align:center}.end-md{-webkit-box-pack:end;-ms-flex-pack:end;justify-content:flex-end;text-align:end}.top-md{-webkit-box-align:start;-ms-flex-align:start;align-items:flex-start}.middle-md{-webkit-box-align:center;-ms-flex-align:center;align-items:center}.bottom-md{-webkit-box-align:end;-ms-flex-align:end;align-items:flex-end}.around-md{-ms-flex-pack:distribute;justify-content:space-around}.between-md{-webkit-box-pack:justify;-ms-flex-pack:justify;justify-content:space-between}.first-md{-webkit-box-ordinal-group:0;-ms-flex-order:-1;order:-1}.last-md{-webkit-box-ordinal-group:2;-ms-flex-order:1;order:1}}@media only screen and (min-width:75em){.container{width:76rem}.col-lg,.col-lg-1,.col-lg-10,.col-lg-11,.col-lg-12,.col-lg-2,.col-lg-3,.col-lg-4,.col-lg-5,.col-lg-6,.col-lg-7,.col-lg-8,.col-lg-9,.col-lg-offset-0,.col-lg-offset-1,.col-lg-offset-10,.col-lg-offset-11,.col-lg-offset-12,.col-lg-offset-2,.col-lg-offset-3,.col-lg-offset-4,.col-lg-offset-5,.col-lg-offset-6,.col-lg-offset-7,.col-lg-offset-8,.col-lg-offset-9{box-sizing:border-box;-webkit-box-flex:0;-ms-flex:0 0 auto;flex:none;padding-right:.5rem;padding-left:.5rem}.col-lg{-webkit-box-flex:1;-ms-flex-positive:1;flex-grow:1;-ms-flex-preferred-size:0;flex-basis:0;max-width:100%}.col-lg-1{-ms-flex-preferred-size:8.33333333%;flex-basis:8.33333333%;max-width:8.33333333%}.col-lg-2{-ms-flex-preferred-size:16.66666667%;flex-basis:16.66666667%;max-width:16.66666667%}.col-lg-3{-ms-flex-preferred-size:25%;flex-basis:25%;max-width:25%}.col-lg-4{-ms-flex-preferred-size:33.33333333%;flex-basis:33.33333333%;max-width:33.33333333%}.col-lg-5{-ms-flex-preferred-size:41.66666667%;flex-basis:41.66666667%;max-width:41.66666667%}.col-lg-6{-ms-flex-preferred-size:50%;flex-basis:50%;max-width:50%}.col-lg-7{-ms-flex-preferred-size:58.33333333%;flex-basis:58.33333333%;max-width:58.33333333%}.col-lg-8{-ms-flex-preferred-size:66.66666667%;flex-basis:66.66666667%;max-width:66.66666667%}.col-lg-9{-ms-flex-preferred-size:75%;flex-basis:75%;max-width:75%}.col-lg-10{-ms-flex-preferred-size:83.33333333%;flex-basis:83.33333333%;max-width:83.33333333%}.col-lg-11{-ms-flex-preferred-size:91.66666667%;flex-basis:91.66666667%;max-width:91.66666667%}.col-lg-12{-ms-flex-preferred-size:100%;flex-basis:100%;max-width:100%}.col-lg-offset-0{margin-left:0}.col-lg-offset-1{margin-left:8.33333333%}.col-lg-offset-2{margin-left:16.66666667%}.col-lg-offset-3{margin-left:25%}.col-lg-offset-4{margin-left:33.33333333%}.col-lg-offset-5{margin-left:41.66666667%}.col-lg-offset-6{margin-left:50%}.col-lg-offset-7{margin-left:58.33333333%}.col-lg-offset-8{margin-left:66.66666667%}.col-lg-offset-9{margin-left:75%}.col-lg-offset-10{margin-left:83.33333333%}.col-lg-offset-11{margin-left:91.66666667%}.start-lg{-webkit-box-pack:start;-ms-flex-pack:start;justify-content:flex-start;text-align:start}.center-lg{-webkit-box-pack:center;-ms-flex-pack:center;justify-content:center;text-align:center}.end-lg{-webkit-box-pack:end;-ms-flex-pack:end;justify-content:flex-end;text-align:end}.top-lg{-webkit-box-align:start;-ms-flex-align:start;align-items:flex-start}.middle-lg{-webkit-box-align:center;-ms-flex-align:center;align-items:center}.bottom-lg{-webkit-box-align:end;-ms-flex-align:end;align-items:flex-end}.around-lg{-ms-flex-pack:distribute;justify-content:space-around}.between-lg{-webkit-box-pack:justify;-ms-flex-pack:justify;justify-content:space-between}.first-lg{-webkit-box-ordinal-group:0;-ms-flex-order:-1;order:-1}.last-lg{-webkit-box-ordinal-group:2;-ms-flex-order:1;order:1}}</style>
+<link href=/index.xml rel=alternate type=application/rss+xml title="简单易懂的现代魔法 - Zhirui Li">
+<link rel=preconnect href=https://fonts.gstatic.com>
+<link href="https://fonts.googleapis.com/css?family=Bree+Serif|Bungee+Shade" rel=stylesheet>
+</head>
+<body>
+<article class="post Chinese" id=article>
+<div class=row>
+<div class=col-xs-12>
+<div class=site-header>
+<header>
+<div class=header-title>
+<a href=/>简单易懂的现代魔法</a>
+</div>
+<div class=header-subtitle></div>
+</header>
+<div class="row end-md center-xs header-items">
+<div class=header-item>
+<a href=/index.xml target=_blank>RSS</a>
+</div>
+<div class=header-item>
+<a href=mailto:zr.public@outlook.com target=_blank>E-mail</a>
+</div>
+<div class=header-item>
+<a href=https://www.github.com/ZhiruiLi target=_blank>Github</a>
+</div>
+</div>
+<div class="row end-xs">
+</div>
+<div class=header-line></div>
+</div>
+<header class=post-header>
+<h1 class=post-title>图形学入门（一）：坐标变换</h1>
+<div class="row post-desc">
+<div class=col-xs-6>
+<time class=post-date datetime="2021-07-17 00:00:00 UTC">
+17 Jul 2021
+</time>
+</div>
+<div class=col-xs-6>
+<div class=post-author>
+<a target=_blank href=https://www.github.com/ZhiruiLi>@Zhirui Li</a>
+</div>
+</div>
+</div>
+</header>
+<div class="post-content markdown-body">
+<p>将一个物体显示到屏幕上，这个事情似乎非常简单，以至于我们基本上认为它已经天经地义到直接告诉计算机我们要显示什么物体它就会自动显示出来，毕竟我们拍照的时候就是举起相机按下快门就会出现一张图片了。但事实上，相机是基于物理感光元件实现了从三维世界到二维图片的投影，在计算机的程序世界中一切都需要被计算出来，也就是说，我们只有一堆图形的描述信息，我们需要自己将这些图形在二维的平面上绘制的方式告诉操作系统，操作系统才能最终在屏幕上绘制出我们想要的图形。</p>
+<p>那么，我们究竟要进行怎样的一些计算呢？我们可以将这个过程和拍照进行类比，物体的位置、角度，相机的位置、角度以及相机本身设置的一些参数都会对拍照的结果产生影响，相机离物体近，物体就显得大一些，相机往左偏，物体在最终相片上的位置就会往右。显然，光有场景中物体本身的模型信息还不足以让我们知道最终呈现在屏幕上的图像的样子，我们还需要考虑上述的种种信息才能最终得出在二维的平面上这个场景最终的形态，这些计算主要分为三部分：</p>
+<ul>
+<li>
+<p>模型空间到世界空间的变换</p>
+<p>这个过程将物体的每个顶点坐标从自己模型空间移动到世界空间，也就是将物体移动到世界的对应位置摆放好。</p>
+</li>
+<li>
+<p>世界空间到观察空间的变换</p>
+<p>这个过程将物体的每个顶点坐标从世界空间移动到相机的观察空间，由于位置的移动是相对的，这也就相当于把相机移动到对应位置摆放好。只不过为了计算方便，我们一般假设相机的位置就在原点的位置，看向 $z$ 轴负方向。</p>
+</li>
+<li>
+<p>观察空间到裁剪空间的变换</p>
+<p>这个过程就是将物体的每个顶点坐标从三维空间投影到相机的二维成像平面上，这也就相当于相机拍照时在胶片上记录下当时的画面。</p>
+</li>
+</ul>
+<h1 id=数学基础>数学基础</h1>
+<p>为了说明这三种变换在计算机中是如何进行的，这里需要先补充一点相关的基础知识。在计算机中，为了进行快速的计算，采用了矩阵（Matrix）这一数学工具。下面是一个 $3 \times 2$ 的矩阵（即 $3$ 行 $2$ 列的矩阵）：</p>
+<p>$$
+A =
+\begin{bmatrix}
+1 & 2 \newline
+3 & 4 \newline
+5 & 6
+\end{bmatrix}
+$$</p>
+<p>矩阵有一个操作叫转置（Transpose），矩阵 $A$ 的转置写作 $A^\mathrm{T}$，这个过程其实就是将矩阵沿着左上到右下的对角线翻转，即把 $A$ 的每一行写 $A^\mathrm{T}$ 的列，把 $A$ 的每一列写 $A^\mathrm{T}$ 的行，对于上面的矩阵 $A$ 来说，我们有：</p>
+<p>$$
+A^\mathrm{T} =
+\begin{bmatrix}
+1 & 3 & 5 \newline
+2 & 4 & 6
+\end{bmatrix}
+$$</p>
+<p>一个 $N$ 维向量也可以表示为一个矩阵的形式，也就是一个 $N \times 1$ 的矩阵：</p>
+<p>$$
+\vec{v} =
+\begin{bmatrix}
+1 \newline
+2 \newline
+3
+\end{bmatrix}
+$$</p>
+<p>为了减少版面占用，我们在写向量的时候往往写它们的转置形式：</p>
+<p>$$
+\vec{v} =
+\begin{bmatrix}
+1 & 2 & 3
+\end{bmatrix}^\mathrm{T}
+$$</p>
+<p>类似地，空间中的点也能用类似这一的表示。这里需要略微说明的是，由于坐标系中的一个点本身可以看作是一个从原点开始指向该点的向量，因此，在许多图形库中也常直接用向量来表示顶点。多数情况下，我们并不需要区分这两个概念，但是，在一些特定的场合（如后文将提到的平移变换）下，我们还是要严格区分点和向量的。</p>
+<p>对于一个矩阵 $A$ 而言，我们用 $A_{ij}$ 表示这个矩阵第 $i$ 行第 $j$ 列的值。</p>
+<p>矩阵之间可以进行加法和乘法运算，加法运算要求矩阵有相同的行数和列数，然后进行对应位置的相加：</p>
+<h1 id=endbmatrix>$$
+\begin{bmatrix}
+A_{11} & A_{12} & A_{13} \newline
+A_{21} & A_{22} & A_{23}
+\end{bmatrix}
++
+\begin{bmatrix}
+B_{11} & B_{12} & B_{13} \newline
+B_{21} & B_{22} & B_{23}
+\end{bmatrix}</h1>
+<p>\begin{bmatrix}
+A_{11} + B_{11} & A_{12} + B_{12} & A_{13} + B_{13} \newline
+A_{21} + B_{21} & A_{22} + B_{22} & A_{23} + B_{23}
+\end{bmatrix}
+$$</p>
+<p>乘法运算则稍微复杂一点，对于 $A$、$B$ 两个矩阵相乘，我们需要确保 $A$ 的列数等于 $B$ 的行数。假设 $A$ 是一个 $3 \times 2$ 的矩阵，而 $B$ 是一个 $2 \times 1$ 的矩阵，则 $A B$ 的结果就是一个 $3 \times 1$ 的矩阵：</p>
+<h1 id=endbmatrix-1>$$
+\begin{bmatrix}
+A_{11} & A_{12} \newline
+A_{21} & A_{22} \newline
+A_{31} & A_{32}
+\end{bmatrix}
+\begin{bmatrix}
+B_{11} \newline
+B_{12}
+\end{bmatrix}</h1>
+<p>\begin{bmatrix}
+A_{11} B_{11} + A_{12} B_{12} \newline
+A_{21} B_{11} + A_{22} B_{12} \newline
+A_{31} B_{11} + A_{32} B_{12}
+\end{bmatrix}
+$$</p>
+<p>下面快速给出一组我们会用到的矩阵相关的定义：</p>
+<ul>
+<li>一个矩阵 $A$ 的主对角线（Main Diagonal）被定义为所有 $A_{ij},\ (i = j)$ 的值。</li>
+<li>对角矩阵（Diagonal Matrix）被定义为除了主对角线都为 $0$ 的矩阵。</li>
+<li>方阵（Square Matrix）被定义为行列数相同的矩阵，一个 $n \times n$ 的方阵被称为 $n$ 阶方阵，$n$ 为方阵的阶。</li>
+<li>单位矩阵（Identity Matrix）被定义为主对角线上的元素都为 $1$ 而其他元素都为 $0$ 的方阵，一个 $n$ 阶的单位矩阵记作 $I_n$。</li>
+<li>给定一个 $n$ 阶方阵 $A$，如果存在一个 $n$ 阶方阵 $B$ 使得 $A B = B A = I_n$，则称 $B$ 是 $A$ 的逆矩阵（Inverse Matrix），记作 $A^{-1}$。</li>
+<li>如果一个方阵 $A$ 的转置矩阵为其逆矩阵，即 $A^\mathrm{T} = A^{-1}$，则称 $A$ 为正交矩阵（Orthogonal Matrix）。</li>
+</ul>
+<p>说完矩阵的一些相关的定义和运算之后，我们来说一下矩阵和我们的坐标变换有什么关系。由于整个坐标变换过程事实上是对模型的顶点应用了一组线性变换，因此它们可以被转变为用矩阵表示，例如：</p>
+<p>$$
+\begin{align}
+x^\prime &= x + y + z \newline
+y^\prime &= 3x + 5z \newline
+z^\prime &= 6x
+\end{align}
+$$</p>
+<p>可以用矩阵乘法表示为：</p>
+<h1 id=endbmatrixmathrmt>$$
+\begin{bmatrix}
+x^\prime & y^\prime & z^\prime
+\end{bmatrix}^\mathrm{T}</h1>
+<p>\begin{bmatrix}
+1 & 1 & 1 \newline
+3 & 0 & 5 \newline
+6 & 0 & 0
+\end{bmatrix}
+\begin{bmatrix}
+x & y & z
+\end{bmatrix}^\mathrm{T}
+$$</p>
+<p>这里不用简单的运算而引入矩阵这一概念，是因为矩阵乘法有一个很好的性质：运算服从结合律。因此，对一个点 $p$ 先应用矩阵 $A$ 再应用矩阵 $B$ 就相当于直接对 $p$ 应用 $(A B)$。在实际的场景中，我们可能需要处理非常大量的顶点，矩阵乘法的这一特性可以使得我们将变换过程计算一次，生成一个变换矩阵后，再将这个矩阵应用到所有顶点上，显著减少计算量。</p>
+<h1 id=图形基本变换>图形基本变换</h1>
+<p>通过前文的介绍，我们已经了解了矩阵以及矩阵的一些基本运算方式。既然我们有了一个可组合的计算工具，现在我们就需要去了解我们可用的一些基础组合子，也就是图形变换的基本形式<sup id=fnref:1><a href=#fn:1 class=footnote-ref role=doc-noteref>1</a></sup>，以及这些变换如何用矩阵乘法的形式进行表示。在这里，以二维情况为例，说明图形几种基本的变换所对应的变换矩阵：</p>
+<h2 id=二维缩放>二维缩放</h2>
+<p>所谓缩放，其实就是对图形的每一个顶点的每一个分量都乘上一个缩放因子，例如我们想让一个二维图形在 $x$ 轴方向缩放 2 倍，在 $y$ 轴方向缩放 3 倍，那么，我们只需要对它上面的任何一个顶点 $p = (x,\ y)^\mathrm{T}$ 进行如下操作：</p>
+<p>$$
+\begin{align}
+x^\prime &= 2x \newline
+y^\prime &= 3y
+\end{align}
+$$</p>
+<p>将其写成矩阵形式：</p>
+<h1 id=endbmatrixmathrmt-1>$$
+\begin{bmatrix}
+x^\prime & y^\prime
+\end{bmatrix}^\mathrm{T}</h1>
+<p>\begin{bmatrix}
+2 & 0 \newline
+0 & 3
+\end{bmatrix}
+\begin{bmatrix}
+x & y
+\end{bmatrix}^\mathrm{T}
+$$</p>
+<p>也就是通用情况下，我们有：</p>
+<h1 id=endbmatrixmathrmt-2>$$
+\begin{bmatrix}
+s_x & 0 \newline
+0 & s_y
+\end{bmatrix}
+\begin{bmatrix}
+x & y
+\end{bmatrix}^\mathrm{T}</h1>
+<p>\begin{bmatrix}
+s_x x & s_y y
+\end{bmatrix}^\mathrm{T}
+$$</p>
+<h2 id=二维旋转>二维旋转</h2>
+<p>相比于缩放，旋转要稍微复杂一点。对于一个二维的图形的每一个顶点 $p = (x,\ y)^\mathrm{T}$ 我们希望对其应用一个 $2 \times 2$ 的矩阵，使得其绕原点逆时针旋转一个 $\theta$ 角后得到 $(x^\prime,\ y^\prime)$：</p>
+<h1 id=endbmatrixmathrmt-3>$$
+\begin{bmatrix}
+a & b \newline
+c & d
+\end{bmatrix}
+\begin{bmatrix}
+x & y
+\end{bmatrix}^\mathrm{T}</h1>
+<p>\begin{bmatrix}
+x^\prime & y^\prime
+\end{bmatrix}^\mathrm{T}
+$$</p>
+<p>我们可以从两种最简单的情况进行考虑，来求出 $a$、$b$、$c$、$d$ 分别是什么。</p>
+<p>第一种情况是 $x \neq 0,\ y = 0$。此时，矩阵相乘的结果为：</p>
+<p>$$
+\begin{align}
+\begin{bmatrix}
+x^\prime & y^\prime
+\end{bmatrix}^\mathrm{T}
+&=
+\begin{bmatrix}
+a & b \newline
+c & d
+\end{bmatrix}
+\begin{bmatrix}
+x & 0
+\end{bmatrix}^\mathrm{T}
+\newline
+&=
+\begin{bmatrix}
+a x + 0 & c x + 0
+\end{bmatrix}^\mathrm{T}
+\newline
+&=
+\begin{bmatrix}
+a x & c x
+\end{bmatrix}^\mathrm{T}
+\end{align}
+$$</p>
+<p>我们可以知道，对于这样的点而言，旋转 $\theta$ 角后，$x^\prime = x\cos{\theta}$，$y^\prime = x\sin{\theta}$。将这个结果对应于矩阵，我们就可以知道：</p>
+<p>$$
+\begin{align}
+a &= \cos{\theta} \newline
+c &= \sin{\theta}
+\end{align}
+$$</p>
+<p>类似地，对于 $x = 0,\ y \neq 0$ 的情况而言。此时，矩阵相乘的结果为：</p>
+<p>$$
+\begin{align}
+\begin{bmatrix}
+x^\prime & y^\prime
+\end{bmatrix}^\mathrm{T}
+&=
+\begin{bmatrix}
+a & b \newline
+c & d
+\end{bmatrix}
+\begin{bmatrix}
+0 & y
+\end{bmatrix}^\mathrm{T}
+\newline
+&=
+\begin{bmatrix}
+0 + b y & 0 + d y
+\end{bmatrix}^\mathrm{T}
+\newline
+&=
+\begin{bmatrix}
+b y & d y
+\end{bmatrix}^\mathrm{T}
+\end{align}
+$$</p>
+<p>对于这样的点而言，旋转 $\theta$ 角后，$x^\prime = -y\sin{\theta}$，$y^\prime = y\cos{\theta}$。将这个结果对应于矩阵，我们就可以知道：</p>
+<p>$$
+\begin{align}
+b &= -\sin{\theta} \newline
+d &= \cos{\theta}
+\end{align}
+$$</p>
+<p>因此，二维场景下，逆时针旋转的矩阵为：</p>
+<p>$$
+\begin{bmatrix}
+\cos{\theta} & -\sin{\theta} \newline
+\sin{\theta} & \cos{\theta}
+\end{bmatrix}
+$$</p>
+<h2 id=二维平移>二维平移</h2>
+<p>所谓平移，其实就是对点的每一个分量都加上一个偏移量，例如我们想让一个图形在 $x$ 轴方向平移 1 个单位长度，在 $y$ 轴方向平移 2 个单位长度，那么，我们只需要对其每一个顶点 $p = (x,\ y)^\mathrm{T}$ 进行如下操作：</p>
+<p>$$
+\begin{align}
+x^\prime &= x + 1 \newline
+y^\prime &= y + 2
+\end{align}
+$$</p>
+<p>这看起来比前面的两种变换都要简单，但事实上，我们却无法用上面的 $2 \times 2$ 矩阵乘以一个向量的方式表示这样的运算。这是因为对于任意的 $2 \times 2$ 矩阵而言，当其应用于一个向量的时候，它的结果总为如下形式：</p>
+<h1 id=endbmatrixmathrmt-4>$$
+\begin{bmatrix}
+a & b \newline
+c & d
+\end{bmatrix}
+\begin{bmatrix}
+x & y
+\end{bmatrix}^\mathrm{T}</h1>
+<p>\begin{bmatrix}
+a x + b y & c x + d y
+\end{bmatrix}^\mathrm{T}
+$$</p>
+<p>我们会发现，这里并没有任何地方能放下一个与 $x$ 和 $y$ 都无关的值，因此，我们只能将其写为：</p>
+<h1 id=endbmatrixmathrmt-5>$$
+\begin{bmatrix}
+a & b \newline
+c & d
+\end{bmatrix}
+\begin{bmatrix}
+x & y
+\end{bmatrix}^\mathrm{T}
++
+\begin{bmatrix}
+t_x & t_y
+\end{bmatrix}^\mathrm{T}</h1>
+<p>\begin{bmatrix}
+a x + b y + t_x & c x + d y + t_y
+\end{bmatrix}^\mathrm{T}
+$$</p>
+<p>这看起来似乎没什么问题，但是它导致了一个巨大的灾难，就是我们无法将若干矩阵变换应用结合律合成一个矩阵了，这是我们不想看到的。因此我们需要引入一个新的数学工具：齐次坐标（Homogeneous Coordinates）。在齐次坐标下，一个点 $p = (x,\ y)^\mathrm{T}$ 将被表示为 $p = (x,\ y,\ 1)^\mathrm{T}$，向量 $\vec{v} = (x,\ y)^\mathrm{T}$ 将被表示为：$\vec{v} = (x,\ y,\ 0)^\mathrm{T}$。在引入其次坐标后，我们对点的平移就可以用如下的矩阵乘法实现了：</p>
+<h1 id=endbmatrixmathrmt-6>$$
+\begin{bmatrix}
+1 & 0 & t_x \newline
+0 & 1 & t_y \newline
+0 & 0 & 1
+\end{bmatrix}
+\begin{bmatrix}
+x & y & 1
+\end{bmatrix}^\mathrm{T}</h1>
+<p>\begin{bmatrix}
+x + t_x & y + t_y & 1
+\end{bmatrix}^\mathrm{T}
+$$</p>
+<p>我们可以看到，此时，这个向量的前两个值恰好就是我们要的结果。前面提到，我们大多数情况下并不严格区分点和向量，这里之所以需要严格区分，是因为向量具有平移不变性。当一个向量应用了上述变换后，则变为：</p>
+<h1 id=endbmatrixmathrmt-7>$$
+\begin{bmatrix}
+1 & 0 & t_x \newline
+0 & 1 & t_y \newline
+0 & 0 & 1
+\end{bmatrix}
+\begin{bmatrix}
+x & y & 0
+\end{bmatrix}^\mathrm{T}</h1>
+<p>\begin{bmatrix}
+x & y & 0
+\end{bmatrix}^\mathrm{T}
+$$</p>
+<p>结果还是原来的向量，确保了平移不变性。</p>
+<p>在使用了其次坐标后，本章提到的三个基本的变换矩阵可以分别被表示为：</p>
+<ul>
+<li>
+<p>缩放</p>
+<p>$$
+S(s_x,\ s_y) =
+\begin{bmatrix}
+s_x & 0 & 0 \newline
+0 & s_y & 0 \newline
+0 & 0 & 1
+\end{bmatrix}
+$$</p>
+</li>
+<li>
+<p>旋转</p>
+<p>$$
+R(\theta) =
+\begin{bmatrix}
+\cos{\theta} & -\sin{\theta} & 0 \newline
+\sin{\theta} & \cos{\theta} & 0 \newline
+0 & 0 & 1
+\end{bmatrix}
+$$</p>
+</li>
+<li>
+<p>平移</p>
+<p>$$
+T(t_x,\ t_y) =
+\begin{bmatrix}
+1 & 0 & t_x \newline
+0 & 1 & t_y \newline
+0 & 0 & 1
+\end{bmatrix}
+$$</p>
+</li>
+</ul>
+<h2 id=二维组合变换>二维组合变换</h2>
+<p>有了这些基础的变换方式，我们就可以组合成一些更复杂的变换形式。例如，我们刚刚提到的旋转变换是基于原点逆时针旋转 $\theta$ 角，那如果我们想绕任意一个点 $p = (a,\ b)$ 旋转 $\theta$ 角要怎么做呢？我们可以将这个过程拆解为三步：</p>
+<ul>
+<li>将整个图形和点 $p$ 一起移动，使得点 $p$ 被移动到原点</li>
+<li>将图形绕原点旋转</li>
+<li>将整个图形点 $p$ 移动回原位置</li>
+</ul>
+<p>也就是：</p>
+<p>$$
+R_p = T(a,\ b) \ R(\theta) \ T(-a,\ -b)
+$$</p>
+<h1 id=坐标变换>坐标变换</h1>
+<p>有了这些基础知识后，我们就可以来讨论完整的坐标变换应该怎么做了。文章开头已经提到，在空间中的顶点坐标变换分为三步。而这三步中的每一步都可以用一个对应的变换矩阵实现，它们是：</p>
+<ul>
+<li>模型空间到世界空间：Model Matrix</li>
+<li>世界空间到观察空间：View Matrix</li>
+<li>观察空间到裁剪空间：Projection Matrix</li>
+</ul>
+<p>即经过这三个变换后，我们可以将一个模型空间的向量转变为裁剪空间的向量：</p>
+<p>$$
+\vec{v}<em>{clip} = M</em>{projection} \ M_{view} \ M_{model} \ \vec{v}_{model}
+$$</p>
+<p>根据这三个变换的首字母，这个过程又被称为 MVP 变换，如下图<sup id=fnref:2><a href=#fn:2 class=footnote-ref role=doc-noteref>2</a></sup>所示：</p>
+<p><img src=../../images/2021-07-18-19-21-56.png alt="MVP Transformation"></p>
+<h2 id=模型变换>模型变换</h2>
+<p>模型空间到世界空间是比较简单的情况，它其实就是一些基础的变换或者是基础变换的组合，将物体的顶点从模型中定义的坐标系移动到世界坐标系中，例如一个正方体的盒子的一个顶点在 $(1,\ 1,\ 1)$ 的位置上，那么当这个正方体移动到了 $(2,\ 3,\ 5)$ 位置上时，这个顶点也自然应该被移动到 $(3,\ 4,\ 6)$ 位置上了。</p>
+<p>前文已经说明如何对二维情况下的点和向量进行变换，对于三维情况，我们也可以做类似的处理<sup id=fnref:3><a href=#fn:3 class=footnote-ref role=doc-noteref>3</a></sup>。我们首先通过齐次坐标将三维空间中的点 $p = (x,\ y,\ z)^\mathrm{T}$ 扩充为 $p = (x,\ y,\ z,\ 1)^\mathrm{T}$，将三维空间中的向量 $\vec{v} = (x,\ y,\ z)^\mathrm{T}$ 扩充为 $\vec{v} = (x,\ y,\ z,\ 0)^\mathrm{T}$。然后，对应的变换矩阵就变为：</p>
+<ul>
+<li>
+<p>缩放</p>
+<p>$$
+S(s_x,\ s_y,\ s_z) =
+\begin{bmatrix}
+s_x & 0 & 0 & 0 \newline
+0 & s_y & 0 & 0 \newline
+0 & 0 & s_z & 0 \newline
+0 & 0 & 0 & 1
+\end{bmatrix}
+$$</p>
+</li>
+<li>
+<p>平移</p>
+<p>$$
+T(t_x,\ t_y,\ t_z) =
+\begin{bmatrix}
+1 & 0 & 0 & t_x \newline
+0 & 1 & 0 & t_y \newline
+0 & 0 & 1 & t_z \newline
+0 & 0 & 0 & 1
+\end{bmatrix}
+$$</p>
+</li>
+<li>
+<p>旋转</p>
+<p>旋转比较特殊，在二维空间中，绕原点逆时针旋转含义是非常明确的，但在三维空间中，我们则无法说绕原点逆时针旋转，而是需要确定是绕哪个轴旋转，它们的公式分别为：</p>
+<ul>
+<li>
+<p>绕 $x$ 轴旋转</p>
+<p>$$
+R_x(\theta) =
+\begin{bmatrix}
+1 & 0 & 0 & 0 \newline
+0 & \cos{\theta} & -\sin{\theta} & 0 \newline
+0 & \sin{\theta} & \cos{\theta} & 0 \newline
+0 & 0 & 0 & 1
+\end{bmatrix}
+$$</p>
+</li>
+<li>
+<p>绕 $y$ 轴旋转</p>
+<p>注意这里的负号的位置与绕 $x$ 轴、$z$ 轴旋转的情况不同，这是因为 $\vec{x} = \vec{y} \times \vec{z}$、$\vec{z} = \vec{x} \times \vec{y}$，而 $\vec{y}$ 并不是 $\vec{x} \times \vec{z}$ 而是 $\vec{z} \times \vec{x}$，顺序恰好相反。</p>
+<p>$$
+R_y(\theta) =
+\begin{bmatrix}
+\cos{\theta} & 0 & \sin{\theta} & 0 \newline
+0 & 1 & 0 & 0 \newline
+-\sin{\theta} & 0 & \cos{\theta} & 0 \newline
+0 & 0 & 0 & 1
+\end{bmatrix}
+$$</p>
+</li>
+<li>
+<p>绕 $z$ 轴旋转</p>
+<p>$$
+R_z(\theta) =
+\begin{bmatrix}
+\cos{\theta} & -\sin{\theta} & 0 & 0 \newline
+\sin{\theta} & \cos{\theta} & 0 & 0 \newline
+0 & 0 & 1 & 0 \newline
+0 & 0 & 0 & 1
+\end{bmatrix}
+$$</p>
+</li>
+</ul>
+</li>
+</ul>
+<h2 id=视图变换>视图变换</h2>
+<p>世界空间到观察空间这个过程虽然我们在概念上将其理解为移动相机，但是本质上也可以看作是为移动物体。如何理解这件事呢？首先我们来看相机的位置如何定义。当我们定义相机的位置时，一般会采用这样的方式：</p>
+<ul>
+<li>位置 Position，用向量 $\vec{e}$ 表示</li>
+<li>朝向 Look-at Direction，用单位向量 $\hat{g}$ 表示</li>
+<li>上方 Up Direction，用单位向量 $\hat{t}$ 表示</li>
+</ul>
+<p>我们知道，位置是相对的，假设我们正拿着一个相机在拍摄一个物体，固定好位置并拍出一张相片后，我们将相机和被拍摄物体都向前移动一段相同的距离，再向左移动相同的距离，然后再拍摄一张照片，在不考虑背景的情况下，这两张照片拍摄出来的结果显然是一模一样的。这也就意味着，我们可以根据计算的便利性，选择一个坐标系，来将所有物体和相机都按照这个坐标系进行移动。在这里我们选择就以相机的位置为原点，相机的上方向 $\hat{t}$ 为 $y$ 轴的正方向，相机看向的方向 $\hat{g}$ 为 $z$ 轴的负方向，以此为基础构建一个右手的坐标系（也就是 $x$ 轴向右，$y$ 轴向上的情况下，$z$ 轴向屏幕外，$\vec{x} \times \vec{y} = \vec{z}$）。一旦规定好 $y$ 轴和 $z$ 轴，那么 $x$ 轴的方向也就可以通过叉乘来计算得出了：$\hat{x} = \hat{y} \times \hat{z} = \hat{g} \times \hat{t}$。</p>
+<p>也就是说，我们需要先对场景中所有物体，包括相机，应用一个变换矩阵，使得相机恰好在原点，相机的上方向 $\hat{t}$ 为 $y$ 轴的正方向，相机看向的方向 $\hat{g}$ 为 $z$ 轴的负方向。为了达成这个目的，我们先对场景中的物体应用一个平移变换，这个变换是非常直观的：</p>
+<p>$$
+T_{view} =
+\begin{bmatrix}
+1 & 0 & 0 & -x_e \newline
+0 & 1 & 0 & -y_e \newline
+0 & 0 & 1 & -z_e \newline
+0 & 0 & 0 & 1
+\end{bmatrix}
+$$</p>
+<p>在这个基础上，我们再应用旋转变换，使相机的 $\hat{g}$ 和 $\hat{t}$ 符合我们的需求。在这里，由于这个过程并不直观，也不好求解，因此我们需要应用一个小技巧。旋转矩阵是一个正交矩阵，根据前面给出的定义，一个方阵 $A$ 如果是一个正交矩阵，那么 $A^\mathrm{T} = A^{-1}$。</p>
+<p>也就是说，假设我们要求的旋转矩阵是 $R_{view}$，那么我们可以先计算这个旋转变换的逆变换对应的矩阵 $R_{view}^{-1}$，再通过其转置得到该旋转变换矩阵。那么，这个 $R_{view}^{-1}$ 是什么呢？显然，将单位向量 $\hat{t}$ 从任意方向转到 $y$ 轴的正方向的逆变换就是将 $y$ 轴正方向的单位向量 $\hat{y} = (0,\ 1,\ 0,\ 0)^\mathrm{T}$（注意向量的齐次坐标表示最后一个元素是 $0$）转到 $\hat{t}$ 方向。也就是说，这个 $R_{view}^{-1}$ 矩阵需要满足：</p>
+<h1 id=-hatt>$$
+R_{view}^{-1}
+\ \begin{bmatrix}
+0 & 1 & 0 & 0
+\end{bmatrix}^\mathrm{T}
+= \hat{t}</h1>
+<p>\begin{bmatrix}
+x_t & y_t & z_t & 0
+\end{bmatrix}^\mathrm{T}
+$$</p>
+<p>根据矩阵乘法的计算方式我们可以知道，这个 $R_{view}^{-1}$ 矩阵的第二列必然为 $(x_t,\ y_t,\ z_t,\ 0)^\mathrm{T}$，否则就无法得出这样的结果。</p>
+<p>类似地，这个矩阵也需要满足：</p>
+<h1 id=--hatg>$$
+R_{view}^{-1}
+\ \begin{bmatrix}
+0 & 0 & 1 & 0
+\end{bmatrix}^\mathrm{T}
+= -\hat{g}</h1>
+<p>\begin{bmatrix}
+x_{-g} & y_{-g} & z_{-g} & 0
+\end{bmatrix}^\mathrm{T}
+$$</p>
+<p>这里之所以需要加一个负号，是因为我们看向的是 $z$ 轴负方向，也就是将 $\hat{z} = (0,\ 0,\ 1,\ 0)^\mathrm{T}$ 轴转到了 $-\hat{g}$ 的方向。由此我们可以知道，这个 $R_{view}^{-1}$ 矩阵的第三列必然为 $(x_{-g},\ y_{-g},\ z_{-g},\ 0)^\mathrm{T}$。</p>
+<p>同理，由于相机的 $x$ 轴方向的单位向量 $\hat{x}$ 可以通过 $\hat{t}$ 和 $\hat{-g}$ 叉乘得到，即 $\hat{g} \times \hat{t}$，因此，我们也知道了第一列的值：$(x_{\hat{g} \times \hat{t}},\ y_{\hat{g} \times \hat{t}},\ z_{\hat{g} \times \hat{t}})^\mathrm{T}$。</p>
+<p>最终，我们得到了如下的矩阵：</p>
+<p>$$
+R_{view}^{-1} =
+\begin{bmatrix}
+x_{\hat{g} \times \hat{t}} & x_t & x_{-g} & 0 \newline
+y_{\hat{g} \times \hat{t}} & y_t & y_{-g} & 0 \newline
+z_{\hat{g} \times \hat{t}} & z_t & z_{-g} & 0 \newline
+0 & 0 & 0 & 1
+\end{bmatrix}
+$$</p>
+<p>我们可以简单地将这个矩阵与 $\hat{x}$、$\hat{y}$、$\hat{z}$ 相乘来进行验算，确认其正确性。然后，根据正交矩阵的性质，我们有：</p>
+<p>$$
+R_{view} = {R_{view}^{-1}}^\mathrm{T} =
+\begin{bmatrix}
+x_{\hat{g} \times \hat{t}} & y_{\hat{g} \times \hat{t}} & z_{\hat{g} \times \hat{t}} & 0 \newline
+x_t & y_t & z_t & 0 \newline
+x_{-g} & y_{-g} & z_{-g} & 0 \newline
+0 & 0 & 0 & 1
+\end{bmatrix}
+$$</p>
+<p>此时我们就知道了 View Matrix 为：</p>
+<p>$$
+M_{view} = R_{view} \ T_{view} =
+\begin{bmatrix}
+x_{\hat{g} \times \hat{t}} & y_{\hat{g} \times \hat{t}} & z_{\hat{g} \times \hat{t}} & 0 \newline
+x_t & y_t & z_t & 0 \newline
+x_{-g} & y_{-g} & z_{-g} & 0 \newline
+0 & 0 & 0 & 1
+\end{bmatrix}
+\begin{bmatrix}
+1 & 0 & 0 & -x_e \newline
+0 & 1 & 0 & -y_e \newline
+0 & 0 & 1 & -z_e \newline
+0 & 0 & 0 & 1
+\end{bmatrix}
+$$</p>
+<h2 id=投影变换>投影变换</h2>
+<p>从观察空间到裁剪空间这个过程是定义了一个区域，最终这个区域外的内容都在图像中不可见（被裁剪了），而区域内的内容会被投影到一个平面上形成图像。在说这个投影矩阵之前，我们需要先区分两种不同的投影方式，一种是透视投影（Perspective Projection），另一种是正交投影（Orthographic Projection）<sup id=fnref:4><a href=#fn:4 class=footnote-ref role=doc-noteref>4</a></sup>：</p>
+<p><img src=../../images/2021-07-18-18-55-05.png alt="Different Projection"></p>
+<p>所谓透视投影就是符合我们一般视觉规律的投影，也就是画面中的物体会近大远小，而正交投影中无论物体远近，在最终成像的结果中都是一样大。从上图中可以看出，投影变换定义了一个近裁剪平面（Near Clip Plane）和远裁剪平面（Far Clip Plane），当我们的相机看向场景的时候，可以将相机所在的点和远裁剪平面的四个顶点连线形成一个四棱锥，近裁剪平面则进一步将这个锥体切成一个平截头体，在近裁剪平面和远裁剪平面中间的截头体内部的物体就是最终会被投影到近裁剪平面的物体。当相机离近裁剪平面越近，则近裁剪平面越小，透视效果越明显，反之，当相机离得越远，近裁剪平面越大，透视效果越不明显，当相机离得无穷远时，近裁剪平面将和远裁剪平面一样大，此时的投影就是正交投影。对于投影变换而言，我们需要做的事情，就是将裁剪空间这个平截头体转换为标准正方体 $[-1,\ 1]^3$，这个正方体以坐标原点为中心，边与坐标轴平行，边长为 $2$。在这步操作完成后，我们之后就可以很容易地将这个标准正方体中的坐标映射到屏幕空间上了。</p>
+<h3 id=正交投影>正交投影</h3>
+<p>虽然透视投影比较符合我们的视觉直觉，但是我们将先描述正交投影，因为它相对而言比较简单。下图描述了正交投影所需要做的变换<sup id=fnref:4><a href=#fn:4 class=footnote-ref role=doc-noteref>4</a></sup>：</p>
+<p><img src=../../images/2021-07-18-19-17-40.png alt="Orthographic Projection"></p>
+<p>由于正交投影所形成的平截头体是一个长方体，因此我们可以用六个平面的坐标值来描述这个长方体，分别是左右（$l$ $r$），上下（$t$ $b$）和远近（$f$ $n$）。从上图中可以看出，我们需要先对这个长方体应用一个平移变换，再应用一个缩放变换。根据我们之前的知识，可以很容易得到这两个矩阵：</p>
+<ul>
+<li>
+<p>平移</p>
+<p>$$
+T_{ortho} =
+\begin{bmatrix}
+1 & 0 & 0 & -\frac{r + l}{2} \newline
+0 & 1 & 0 & -\frac{t + b}{2} \newline
+0 & 0 & 1 & -\frac{n + f}{2} \newline
+0 & 0 & 0 & 1
+\end{bmatrix}
+$$</p>
+</li>
+<li>
+<p>缩放</p>
+<p>$$
+S_{ortho} =
+\begin{bmatrix}
+\frac{2}{r - l} & 0 & 0 & 0 \newline
+0 & \frac{2}{t - b} & 0 & 0 \newline
+0 & 0 & \frac{2}{n - f} & 0 \newline
+0 & 0 & 0 & 1
+\end{bmatrix}
+$$</p>
+<p>这里需要稍微注意的是，由于我们相机看向 $z$ 轴负方向，因此 $n > f$，所以上面 ${S_{ortho}}_{32} = 2 / (n - f)$。另外，由于我们最终产生的正方体的边长是 $2$，因此这里的缩放因子都有一个 $2$ 作为分子。</p>
+</li>
+</ul>
+<p>因此，我们可以得出正交投影的变换矩阵为：</p>
+<p>$$
+M_{ortho} = S_{ortho} T_{ortho} =
+\begin{bmatrix}
+\frac{2}{r - l} & 0 & 0 & 0 \newline
+0 & \frac{2}{t - b} & 0 & 0 \newline
+0 & 0 & \frac{2}{n - f} & 0 \newline
+0 & 0 & 0 & 1
+\end{bmatrix}
+\begin{bmatrix}
+1 & 0 & 0 & -\frac{r + l}{2} \newline
+0 & 1 & 0 & -\frac{t + b}{2} \newline
+0 & 0 & 1 & -\frac{n + f}{2} \newline
+0 & 0 & 0 & 1
+\end{bmatrix}
+$$</p>
+<h3 id=透视投影>透视投影</h3>
+<p>得出正交投影的变换矩阵后，我们可以在此基础上计算透视投影的变换矩阵。所谓透视投影的变换矩阵，可以被看作是先对透视投影的远裁剪平面进行「挤压」，使其变得和近裁剪平面一样大，这使得平截头体被「挤压」成一个长方体，之后我们就可以应用上面算出的正交投影变换矩阵来进行后续的变换了。</p>
+<p>那么这个所谓的「挤压」是怎么做的呢？首先我们需要明确这个「挤压」的定义，也就是我们需要确保这个过程中的一些不变量。我们进行如下的约束：</p>
+<ol>
+<li>近裁剪平面上任意一点经过「挤压」后不变</li>
+<li>远裁剪平面上任意一点经过「挤压」后 $z$ 值不变</li>
+<li>远裁剪平面上的中点经过「挤压」后不变</li>
+</ol>
+<p>我们要求一个矩阵 $M_{persp \rightarrow ortho}$，使得在满足这些约束的条件下，将平截头体「挤压」成长方体。我们先看 $x$ 和 $y$ 会怎么改变。首先，我们将平截头体中的任意一点 $(x,\ y,\ z)$ 与相机所在位置连一条线，这条线会与近裁剪平面相交于一点 $(x^\prime,\ y^\prime,\ z^\prime)$。此时从侧面看过去，我们可以看到一个相似三角形<sup id=fnref:4><a href=#fn:4 class=footnote-ref role=doc-noteref>4</a></sup>：</p>
+<p><img src=../../images/2021-07-18-19-59-17.png alt="Perspective Projection Y"></p>
+<p>由此我们可以得出：</p>
+<p>$$
+y^\prime = \frac{n}{z} \ y
+$$</p>
+<p>类似地，从顶部向下看，我们可以得出：</p>
+<p>$$
+x^\prime = \frac{n}{z} \ x
+$$</p>
+<p>因此，我们现在已经知道了变化后坐标值中的两个元素，我们可以得出这样的等式（其中 $\square$ 是未知待填入的值）：</p>
+<h1 id=endbmatrixmathrmt-8>$$
+M_{persp \rightarrow ortho}
+\ \begin{bmatrix}
+x & y & z & 1
+\end{bmatrix}^\mathrm{T}</h1>
+<h1 id=endbmatrixmathrmt-9>\begin{bmatrix}
+\frac{n}{z} \ x & \frac{n}{z} \ y & \square & 1
+\end{bmatrix}^\mathrm{T}</h1>
+<p>\begin{bmatrix}
+nx & ny & \square & z
+\end{bmatrix}^\mathrm{T}
+$$</p>
+<p>注意到上面的等式中后半部分看起来有点奇怪。为什么我们会认为 $(nx/z,\ ny/z,\ \square,\ 1)^\mathrm{T}$ 和 $(nx,\ ny,\ \square,\ z)^\mathrm{T}$ 相等呢？这里涉及到我们对齐次坐标的一个定义<sup id=fnref:1><a href=#fn:1 class=footnote-ref role=doc-noteref>1</a></sup>，即：当 $w$ 不为 $0$ 时，$(x,\ y,\ z,\ w)^\mathrm{T}$ 表示的是一个三维空间中的点 $(x / w,\ y / w,\ z / w)^\mathrm{T}$。也就是说，$(x,\ y,\ z,\ 1)$ 和 $(wx,\ wy,\ wz,\ w)$ 在空间中表示的是同一个点。</p>
+<p>回到前面的等式，由于结果中 $nx$ 不包含除了 $x$ 之外的参数，$ny$ 不包含除了 $y$ 之外的参数，而且两者都没有常数项，另外，$z$ 则不包含除了 $z$ 之外的任何项，我们可以根据矩阵乘法的规则可知，这个 $M_{persp \rightarrow ortho}$ 矩阵大致的样子必然为：</p>
+<p>$$
+M_{persp \rightarrow ortho} =
+\begin{bmatrix}
+n & 0 & 0 & 0 \newline
+0 & n & 0 & 0 \newline
+a & b & c & d \newline
+0 & 0 & 1 & 0
+\end{bmatrix}
+$$</p>
+<p>根据前面提到的约束 1 我们可知：</p>
+<h1 id=endbmatrixmathrmt-10>$$
+M_{persp \rightarrow ortho}
+\ \begin{bmatrix}
+x & y & n & 1
+\end{bmatrix}^\mathrm{T}</h1>
+<h1 id=endbmatrixmathrmt-11>\begin{bmatrix}
+\frac{n}{n} \ x & \frac{n}{n} \ y & n & 1
+\end{bmatrix}^\mathrm{T}</h1>
+<p>\begin{bmatrix}
+nx & ny & n^2 & n
+\end{bmatrix}^\mathrm{T}
+$$</p>
+<p>由于 $n^2$ 与 $x$ 和 $y$ 都无关，因此我们可以知道 $a = b = 0$。因此这个 $M_{persp \rightarrow ortho}$ 矩阵可以进一步具体化为：</p>
+<p>$$
+M_{persp \rightarrow ortho} =
+\begin{bmatrix}
+n & 0 & 0 & 0 \newline
+0 & n & 0 & 0 \newline
+0 & 0 & c & d \newline
+0 & 0 & 1 & 0
+\end{bmatrix}
+$$</p>
+<p>因此，我们有：</p>
+<p>$$
+\begin{bmatrix}
+0 & 0 & c & d
+\end{bmatrix}
+\begin{bmatrix}
+x & y & n & 1
+\end{bmatrix}^\mathrm{T}
+= cn + d = n^2
+$$</p>
+<p>根据约束 3，我们还可以知道：</p>
+<h1 id=endbmatrixmathrmt-12>$$
+M_{persp \rightarrow ortho}
+\begin{bmatrix}
+0 & 0 & f & 1
+\end{bmatrix}^\mathrm{T}</h1>
+<h1 id=endbmatrixmathrmt-13>\begin{bmatrix}
+0 & 0 & f & 1
+\end{bmatrix}^\mathrm{T}</h1>
+<p>\begin{bmatrix}
+0 & 0 & f^2 & f
+\end{bmatrix}^\mathrm{T}
+$$</p>
+<p>因此，我们又有：</p>
+<p>$$
+\begin{bmatrix}
+0 & 0 & c & d
+\end{bmatrix}
+\begin{bmatrix}
+0 & 0 & f & 1
+\end{bmatrix}^\mathrm{T}
+= cf + d = f^2
+$$</p>
+<p>联立两个式子可得：</p>
+<p>$$
+\begin{align}
+& cn + d = n^2 \newline
+& cf + d = f^2 \newline
+\Rightarrow & \newline
+& c = n + f \newline
+& d = -nf
+\end{align}
+$$</p>
+<p>于是，我们可以得出这个矩阵最终的形态：</p>
+<p>$$
+M_{persp \rightarrow ortho} =
+\begin{bmatrix}
+n & 0 & 0 & 0 \newline
+0 & n & 0 & 0 \newline
+0 & 0 & n + f & -nf \newline
+0 & 0 & 1 & 0
+\end{bmatrix}
+$$</p>
+<p>因此透视投影矩阵 $M_{persp}$ 就可以表示为：</p>
+<p>$$
+\begin{align}
+M_{persp} &= M_{ortho} \ M_{persp \rightarrow ortho} \newline
+&=
+\begin{bmatrix}
+\frac{2}{r - l} & 0 & 0 & 0 \newline
+0 & \frac{2}{t - b} & 0 & 0 \newline
+0 & 0 & \frac{2}{n - f} & 0 \newline
+0 & 0 & 0 & 1
+\end{bmatrix}
+\begin{bmatrix}
+1 & 0 & 0 & -\frac{r + l}{2} \newline
+0 & 1 & 0 & -\frac{t + b}{2} \newline
+0 & 0 & 1 & -\frac{n + f}{2} \newline
+0 & 0 & 0 & 1
+\end{bmatrix}
+\begin{bmatrix}
+n & 0 & 0 & 0 \newline
+0 & n & 0 & 0 \newline
+0 & 0 & n + f & -nf \newline
+0 & 0 & 1 & 0
+\end{bmatrix}
+\end{align}
+$$</p>
+<p>另外，在实际工程中，我们一般用于构建透视投影矩阵的参数有如下几项：</p>
+<ul>
+<li>宽高比 Aspect Ratio：$r$</li>
+<li>近裁剪平面 Near Clip Plane：$z_n$</li>
+<li>远裁剪平面 Far Clip Plane：$z_f$</li>
+<li>纵向视野角度 Field of View：$\theta$</li>
+</ul>
+<p>我们同时假设 $\theta$ 的中线与 $z$ 轴重合，使得远近裁剪面的中心在 $z$ 轴上，且两个平面都垂直于 $z$ 轴。也就是说，我们有 $(t + b) / 2 = 0$ 以及 $(r + l) / 2 = 0$，因此在 $x$ 轴和 $y$ 轴方向并不需要进行任何移动，只需要移动 $z$ 轴即可。根据上面这些数据，我们可以知道（别忘了我们的相机看向 $z$ 轴负方向，$z_n$ 为负值，且 $z_n > z_f$）：</p>
+<p>$$
+\begin{align}
+t - b &= h \newline
+&= -2 \ z_n \ \tan{\frac{\theta}{2}} \newline
+r - l &= w \newline
+&= r \ h \newline
+&= -2 \ r \ z_n \ \tan{\frac{\theta}{2}}
+\end{align}
+$$</p>
+<p>因此我们在实际工程中使用到的矩阵 $M_{persp}$ 可以表示为：</p>
+<p>$$
+\begin{bmatrix}
+-\frac{1}{r \ z_n \ \tan{\theta / 2}} & 0 & 0 & 0 \newline
+0 & -\frac{1}{z_n \ \tan{\theta / 2}} & 0 & 0 \newline
+0 & 0 & \frac{2}{z_n - z_f} & 0 \newline
+0 & 0 & 0 & 1
+\end{bmatrix}
+\begin{bmatrix}
+1 & 0 & 0 & 0 \newline
+0 & 1 & 0 & 0 \newline
+0 & 0 & 1 & -\frac{z_n + z_f}{2} \newline
+0 & 0 & 0 & 1
+\end{bmatrix}
+\begin{bmatrix}
+z_n & 0 & 0 & 0 \newline
+0 & z_n & 0 & 0 \newline
+0 & 0 & z_n + z_f & - z_n \ z_f \newline
+0 & 0 & 1 & 0
+\end{bmatrix}
+$$</p>
+<p>相乘可得：</p>
+<p>$$
+\begin{bmatrix}
+-\frac{1}{r \ \tan{\theta / 2}} & 0 & 0 & 0 \newline
+0 & -\frac{1}{\tan{\theta / 2}} & 0 & 0 \newline
+0 & 0 & \frac{z_n + z_f}{z_n - z_f} & \frac{2 \ z_n \ z_f}{z_f - z_n} \newline
+0 & 0 & 1 & 0
+\end{bmatrix}
+$$</p>
+<h1 id=参考资料>参考资料</h1>
+<section class=footnotes role=doc-endnotes>
+<hr>
+<ol>
+<li id=fn:1 role=doc-endnote>
+<p><a href=https://zh.wikipedia.org/wiki/%E5%8F%98%E6%8D%A2%E7%9F%A9%E9%98%B5>变换矩阵 - Wikipedia</a>&#160;<a href=#fnref:1 class=footnote-backref role=doc-backlink>&#8617;&#xfe0e;</a></p>
+</li>
+<li id=fn:2 role=doc-endnote>
+<p><a href=https://learnopengl-cn.github.io/01%20Getting%20started/08%20Coordinate%20Systems/>坐标系统 - LearnOpenGL CN</a>&#160;<a href=#fnref:2 class=footnote-backref role=doc-backlink>&#8617;&#xfe0e;</a></p>
+</li>
+<li id=fn:3 role=doc-endnote>
+<p><a href=https://sites.cs.ucsb.edu/~lingqi/teaching/resources/GAMES101_Lecture_03.pdf>Transformation slide - Games 101</a>&#160;<a href=#fnref:3 class=footnote-backref role=doc-backlink>&#8617;&#xfe0e;</a></p>
+</li>
+<li id=fn:4 role=doc-endnote>
+<p><a href=https://sites.cs.ucsb.edu/~lingqi/teaching/resources/GAMES101_Lecture_04.pdf>Transformation Cont slide - Games 101</a>&#160;<a href=#fnref:4 class=footnote-backref role=doc-backlink>&#8617;&#xfe0e;</a></p>
+</li>
+</ol>
+</section>
+</div>
+<div class="row middle-xs">
+<div class=col-xs-12>
+<div class=post-tags>
+<a href=/tags/computer-graphics/>
+Computer Graphics
+</a>
+</div>
+</div>
+</div>
+<div class=row>
+<div class=col-xs-12>
+</div>
+</div>
+<div style=height:50px></div>
+<div class=post-comments>
+<div id=disqus_thread></div>
+<script>window.addEventListener("load",()=>{(function(){var a=document,b=a.createElement("script");b.src="https://ZhiruiLi.disqus.com/embed.js",b.setAttribute("data-timestamp",+new Date),(a.head||a.body).appendChild(b)})()})</script>
+<noscript>Please enable JavaScript to view the
+<a href=https://disqus.com/?ref_noscript>comments powered by Disqus.</a></noscript>
+</div>
+<div class=site-footer>
+</div>
+</div>
+</div>
+</article>
+<script src=https://unpkg.com/quicklink@0.1.1/dist/quicklink.umd.js></script>
+<script>var posts=document.getElementById('posts-list');posts&&quicklink({el:posts,priority:!0})</script>
+<script>MathJax={tex:{inlineMath:[['$','$'],['\\(','\\)']]},svg:{fontCache:'global'}}</script>
+<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script id=MathJax-script async src=https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js></script>
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-80302213-1"></script>
+</body>
+</html>

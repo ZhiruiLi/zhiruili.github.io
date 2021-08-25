@@ -1,0 +1,403 @@
+<!doctype html><html lang=en>
+<head>
+<meta charset=utf-8>
+<meta name=generator content="Hugo 0.87.0">
+<meta http-equiv=x-ua-compatible content="IE=edge">
+<meta name=viewport content="width=device-width,initial-scale=1">
+<meta name=author content="Zhirui Li">
+<meta property="og:url" content="https://zhiruili.github.io/posts/golang-design-study/">
+<link rel=canonical href=https://zhiruili.github.io/posts/golang-design-study/><link rel=alternate type=application/atom+xml href=https://zhiruili.github.ioindex.xml title="简单易懂的现代魔法 - Zhirui Li">
+<script type=application/ld+json>{"@context":"http://schema.org","@type":"BlogPosting","mainEntityOfPage":{"@type":"WebPage","@id":"https:\/\/zhiruili.github.io"},"articleSection":"posts","name":"从并发模型看 Go 的语言设计","headline":"从并发模型看 Go 的语言设计","description":"传统的程序语言设计都不会将输入输出作为语言的核心，但 Tony Hoare 认为输入输出是基本的编程原语，且通信顺序进程（Communicating sequential processes，CSP）的并行组合（这里可能用「并发」会更为准确）是基本的程序组织方法。Go 语言的并发设计就是基于 CSP 模型的。\n在最初的 CSP 模型中，程序总由若干个可以相互通信的进程构成，其中每一个进程内部是顺序执行的（这也就是 CSP 名称的含义）。注意这里的「进程」并不一定指操作系统中的进程，也不一定是操作系统的线程，它是一个抽象的概念，代表一组计算的序列，例如 goroutine 这种在应用层调度的计算序列也算 CSP 中的「P」。与 Go 语言不同的地方在于，这个最初的设计中并没有通信管道的概念，每个进程是直接和另一个进程进行通信的，但在 Go 语言中，goroutine 是匿名的，一个 goroutine 并没有办法直接将消息发给另一个 goroutine，为了实现 goroutine 之间的通信，Go 语言提供了 first class 的 channel，消息通过 channel 来从一个 goroutine 发到另一个 goroutine。而且，Go 语言也不要求 goroutine 内部是顺序执行的，goroutine 内部可以创建更多的 goroutine，并发地完成工作。\n下面，我们通过例子说明基于 CSP 模型是如何组织程序的。\n阶乘计算 首先来看的是一个计算阶乘的例子，阶乘的一个简单的递归实现可以是这样的：\nfact 0 = 1 fact n = n * fact (n - 1) 而基于 CSP 组织程序，我们可以这样做：\n\/\/ 阶乘计算的实体 func FactCalc(in \u0026lt;-chan int, out chan\u0026lt;- int) { var subIn, subOut chan int for { n := \u0026lt;-in if n == 0 { out \u0026lt;- 1 } else { if subIn == nil { subIn, subOut = make(chan int), make(chan int) go FactCalc(subIn, subOut) } subIn \u0026lt;- n - 1 r := \u0026lt;-subOut out \u0026lt;- n * r } } } \/\/ 包装一个阶乘计算函数 func MakeFactFunc() func(int) int { in, out := make(chan int), make(chan int) go FactCalc(in, out) return func(x int) int { in \u0026lt;- x return \u0026lt;-out } } MakeFactFunc 就是简单地封装一下 FactCalc，获取一个计算阶乘的函数。主要的计算是由 FactCalc 进行的。","inLanguage":"en-US","author":"Zhirui Li","creator":"Zhirui Li","publisher":"Zhirui Li","accountablePerson":"Zhirui Li","copyrightHolder":"Zhirui Li","copyrightYear":"2019","datePublished":"2019-05-03 00:00:00 \u002b0000 UTC","dateModified":"2019-05-03 00:00:00 \u002b0000 UTC","url":"https:\/\/zhiruili.github.io\/posts\/golang-design-study\/","keywords":["Go"]}</script>
+<title>从并发模型看 Go 的语言设计</title>
+<meta property="og:title" content="从并发模型看 Go 的语言设计">
+<meta property="og:type" content="article">
+<meta property="og:description" content="传统的程序语言设计都不会将输入输出作为语言的核心，但 Tony Hoare 认为输入输出是基本的编程原语，且通信顺序进程（Communicating sequential processes，CSP）的并行组合（这里可能用「并发」会更为准确）是基本的程序组织方法。Go 语言的并发设计就是基于 CSP 模型的。
+在最初的 CSP 模型中，程序总由若干个可以相互通信的进程构成，其中每一个进程内部是顺序执行的（这也就是 CSP 名称的含义）。注意这里的「进程」并不一定指操作系统中的进程，也不一定是操作系统的线程，它是一个抽象的概念，代表一组计算的序列，例如 goroutine 这种在应用层调度的计算序列也算 CSP 中的「P」。与 Go 语言不同的地方在于，这个最初的设计中并没有通信管道的概念，每个进程是直接和另一个进程进行通信的，但在 Go 语言中，goroutine 是匿名的，一个 goroutine 并没有办法直接将消息发给另一个 goroutine，为了实现 goroutine 之间的通信，Go 语言提供了 first class 的 channel，消息通过 channel 来从一个 goroutine 发到另一个 goroutine。而且，Go 语言也不要求 goroutine 内部是顺序执行的，goroutine 内部可以创建更多的 goroutine，并发地完成工作。
+下面，我们通过例子说明基于 CSP 模型是如何组织程序的。
+阶乘计算 首先来看的是一个计算阶乘的例子，阶乘的一个简单的递归实现可以是这样的：
+fact 0 = 1 fact n = n * fact (n - 1) 而基于 CSP 组织程序，我们可以这样做：
+// 阶乘计算的实体 func FactCalc(in &amp;lt;-chan int, out chan&amp;lt;- int) { var subIn, subOut chan int for { n := &amp;lt;-in if n == 0 { out &amp;lt;- 1 } else { if subIn == nil { subIn, subOut = make(chan int), make(chan int) go FactCalc(subIn, subOut) } subIn &amp;lt;- n - 1 r := &amp;lt;-subOut out &amp;lt;- n * r } } } // 包装一个阶乘计算函数 func MakeFactFunc() func(int) int { in, out := make(chan int), make(chan int) go FactCalc(in, out) return func(x int) int { in &amp;lt;- x return &amp;lt;-out } } MakeFactFunc 就是简单地封装一下 FactCalc，获取一个计算阶乘的函数。主要的计算是由 FactCalc 进行的。">
+<meta name=description content="传统的程序语言设计都不会将输入输出作为语言的核心，但 Tony Hoare 认为输入输出是基本的编程原语，且通信顺序进程（Communicating sequential processes，CSP）的并行组合（这里可能用「并发」会更为准确）是基本的程序组织方法。Go 语言的并发设计就是基于 CSP 模型的。
+在最初的 CSP 模型中，程序总由若干个可以相互通信的进程构成，其中每一个进程内部是顺序执行的（这也就是 CSP 名称的含义）。注意这里的「进程」并不一定指操作系统中的进程，也不一定是操作系统的线程，它是一个抽象的概念，代表一组计算的序列，例如 goroutine 这种在应用层调度的计算序列也算 CSP 中的「P」。与 Go 语言不同的地方在于，这个最初的设计中并没有通信管道的概念，每个进程是直接和另一个进程进行通信的，但在 Go 语言中，goroutine 是匿名的，一个 goroutine 并没有办法直接将消息发给另一个 goroutine，为了实现 goroutine 之间的通信，Go 语言提供了 first class 的 channel，消息通过 channel 来从一个 goroutine 发到另一个 goroutine。而且，Go 语言也不要求 goroutine 内部是顺序执行的，goroutine 内部可以创建更多的 goroutine，并发地完成工作。
+下面，我们通过例子说明基于 CSP 模型是如何组织程序的。
+阶乘计算 首先来看的是一个计算阶乘的例子，阶乘的一个简单的递归实现可以是这样的：
+fact 0 = 1 fact n = n * fact (n - 1) 而基于 CSP 组织程序，我们可以这样做：
+// 阶乘计算的实体 func FactCalc(in &amp;lt;-chan int, out chan&amp;lt;- int) { var subIn, subOut chan int for { n := &amp;lt;-in if n == 0 { out &amp;lt;- 1 } else { if subIn == nil { subIn, subOut = make(chan int), make(chan int) go FactCalc(subIn, subOut) } subIn &amp;lt;- n - 1 r := &amp;lt;-subOut out &amp;lt;- n * r } } } // 包装一个阶乘计算函数 func MakeFactFunc() func(int) int { in, out := make(chan int), make(chan int) go FactCalc(in, out) return func(x int) int { in &amp;lt;- x return &amp;lt;-out } } MakeFactFunc 就是简单地封装一下 FactCalc，获取一个计算阶乘的函数。主要的计算是由 FactCalc 进行的。">
+<meta property="og:locale" content="zh-cn">
+<style>body{font-family:bree serif,sans-serif;-webkit-font-smoothing:antialiased;margin:0 20px}article{max-width:800px;margin-left:auto;margin-right:auto}a{color:#000;text-decoration:none}a:hover{font-weight:600;text-decoration:underline}.post-ads{margin:50px 0}.markdown-body{font-size:18px;max-width:100%}.markdown-body a{text-decoration:underline;text-decoration-color:#000}.markdown-body pre{padding:16px;overflow:auto;border-radius:10px}.markdown-body code{padding:.2em .4em;font-size:85%;background-color:#f6f8fa;border-radius:6px}.markdown-body pre>code{padding:0;font-size:100%;background-color:inherit;border:0}.Chinese .markdown-body{line-height:200%}.site-date-catalog{font-size:2rem}.header-title{font-size:2rem;font-weight:700;margin-top:32px;font-family:bungee shade,sans-serif}.header-title a{text-decoration:none}.header-subtitle{color:#666}.header-items{margin:10px 0}.header-item{margin:0 5px}.header-line{width:100%;border-width:2px;border-color:#482936;border-style:solid none none none}.lang-switch{font-weight:600}#posts-list{min-height:600px}.posts-line{font-size:1.2rem;margin:12px 0}.posts-categories{font-size:.8rem;margin:auto;text-align:center}.posts-category{padding:3px 0;border:#000 2px solid;border-radius:5px}.site-footer{margin-top:50px}.site-footer-item{margin-right:12px}.post-content img{max-width:100%;display:block;margin-right:auto;margin-top:12px}.post-header{margin-bottom:50px}.post-title{font-size:2rem;font-weight:600}.post-tags{display:inline;font-weight:600;padding:2px 5px;margin-right:6px;border:#000 2px solid;border-radius:5px}.post-date{font-weight:800;font-style:italic}.post-author{float:right;font-weight:600}.page-content{min-height:60%}.post-content{margin-bottom:50px}.post-content p{hyphens:auto;line-height:1.8;text-justify:ideographic;margin-bottom:1em}.related-content{border-width:3px;border-style:solid;border-color:#000;padding:0 10px;margin-bottom:50px;margin-top:100px}.related-content li{margin:5px 0}.taxonomy-term{font-size:3rem}.gallery-img{text-align:center}.gallery-img span{text-align:center}.gallery-img-desc{font-size:.8em;font-weight:800}#disqus_thread{position:relative}#disqus_thread:after{content:"";display:block;height:55px;width:100%;position:absolute;bottom:0;background:#fff}@media screen and (max-width:600px){.header-title,.header-subtitle,.header-items{text-align:center}.posts-line{font-size:16px}.markdown-body{font-size:16px}.post-title{font-size:2rem}.post-content p{letter-spacing:.05em}}@media screen and (max-width:48em){.posts-category{display:none}}</style>
+<style>.container,.container-fluid{margin-right:auto;margin-left:auto}.container-fluid{padding-right:2rem;padding-left:2rem}.row{box-sizing:border-box;display:-webkit-box;display:-ms-flexbox;display:flex;-webkit-box-flex:0;-ms-flex:0 1 auto;flex:initial;-webkit-box-orient:horizontal;-webkit-box-direction:normal;-ms-flex-direction:row;flex-direction:row;-ms-flex-wrap:wrap;flex-wrap:wrap;margin-right:-.5rem;margin-left:-.5rem}.row.reverse{-webkit-box-orient:horizontal;-webkit-box-direction:reverse;-ms-flex-direction:row-reverse;flex-direction:row-reverse}.col.reverse{-webkit-box-orient:vertical;-webkit-box-direction:reverse;-ms-flex-direction:column-reverse;flex-direction:column-reverse}.col-xs,.col-xs-1,.col-xs-10,.col-xs-11,.col-xs-12,.col-xs-2,.col-xs-3,.col-xs-4,.col-xs-5,.col-xs-6,.col-xs-7,.col-xs-8,.col-xs-9,.col-xs-offset-0,.col-xs-offset-1,.col-xs-offset-10,.col-xs-offset-11,.col-xs-offset-12,.col-xs-offset-2,.col-xs-offset-3,.col-xs-offset-4,.col-xs-offset-5,.col-xs-offset-6,.col-xs-offset-7,.col-xs-offset-8,.col-xs-offset-9{box-sizing:border-box;-webkit-box-flex:0;-ms-flex:0 0 auto;flex:none;padding-right:.5rem;padding-left:.5rem}.col-xs{-webkit-box-flex:1;-ms-flex-positive:1;flex-grow:1;-ms-flex-preferred-size:0;flex-basis:0;max-width:100%}.col-xs-1{-ms-flex-preferred-size:8.33333333%;flex-basis:8.33333333%;max-width:8.33333333%}.col-xs-2{-ms-flex-preferred-size:16.66666667%;flex-basis:16.66666667%;max-width:16.66666667%}.col-xs-3{-ms-flex-preferred-size:25%;flex-basis:25%;max-width:25%}.col-xs-4{-ms-flex-preferred-size:33.33333333%;flex-basis:33.33333333%;max-width:33.33333333%}.col-xs-5{-ms-flex-preferred-size:41.66666667%;flex-basis:41.66666667%;max-width:41.66666667%}.col-xs-6{-ms-flex-preferred-size:50%;flex-basis:50%;max-width:50%}.col-xs-7{-ms-flex-preferred-size:58.33333333%;flex-basis:58.33333333%;max-width:58.33333333%}.col-xs-8{-ms-flex-preferred-size:66.66666667%;flex-basis:66.66666667%;max-width:66.66666667%}.col-xs-9{-ms-flex-preferred-size:75%;flex-basis:75%;max-width:75%}.col-xs-10{-ms-flex-preferred-size:83.33333333%;flex-basis:83.33333333%;max-width:83.33333333%}.col-xs-11{-ms-flex-preferred-size:91.66666667%;flex-basis:91.66666667%;max-width:91.66666667%}.col-xs-12{-ms-flex-preferred-size:100%;flex-basis:100%;max-width:100%}.col-xs-offset-0{margin-left:0}.col-xs-offset-1{margin-left:8.33333333%}.col-xs-offset-2{margin-left:16.66666667%}.col-xs-offset-3{margin-left:25%}.col-xs-offset-4{margin-left:33.33333333%}.col-xs-offset-5{margin-left:41.66666667%}.col-xs-offset-6{margin-left:50%}.col-xs-offset-7{margin-left:58.33333333%}.col-xs-offset-8{margin-left:66.66666667%}.col-xs-offset-9{margin-left:75%}.col-xs-offset-10{margin-left:83.33333333%}.col-xs-offset-11{margin-left:91.66666667%}.start-xs{-webkit-box-pack:start;-ms-flex-pack:start;justify-content:flex-start;text-align:start}.center-xs{-webkit-box-pack:center;-ms-flex-pack:center;justify-content:center;text-align:center}.end-xs{-webkit-box-pack:end;-ms-flex-pack:end;justify-content:flex-end;text-align:end}.top-xs{-webkit-box-align:start;-ms-flex-align:start;align-items:flex-start}.middle-xs{-webkit-box-align:center;-ms-flex-align:center;align-items:center}.bottom-xs{-webkit-box-align:end;-ms-flex-align:end;align-items:flex-end}.around-xs{-ms-flex-pack:distribute;justify-content:space-around}.between-xs{-webkit-box-pack:justify;-ms-flex-pack:justify;justify-content:space-between}.first-xs{-webkit-box-ordinal-group:0;-ms-flex-order:-1;order:-1}.last-xs{-webkit-box-ordinal-group:2;-ms-flex-order:1;order:1}@media only screen and (min-width:48em){.container{width:49rem}.col-sm,.col-sm-1,.col-sm-10,.col-sm-11,.col-sm-12,.col-sm-2,.col-sm-3,.col-sm-4,.col-sm-5,.col-sm-6,.col-sm-7,.col-sm-8,.col-sm-9,.col-sm-offset-0,.col-sm-offset-1,.col-sm-offset-10,.col-sm-offset-11,.col-sm-offset-12,.col-sm-offset-2,.col-sm-offset-3,.col-sm-offset-4,.col-sm-offset-5,.col-sm-offset-6,.col-sm-offset-7,.col-sm-offset-8,.col-sm-offset-9{box-sizing:border-box;-webkit-box-flex:0;-ms-flex:0 0 auto;flex:none;padding-right:.5rem;padding-left:.5rem}.col-sm{-webkit-box-flex:1;-ms-flex-positive:1;flex-grow:1;-ms-flex-preferred-size:0;flex-basis:0;max-width:100%}.col-sm-1{-ms-flex-preferred-size:8.33333333%;flex-basis:8.33333333%;max-width:8.33333333%}.col-sm-2{-ms-flex-preferred-size:16.66666667%;flex-basis:16.66666667%;max-width:16.66666667%}.col-sm-3{-ms-flex-preferred-size:25%;flex-basis:25%;max-width:25%}.col-sm-4{-ms-flex-preferred-size:33.33333333%;flex-basis:33.33333333%;max-width:33.33333333%}.col-sm-5{-ms-flex-preferred-size:41.66666667%;flex-basis:41.66666667%;max-width:41.66666667%}.col-sm-6{-ms-flex-preferred-size:50%;flex-basis:50%;max-width:50%}.col-sm-7{-ms-flex-preferred-size:58.33333333%;flex-basis:58.33333333%;max-width:58.33333333%}.col-sm-8{-ms-flex-preferred-size:66.66666667%;flex-basis:66.66666667%;max-width:66.66666667%}.col-sm-9{-ms-flex-preferred-size:75%;flex-basis:75%;max-width:75%}.col-sm-10{-ms-flex-preferred-size:83.33333333%;flex-basis:83.33333333%;max-width:83.33333333%}.col-sm-11{-ms-flex-preferred-size:91.66666667%;flex-basis:91.66666667%;max-width:91.66666667%}.col-sm-12{-ms-flex-preferred-size:100%;flex-basis:100%;max-width:100%}.col-sm-offset-0{margin-left:0}.col-sm-offset-1{margin-left:8.33333333%}.col-sm-offset-2{margin-left:16.66666667%}.col-sm-offset-3{margin-left:25%}.col-sm-offset-4{margin-left:33.33333333%}.col-sm-offset-5{margin-left:41.66666667%}.col-sm-offset-6{margin-left:50%}.col-sm-offset-7{margin-left:58.33333333%}.col-sm-offset-8{margin-left:66.66666667%}.col-sm-offset-9{margin-left:75%}.col-sm-offset-10{margin-left:83.33333333%}.col-sm-offset-11{margin-left:91.66666667%}.start-sm{-webkit-box-pack:start;-ms-flex-pack:start;justify-content:flex-start;text-align:start}.center-sm{-webkit-box-pack:center;-ms-flex-pack:center;justify-content:center;text-align:center}.end-sm{-webkit-box-pack:end;-ms-flex-pack:end;justify-content:flex-end;text-align:end}.top-sm{-webkit-box-align:start;-ms-flex-align:start;align-items:flex-start}.middle-sm{-webkit-box-align:center;-ms-flex-align:center;align-items:center}.bottom-sm{-webkit-box-align:end;-ms-flex-align:end;align-items:flex-end}.around-sm{-ms-flex-pack:distribute;justify-content:space-around}.between-sm{-webkit-box-pack:justify;-ms-flex-pack:justify;justify-content:space-between}.first-sm{-webkit-box-ordinal-group:0;-ms-flex-order:-1;order:-1}.last-sm{-webkit-box-ordinal-group:2;-ms-flex-order:1;order:1}}@media only screen and (min-width:64em){.container{width:65rem}.col-md,.col-md-1,.col-md-10,.col-md-11,.col-md-12,.col-md-2,.col-md-3,.col-md-4,.col-md-5,.col-md-6,.col-md-7,.col-md-8,.col-md-9,.col-md-offset-0,.col-md-offset-1,.col-md-offset-10,.col-md-offset-11,.col-md-offset-12,.col-md-offset-2,.col-md-offset-3,.col-md-offset-4,.col-md-offset-5,.col-md-offset-6,.col-md-offset-7,.col-md-offset-8,.col-md-offset-9{box-sizing:border-box;-webkit-box-flex:0;-ms-flex:0 0 auto;flex:none;padding-right:.5rem;padding-left:.5rem}.col-md{-webkit-box-flex:1;-ms-flex-positive:1;flex-grow:1;-ms-flex-preferred-size:0;flex-basis:0;max-width:100%}.col-md-1{-ms-flex-preferred-size:8.33333333%;flex-basis:8.33333333%;max-width:8.33333333%}.col-md-2{-ms-flex-preferred-size:16.66666667%;flex-basis:16.66666667%;max-width:16.66666667%}.col-md-3{-ms-flex-preferred-size:25%;flex-basis:25%;max-width:25%}.col-md-4{-ms-flex-preferred-size:33.33333333%;flex-basis:33.33333333%;max-width:33.33333333%}.col-md-5{-ms-flex-preferred-size:41.66666667%;flex-basis:41.66666667%;max-width:41.66666667%}.col-md-6{-ms-flex-preferred-size:50%;flex-basis:50%;max-width:50%}.col-md-7{-ms-flex-preferred-size:58.33333333%;flex-basis:58.33333333%;max-width:58.33333333%}.col-md-8{-ms-flex-preferred-size:66.66666667%;flex-basis:66.66666667%;max-width:66.66666667%}.col-md-9{-ms-flex-preferred-size:75%;flex-basis:75%;max-width:75%}.col-md-10{-ms-flex-preferred-size:83.33333333%;flex-basis:83.33333333%;max-width:83.33333333%}.col-md-11{-ms-flex-preferred-size:91.66666667%;flex-basis:91.66666667%;max-width:91.66666667%}.col-md-12{-ms-flex-preferred-size:100%;flex-basis:100%;max-width:100%}.col-md-offset-0{margin-left:0}.col-md-offset-1{margin-left:8.33333333%}.col-md-offset-2{margin-left:16.66666667%}.col-md-offset-3{margin-left:25%}.col-md-offset-4{margin-left:33.33333333%}.col-md-offset-5{margin-left:41.66666667%}.col-md-offset-6{margin-left:50%}.col-md-offset-7{margin-left:58.33333333%}.col-md-offset-8{margin-left:66.66666667%}.col-md-offset-9{margin-left:75%}.col-md-offset-10{margin-left:83.33333333%}.col-md-offset-11{margin-left:91.66666667%}.start-md{-webkit-box-pack:start;-ms-flex-pack:start;justify-content:flex-start;text-align:start}.center-md{-webkit-box-pack:center;-ms-flex-pack:center;justify-content:center;text-align:center}.end-md{-webkit-box-pack:end;-ms-flex-pack:end;justify-content:flex-end;text-align:end}.top-md{-webkit-box-align:start;-ms-flex-align:start;align-items:flex-start}.middle-md{-webkit-box-align:center;-ms-flex-align:center;align-items:center}.bottom-md{-webkit-box-align:end;-ms-flex-align:end;align-items:flex-end}.around-md{-ms-flex-pack:distribute;justify-content:space-around}.between-md{-webkit-box-pack:justify;-ms-flex-pack:justify;justify-content:space-between}.first-md{-webkit-box-ordinal-group:0;-ms-flex-order:-1;order:-1}.last-md{-webkit-box-ordinal-group:2;-ms-flex-order:1;order:1}}@media only screen and (min-width:75em){.container{width:76rem}.col-lg,.col-lg-1,.col-lg-10,.col-lg-11,.col-lg-12,.col-lg-2,.col-lg-3,.col-lg-4,.col-lg-5,.col-lg-6,.col-lg-7,.col-lg-8,.col-lg-9,.col-lg-offset-0,.col-lg-offset-1,.col-lg-offset-10,.col-lg-offset-11,.col-lg-offset-12,.col-lg-offset-2,.col-lg-offset-3,.col-lg-offset-4,.col-lg-offset-5,.col-lg-offset-6,.col-lg-offset-7,.col-lg-offset-8,.col-lg-offset-9{box-sizing:border-box;-webkit-box-flex:0;-ms-flex:0 0 auto;flex:none;padding-right:.5rem;padding-left:.5rem}.col-lg{-webkit-box-flex:1;-ms-flex-positive:1;flex-grow:1;-ms-flex-preferred-size:0;flex-basis:0;max-width:100%}.col-lg-1{-ms-flex-preferred-size:8.33333333%;flex-basis:8.33333333%;max-width:8.33333333%}.col-lg-2{-ms-flex-preferred-size:16.66666667%;flex-basis:16.66666667%;max-width:16.66666667%}.col-lg-3{-ms-flex-preferred-size:25%;flex-basis:25%;max-width:25%}.col-lg-4{-ms-flex-preferred-size:33.33333333%;flex-basis:33.33333333%;max-width:33.33333333%}.col-lg-5{-ms-flex-preferred-size:41.66666667%;flex-basis:41.66666667%;max-width:41.66666667%}.col-lg-6{-ms-flex-preferred-size:50%;flex-basis:50%;max-width:50%}.col-lg-7{-ms-flex-preferred-size:58.33333333%;flex-basis:58.33333333%;max-width:58.33333333%}.col-lg-8{-ms-flex-preferred-size:66.66666667%;flex-basis:66.66666667%;max-width:66.66666667%}.col-lg-9{-ms-flex-preferred-size:75%;flex-basis:75%;max-width:75%}.col-lg-10{-ms-flex-preferred-size:83.33333333%;flex-basis:83.33333333%;max-width:83.33333333%}.col-lg-11{-ms-flex-preferred-size:91.66666667%;flex-basis:91.66666667%;max-width:91.66666667%}.col-lg-12{-ms-flex-preferred-size:100%;flex-basis:100%;max-width:100%}.col-lg-offset-0{margin-left:0}.col-lg-offset-1{margin-left:8.33333333%}.col-lg-offset-2{margin-left:16.66666667%}.col-lg-offset-3{margin-left:25%}.col-lg-offset-4{margin-left:33.33333333%}.col-lg-offset-5{margin-left:41.66666667%}.col-lg-offset-6{margin-left:50%}.col-lg-offset-7{margin-left:58.33333333%}.col-lg-offset-8{margin-left:66.66666667%}.col-lg-offset-9{margin-left:75%}.col-lg-offset-10{margin-left:83.33333333%}.col-lg-offset-11{margin-left:91.66666667%}.start-lg{-webkit-box-pack:start;-ms-flex-pack:start;justify-content:flex-start;text-align:start}.center-lg{-webkit-box-pack:center;-ms-flex-pack:center;justify-content:center;text-align:center}.end-lg{-webkit-box-pack:end;-ms-flex-pack:end;justify-content:flex-end;text-align:end}.top-lg{-webkit-box-align:start;-ms-flex-align:start;align-items:flex-start}.middle-lg{-webkit-box-align:center;-ms-flex-align:center;align-items:center}.bottom-lg{-webkit-box-align:end;-ms-flex-align:end;align-items:flex-end}.around-lg{-ms-flex-pack:distribute;justify-content:space-around}.between-lg{-webkit-box-pack:justify;-ms-flex-pack:justify;justify-content:space-between}.first-lg{-webkit-box-ordinal-group:0;-ms-flex-order:-1;order:-1}.last-lg{-webkit-box-ordinal-group:2;-ms-flex-order:1;order:1}}</style>
+<link href=/index.xml rel=alternate type=application/rss+xml title="简单易懂的现代魔法 - Zhirui Li">
+<link rel=preconnect href=https://fonts.gstatic.com>
+<link href="https://fonts.googleapis.com/css?family=Bree+Serif|Bungee+Shade" rel=stylesheet>
+</head>
+<body>
+<article class="post Chinese" id=article>
+<div class=row>
+<div class=col-xs-12>
+<div class=site-header>
+<header>
+<div class=header-title>
+<a href=/>简单易懂的现代魔法</a>
+</div>
+<div class=header-subtitle></div>
+</header>
+<div class="row end-md center-xs header-items">
+<div class=header-item>
+<a href=/index.xml target=_blank>RSS</a>
+</div>
+<div class=header-item>
+<a href=mailto:zr.public@outlook.com target=_blank>E-mail</a>
+</div>
+<div class=header-item>
+<a href=https://www.github.com/ZhiruiLi target=_blank>Github</a>
+</div>
+</div>
+<div class="row end-xs">
+</div>
+<div class=header-line></div>
+</div>
+<header class=post-header>
+<h1 class=post-title>从并发模型看 Go 的语言设计</h1>
+<div class="row post-desc">
+<div class=col-xs-6>
+<time class=post-date datetime="2019-05-03 00:00:00 UTC">
+03 May 2019
+</time>
+</div>
+<div class=col-xs-6>
+<div class=post-author>
+<a target=_blank href=https://www.github.com/ZhiruiLi>@Zhirui Li</a>
+</div>
+</div>
+</div>
+</header>
+<div class="post-content markdown-body">
+<p>传统的程序语言设计都不会将输入输出作为语言的核心，但 Tony Hoare 认为输入输出是基本的编程原语，且通信顺序进程（Communicating sequential processes，CSP）的并行组合（这里可能用「并发」会更为准确）是基本的程序组织方法。Go 语言的并发设计就是基于 CSP 模型的。</p>
+<p>在<a href=https://www.cs.cmu.edu/~crary/819-f09/Hoare78.pdf>最初的 CSP 模型</a>中，程序总由若干个可以相互通信的进程构成，其中每一个进程内部是顺序执行的（这也就是 CSP 名称的含义）。注意这里的「进程」并不一定指操作系统中的进程，也不一定是操作系统的线程，它是一个抽象的概念，代表一组计算的序列，例如 goroutine 这种在应用层调度的计算序列也算 CSP 中的「P」。与 Go 语言不同的地方在于，这个最初的设计中并没有通信管道的概念，每个进程是直接和另一个进程进行通信的，但在 Go 语言中，goroutine 是匿名的，一个 goroutine 并没有办法直接将消息发给另一个 goroutine，为了实现 goroutine 之间的通信，Go 语言提供了 first class 的 channel，消息通过 channel 来从一个 goroutine 发到另一个 goroutine。而且，Go 语言也不要求 goroutine 内部是顺序执行的，goroutine 内部可以创建更多的 goroutine，并发地完成工作。</p>
+<p>下面，我们通过例子说明基于 CSP 模型是如何组织程序的。</p>
+<h1 id=阶乘计算>阶乘计算</h1>
+<p>首先来看的是一个计算阶乘的例子，阶乘的一个简单的递归实现可以是这样的：</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-haskell data-lang=haskell><span style=color:#a6e22e>fact</span> <span style=color:#ae81ff>0</span> <span style=color:#f92672>=</span> <span style=color:#ae81ff>1</span>
+<span style=color:#a6e22e>fact</span> n <span style=color:#f92672>=</span> n <span style=color:#f92672>*</span> fact (n <span style=color:#f92672>-</span> <span style=color:#ae81ff>1</span>)
+</code></pre></div><p>而基于 CSP 组织程序，我们可以这样做：</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=color:#75715e>// 阶乘计算的实体
+</span><span style=color:#75715e></span><span style=color:#66d9ef>func</span> <span style=color:#a6e22e>FactCalc</span>(<span style=color:#a6e22e>in</span> <span style=color:#f92672>&lt;-</span><span style=color:#66d9ef>chan</span> <span style=color:#66d9ef>int</span>, <span style=color:#a6e22e>out</span> <span style=color:#66d9ef>chan</span><span style=color:#f92672>&lt;-</span> <span style=color:#66d9ef>int</span>) {
+	<span style=color:#66d9ef>var</span> <span style=color:#a6e22e>subIn</span>, <span style=color:#a6e22e>subOut</span> <span style=color:#66d9ef>chan</span> <span style=color:#66d9ef>int</span>
+	<span style=color:#66d9ef>for</span> {
+		<span style=color:#a6e22e>n</span> <span style=color:#f92672>:=</span> <span style=color:#f92672>&lt;-</span><span style=color:#a6e22e>in</span>
+		<span style=color:#66d9ef>if</span> <span style=color:#a6e22e>n</span> <span style=color:#f92672>==</span> <span style=color:#ae81ff>0</span> {
+			<span style=color:#a6e22e>out</span> <span style=color:#f92672>&lt;-</span> <span style=color:#ae81ff>1</span>
+		} <span style=color:#66d9ef>else</span> {
+			<span style=color:#66d9ef>if</span> <span style=color:#a6e22e>subIn</span> <span style=color:#f92672>==</span> <span style=color:#66d9ef>nil</span> {
+				<span style=color:#a6e22e>subIn</span>, <span style=color:#a6e22e>subOut</span> = make(<span style=color:#66d9ef>chan</span> <span style=color:#66d9ef>int</span>), make(<span style=color:#66d9ef>chan</span> <span style=color:#66d9ef>int</span>)
+				<span style=color:#66d9ef>go</span> <span style=color:#a6e22e>FactCalc</span>(<span style=color:#a6e22e>subIn</span>, <span style=color:#a6e22e>subOut</span>)
+			}
+			<span style=color:#a6e22e>subIn</span> <span style=color:#f92672>&lt;-</span> <span style=color:#a6e22e>n</span> <span style=color:#f92672>-</span> <span style=color:#ae81ff>1</span>
+			<span style=color:#a6e22e>r</span> <span style=color:#f92672>:=</span> <span style=color:#f92672>&lt;-</span><span style=color:#a6e22e>subOut</span>
+			<span style=color:#a6e22e>out</span> <span style=color:#f92672>&lt;-</span> <span style=color:#a6e22e>n</span> <span style=color:#f92672>*</span> <span style=color:#a6e22e>r</span>
+		}
+	}
+}
+
+<span style=color:#75715e>// 包装一个阶乘计算函数
+</span><span style=color:#75715e></span><span style=color:#66d9ef>func</span> <span style=color:#a6e22e>MakeFactFunc</span>() <span style=color:#66d9ef>func</span>(<span style=color:#66d9ef>int</span>) <span style=color:#66d9ef>int</span> {
+	<span style=color:#a6e22e>in</span>, <span style=color:#a6e22e>out</span> <span style=color:#f92672>:=</span> make(<span style=color:#66d9ef>chan</span> <span style=color:#66d9ef>int</span>), make(<span style=color:#66d9ef>chan</span> <span style=color:#66d9ef>int</span>)
+	<span style=color:#66d9ef>go</span> <span style=color:#a6e22e>FactCalc</span>(<span style=color:#a6e22e>in</span>, <span style=color:#a6e22e>out</span>)
+	<span style=color:#66d9ef>return</span> <span style=color:#66d9ef>func</span>(<span style=color:#a6e22e>x</span> <span style=color:#66d9ef>int</span>) <span style=color:#66d9ef>int</span> {
+		<span style=color:#a6e22e>in</span> <span style=color:#f92672>&lt;-</span> <span style=color:#a6e22e>x</span>
+		<span style=color:#66d9ef>return</span> <span style=color:#f92672>&lt;-</span><span style=color:#a6e22e>out</span>
+	}
+}
+</code></pre></div><p><code>MakeFactFunc</code> 就是简单地封装一下 <code>FactCalc</code>，获取一个计算阶乘的函数。主要的计算是由 <code>FactCalc</code> 进行的。</p>
+<p>每一个 <code>FactCalc</code> 都会被作为一个独立的 goroutine 来执行，对于第 i 个 goroutine 而言，它先从第 i - 1 个 goroutine 中读入一个数字 <code>n</code>，然后，如果 <code>n > 0</code>，这个 goroutine 需要做 3 件事：</p>
+<ol>
+<li>向第 i + 1 个 goroutine 写入一个 <code>n - 1</code></li>
+<li>从第 i + 1 个 goroutine 处读回来一个数字 <code>r</code></li>
+<li>将 <code>n * r</code> 写入第 i - 1 个 goroutine</li>
+</ol>
+<p>否则，则向第 i - 1 个 goroutine 处写入一个 1。</p>
+<p>如前所述，由于 Go 语言不支持直接向一个 goroutine 发消息，所以这里的消息收发都要基于 channel 进行。我们可以看到，一旦 <code>FactCalc</code> 发现自己无法完成阶乘问题的计算工作，它就会创建另一个 goroutine（只会创建一次），并将子问题发送给这个 goroutine 进行处理，这会形成一个 <code>FactCalc</code> goroutine 的链条，链条上的每一个 goroutine 都与前一个和后一个 goroutine 进行通信（这就是前文所说的「若干个可以相互通信的进程」）。</p>
+<p>我们又了这样的阶乘计算器后，我们可以这么去使用它：</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=color:#66d9ef>const</span> <span style=color:#a6e22e>limit</span> = <span style=color:#ae81ff>5</span>
+<span style=color:#66d9ef>func</span> <span style=color:#a6e22e>main</span>() {
+	<span style=color:#a6e22e>fact</span> <span style=color:#f92672>:=</span> <span style=color:#a6e22e>MakeFactFunc</span>()
+	<span style=color:#66d9ef>for</span> <span style=color:#a6e22e>i</span> <span style=color:#f92672>:=</span> <span style=color:#ae81ff>0</span>; <span style=color:#a6e22e>i</span> &lt; <span style=color:#a6e22e>limit</span>; <span style=color:#a6e22e>i</span><span style=color:#f92672>++</span> {
+		<span style=color:#a6e22e>fmt</span>.<span style=color:#a6e22e>Println</span>(<span style=color:#a6e22e>fact</span>(<span style=color:#a6e22e>i</span>))
+	}
+}
+</code></pre></div><p>执行程序，我们可以看到这样的输出：</p>
+<pre><code>1
+1
+2
+6
+24
+</code></pre><p>相比于直接使用递归函数调用，这个实现方式非常不直观。下面这个图可能能帮助理解：</p>
+<p><img src=../../images/2021-07-11-11-47-56.png alt=factorial></p>
+<p>这里的圆形为调用者，每一个矩形都为一个 goroutine，当我们尝试计算 <code>fact(3)</code> 时，会将 3 写入最前面的 in channel 中，数据开始从第一个 goroutine 向后流动。第一个 goroutine 会从这个 channel 中读到这个 3，它将 <code>3 - 1</code> 写入下一个 in channel 中，然后开始阻塞等待 out channel 出现第二个 goroutine 计算的结果，第二个、第三个 goroutine 的计算是类似的，等到第 4 个 goroutine 从 in channel 中读取输入时，它发现这是一个 0，于是直接向 out channel 写入一个 1，此时数据开始从最后一个 goroutine 往回流动，经过第三个和第二个 goroutine 的计算后，第一个 goroutine 会获得 2，然后将 <code>2 * 3</code> 输出。</p>
+<p>注意到这里进行阶乘计算的实体并不是递归的函数，而是并发的 goroutine，它们之间通过 channel 进行通信， 每个 goroutine 都将计算拆分并发送给其他 goroutine 进行处理，直到计算变为 trivial 的情况。当然了，这个实现相比简单的递归函数会显得很啰嗦，我们在实际使用中也不会这么做，但这个例子说明了如何在 CSP 模型下，利用数据的流动实现我们常见的递归。</p>
+<h1 id=素数筛>素数筛</h1>
+<p>下面的一个例子中，我们使用筛法来计算素数。所谓素数筛，大概就是对正整数 2 ～ n 进行遍历，然后对每一个数字都进行一次筛选，只留下是素数的部分，对于第 i 位的筛选，我们需要依赖前面已经晒出的 m 个素数，当且仅当这 m 个素数都无法整除第 i 位的数字时，这个数字可以通过这一位的筛选，也就是这样：</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-haskell data-lang=haskell><span style=color:#a6e22e>primes</span> <span style=color:#f92672>=</span> primesFilter [<span style=color:#ae81ff>2</span><span style=color:#f92672>..</span>]
+  <span style=color:#66d9ef>where</span> primesFilter (p<span style=color:#66d9ef>:</span>xs) <span style=color:#f92672>=</span>
+          p <span style=color:#66d9ef>:</span> primesFilter [x <span style=color:#f92672>|</span> x <span style=color:#f92672>&lt;-</span> xs, x `mod` p <span style=color:#f92672>/=</span> <span style=color:#ae81ff>0</span>]
+</code></pre></div><p>上面这个实现利用了 Haskell 的惰性求值能力，但对于大多数语言而言，我们的实现都不可能这么简洁，基于传统的顺序计算的思路，程序都会比较啰嗦，而且关键是很不清晰。而在 CSP 模型下，我们可以这么实现：</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=color:#66d9ef>func</span> <span style=color:#a6e22e>Counter</span>(<span style=color:#a6e22e>out</span> <span style=color:#66d9ef>chan</span><span style=color:#f92672>&lt;-</span> <span style=color:#66d9ef>int</span>) {
+	<span style=color:#66d9ef>for</span> <span style=color:#a6e22e>i</span> <span style=color:#f92672>:=</span> <span style=color:#ae81ff>2</span>; ; <span style=color:#a6e22e>i</span><span style=color:#f92672>++</span> {
+		<span style=color:#a6e22e>out</span> <span style=color:#f92672>&lt;-</span> <span style=color:#a6e22e>i</span>
+	}
+}
+
+<span style=color:#66d9ef>func</span> <span style=color:#a6e22e>PrimeFilter</span>(<span style=color:#a6e22e>prime</span> <span style=color:#66d9ef>int</span>, <span style=color:#a6e22e>in</span> <span style=color:#f92672>&lt;-</span><span style=color:#66d9ef>chan</span> <span style=color:#66d9ef>int</span>, <span style=color:#a6e22e>out</span> <span style=color:#66d9ef>chan</span><span style=color:#f92672>&lt;-</span> <span style=color:#66d9ef>int</span>) {
+	<span style=color:#66d9ef>for</span> {
+		<span style=color:#a6e22e>i</span> <span style=color:#f92672>:=</span> <span style=color:#f92672>&lt;-</span><span style=color:#a6e22e>in</span>
+		<span style=color:#66d9ef>if</span> <span style=color:#a6e22e>i</span><span style=color:#f92672>%</span><span style=color:#a6e22e>prime</span> <span style=color:#f92672>!=</span> <span style=color:#ae81ff>0</span> {
+			<span style=color:#a6e22e>out</span> <span style=color:#f92672>&lt;-</span> <span style=color:#a6e22e>i</span>
+		}
+	}
+}
+
+<span style=color:#66d9ef>func</span> <span style=color:#a6e22e>PrimeSieve</span>(<span style=color:#a6e22e>out</span> <span style=color:#66d9ef>chan</span><span style=color:#f92672>&lt;-</span> <span style=color:#66d9ef>int</span>) {
+	<span style=color:#a6e22e>c</span> <span style=color:#f92672>:=</span> make(<span style=color:#66d9ef>chan</span> <span style=color:#66d9ef>int</span>)
+	<span style=color:#66d9ef>go</span> <span style=color:#a6e22e>Counter</span>(<span style=color:#a6e22e>c</span>)
+	<span style=color:#66d9ef>for</span> {
+		<span style=color:#a6e22e>prime</span> <span style=color:#f92672>:=</span> <span style=color:#f92672>&lt;-</span><span style=color:#a6e22e>c</span>
+		<span style=color:#a6e22e>out</span> <span style=color:#f92672>&lt;-</span> <span style=color:#a6e22e>prime</span>
+		<span style=color:#a6e22e>newC</span> <span style=color:#f92672>:=</span> make(<span style=color:#66d9ef>chan</span> <span style=color:#66d9ef>int</span>)
+		<span style=color:#66d9ef>go</span> <span style=color:#a6e22e>PrimeFilter</span>(<span style=color:#a6e22e>prime</span>, <span style=color:#a6e22e>c</span>, <span style=color:#a6e22e>newC</span>)
+		<span style=color:#a6e22e>c</span> = <span style=color:#a6e22e>newC</span>
+	}
+}
+</code></pre></div><p>可以看到，我们的素数筛由三个部分组成，首先，<code>Counter</code> 从 2 开始依次产生自然数。<code>PrimeFilter</code> 就是每一层素数的过滤器，每一层过滤器只持有一个输入 channel 一个输出 channel 和一个素数 <code>prime</code>，它将不断从输入 channel 中读入数字，并将其中无法被 <code>prime</code> 整除的部分输出。<code>PrimeSieve</code> 则是一个完整的素数筛，它每获得一个素数，都将素数输出，并创建一个新一层的过滤器，因此整个过程大概是这样的：</p>
+<p><img src=../../images/2021-07-11-11-51-26.png alt=prime></p>
+<p><code>PrimeSieve</code> 可以向 out channel 中依次输出被筛出来的素数，这个过程是惰性的，直到我们从 out channel 中取出素数，下一个素数才会被计算。我们可以这样去使用它：</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=color:#66d9ef>func</span> <span style=color:#a6e22e>main</span>() {
+	<span style=color:#a6e22e>primes</span> <span style=color:#f92672>:=</span> make(<span style=color:#66d9ef>chan</span> <span style=color:#66d9ef>int</span>)
+	<span style=color:#66d9ef>go</span> <span style=color:#a6e22e>PrimeSieve</span>(<span style=color:#a6e22e>primes</span>)
+	<span style=color:#66d9ef>for</span> <span style=color:#a6e22e>i</span> <span style=color:#f92672>:=</span> <span style=color:#ae81ff>0</span>; <span style=color:#a6e22e>i</span> &lt; <span style=color:#ae81ff>5</span>; <span style=color:#a6e22e>i</span><span style=color:#f92672>++</span> {
+		<span style=color:#a6e22e>fmt</span>.<span style=color:#a6e22e>Println</span>(<span style=color:#f92672>&lt;-</span><span style=color:#a6e22e>primes</span>)
+	}
+}
+</code></pre></div><p>执行程序，我们可以看到这样的输出：</p>
+<pre><code>2
+3
+5
+7
+11
+</code></pre><p>从这两个例子中我们可以看到 CSP 模型不一定是用于并行计算，至少在这两个例子中，每一个 goroutine 在进行计算之后都在阻塞等待，同一时间事实上仅有一个活跃的 goroutine，但 Go 语言对 CSP 并发模型的支持能让整个设计变得简单清晰（「并发」和「并行」的区别可以参考<a href=https://vimeo.com/49718712>这个视频</a>）。这反映到 Go 语言设计上的要点有两个：</p>
+<ol>
+<li>Goroutine 之间可以通过 channel 来进行通信，channel 是 first class value，可以被直接传递。在这种情况下，goroutine 之间很容易进行协作，共同完成一个计算工作。</li>
+<li>Goroutine 十分轻量，可以在单机建立大量 goroutine 而不至于消耗过多性能。对于素数筛的例子，每计算多一个素数都需要多一个 goroutine。而阶乘计算的例子，输入参数 + 1 都需要多一个 goroutine。显然，如果没有系统层调度的「process」的支持，CSP 所能应用的范围就非常局限了。</li>
+</ol>
+<p>下面我们再通过另外一个例子看一下 Go 语言的其他设计点。</p>
+<h1 id=信号量>信号量</h1>
+<p>一个信号量有两个操作，分别称为 V（<code>signal()</code>）与 P（<code>wait()</code>）。其运作方式如下：</p>
+<ol>
+<li>初始化，信号标 S 一个非负数的整数值。</li>
+<li>执行 P 操作（<code>wait()</code>）时，信号标 S 的值将尝试被减少。当信号标 S 非正数时，进程会阻塞等待；当信号标 S 为正数时，S 被成功减少，进程可以继续往下执行。</li>
+<li>执行 V 操作（<code>signal()</code>）时，信号标 S 的值将会被增加。</li>
+</ol>
+<p>在 CSP 模型下，我们可以这样实现：</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=color:#66d9ef>type</span> <span style=color:#a6e22e>Semaphore</span> <span style=color:#66d9ef>struct</span> {
+	<span style=color:#a6e22e>inc</span> <span style=color:#66d9ef>chan</span> <span style=color:#66d9ef>struct</span>{}
+	<span style=color:#a6e22e>dec</span> <span style=color:#66d9ef>chan</span> <span style=color:#66d9ef>struct</span>{}
+}
+
+<span style=color:#66d9ef>func</span> (<span style=color:#a6e22e>sem</span> <span style=color:#f92672>*</span><span style=color:#a6e22e>Semaphore</span>) <span style=color:#a6e22e>Wait</span>() {
+	<span style=color:#a6e22e>sem</span>.<span style=color:#a6e22e>dec</span> <span style=color:#f92672>&lt;-</span> <span style=color:#66d9ef>struct</span>{}{}
+}
+
+<span style=color:#66d9ef>func</span> (<span style=color:#a6e22e>sem</span> <span style=color:#f92672>*</span><span style=color:#a6e22e>Semaphore</span>) <span style=color:#a6e22e>Signal</span>() {
+	<span style=color:#a6e22e>sem</span>.<span style=color:#a6e22e>inc</span> <span style=color:#f92672>&lt;-</span> <span style=color:#66d9ef>struct</span>{}{}
+}
+
+<span style=color:#66d9ef>func</span> <span style=color:#a6e22e>MakeSemaphore</span>(<span style=color:#a6e22e>initVal</span> <span style=color:#66d9ef>int</span>) <span style=color:#f92672>*</span><span style=color:#a6e22e>Semaphore</span> {
+	<span style=color:#a6e22e>sem</span> <span style=color:#f92672>:=</span> <span style=color:#a6e22e>Semaphore</span>{
+		<span style=color:#a6e22e>inc</span>: make(<span style=color:#66d9ef>chan</span> <span style=color:#66d9ef>struct</span>{}),
+		<span style=color:#a6e22e>dec</span>: make(<span style=color:#66d9ef>chan</span> <span style=color:#66d9ef>struct</span>{}),
+	}
+	<span style=color:#66d9ef>go</span> <span style=color:#66d9ef>func</span>(<span style=color:#a6e22e>s</span> <span style=color:#66d9ef>int</span>) {
+		<span style=color:#66d9ef>for</span> {
+			<span style=color:#66d9ef>if</span> <span style=color:#a6e22e>s</span> &gt; <span style=color:#ae81ff>0</span> {
+				<span style=color:#66d9ef>select</span> {
+				<span style=color:#66d9ef>case</span> <span style=color:#f92672>&lt;-</span><span style=color:#a6e22e>sem</span>.<span style=color:#a6e22e>inc</span>:
+					<span style=color:#a6e22e>s</span> = <span style=color:#a6e22e>s</span> <span style=color:#f92672>+</span> <span style=color:#ae81ff>1</span>
+				<span style=color:#66d9ef>case</span> <span style=color:#f92672>&lt;-</span><span style=color:#a6e22e>sem</span>.<span style=color:#a6e22e>dec</span>:
+					<span style=color:#a6e22e>s</span> = <span style=color:#a6e22e>s</span> <span style=color:#f92672>-</span> <span style=color:#ae81ff>1</span>
+				}
+			} <span style=color:#66d9ef>else</span> {
+				<span style=color:#f92672>&lt;-</span><span style=color:#a6e22e>sem</span>.<span style=color:#a6e22e>inc</span>
+				<span style=color:#a6e22e>s</span> = <span style=color:#a6e22e>s</span> <span style=color:#f92672>+</span> <span style=color:#ae81ff>1</span>
+			}
+		}
+	}(<span style=color:#a6e22e>initVal</span>)
+	<span style=color:#66d9ef>return</span> <span style=color:#f92672>&amp;</span><span style=color:#a6e22e>sem</span>
+}
+</code></pre></div><p><code>*Semaphore</code> 有两个操作，分别是 <code>Wait</code> 和 <code>Signal</code>，它们分别向 <code>dec</code> channel 和 <code>inc</code> channel 发消息。而 <code>MakeSemaphore</code> 中创建的 goroutine 则会根据 <code>s int</code> 状态的不同选择不同的操作，如果 <code>s > 0</code>，则从 <code>inc</code> channel 或 <code>dec</code> channel 中<strong>随机</strong>读取一个值，并将 <code>s</code> 的值进行增加/减少 1，否则，从 <code>inc</code> channel 中读取一个值，并将 <code>s</code> 的值增加 1。注意这里的「随机」是非常重要的，如果 <code>inc</code> 和 <code>dec</code> 同时都有数据可读，则实际从哪个 channel 中读出数据是不确定的，正是因为 Go 语言的 <code>select</code> 是随机的，我们才可以在这里用它来进行调度。显然，在大多数语言中，如果要实现 channel 这样的类型，一般是以库的形式进行实现，而 Go 语言将其上升到了语言层面实现，这样虽然显的不够纯粹干净，但这样可以通过更方便的语法实现 <code>select</code> 这样强大的功能，如果实现为库的形式，是难以做到这个程度的。</p>
+<h1 id=一个简单的服务模板>一个简单的服务模板</h1>
+<p>在这个例子中，我们将基于 Go 语言实现一个极简单的服务模板，代码如下：</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=color:#66d9ef>type</span> <span style=color:#a6e22e>Input</span> <span style=color:#66d9ef>struct</span> {
+	<span style=color:#a6e22e>Req</span>   <span style=color:#66d9ef>interface</span>{}
+	<span style=color:#a6e22e>State</span> <span style=color:#66d9ef>interface</span>{}
+}
+
+<span style=color:#66d9ef>type</span> <span style=color:#a6e22e>Output</span> <span style=color:#66d9ef>struct</span> {
+	<span style=color:#a6e22e>Rsp</span>   <span style=color:#66d9ef>interface</span>{}
+	<span style=color:#a6e22e>State</span> <span style=color:#66d9ef>interface</span>{}
+}
+
+<span style=color:#66d9ef>type</span> <span style=color:#a6e22e>Handler</span> = <span style=color:#66d9ef>func</span>(<span style=color:#a6e22e>input</span> <span style=color:#a6e22e>Input</span>) (<span style=color:#a6e22e>Output</span>, <span style=color:#66d9ef>error</span>)
+
+<span style=color:#66d9ef>type</span> <span style=color:#a6e22e>Response</span> <span style=color:#66d9ef>struct</span> {
+	<span style=color:#a6e22e>Result</span> <span style=color:#66d9ef>interface</span>{}
+	<span style=color:#a6e22e>Error</span>  <span style=color:#66d9ef>error</span>
+}
+
+<span style=color:#66d9ef>type</span> <span style=color:#a6e22e>InMessage</span> <span style=color:#66d9ef>struct</span> {
+	<span style=color:#a6e22e>Req</span>     <span style=color:#66d9ef>interface</span>{}
+	<span style=color:#a6e22e>OutChan</span> <span style=color:#66d9ef>chan</span><span style=color:#f92672>&lt;-</span> <span style=color:#a6e22e>Response</span>
+}
+
+<span style=color:#66d9ef>type</span> <span style=color:#a6e22e>Service</span> <span style=color:#66d9ef>struct</span> {
+	<span style=color:#a6e22e>inChan</span> <span style=color:#66d9ef>chan</span><span style=color:#f92672>&lt;-</span> <span style=color:#a6e22e>InMessage</span>
+}
+
+<span style=color:#66d9ef>func</span> (<span style=color:#a6e22e>service</span> <span style=color:#f92672>*</span><span style=color:#a6e22e>Service</span>) <span style=color:#a6e22e>RpcCall</span>(<span style=color:#a6e22e>request</span> <span style=color:#66d9ef>interface</span>{}) (<span style=color:#66d9ef>interface</span>{}, <span style=color:#66d9ef>error</span>) {
+	<span style=color:#a6e22e>outChan</span> <span style=color:#f92672>:=</span> make(<span style=color:#66d9ef>chan</span> <span style=color:#a6e22e>Response</span>)
+	<span style=color:#a6e22e>service</span>.<span style=color:#a6e22e>inChan</span> <span style=color:#f92672>&lt;-</span> <span style=color:#a6e22e>InMessage</span>{<span style=color:#a6e22e>request</span>, <span style=color:#a6e22e>outChan</span>}
+	<span style=color:#a6e22e>rsp</span> <span style=color:#f92672>:=</span> <span style=color:#f92672>&lt;-</span><span style=color:#a6e22e>outChan</span>
+	<span style=color:#66d9ef>if</span> <span style=color:#a6e22e>rsp</span>.<span style=color:#a6e22e>Error</span> <span style=color:#f92672>!=</span> <span style=color:#66d9ef>nil</span> {
+		<span style=color:#66d9ef>return</span> <span style=color:#66d9ef>nil</span>, <span style=color:#a6e22e>rsp</span>.<span style=color:#a6e22e>Error</span>
+	}
+	<span style=color:#66d9ef>return</span> <span style=color:#a6e22e>rsp</span>.<span style=color:#a6e22e>Result</span>, <span style=color:#66d9ef>nil</span>
+}
+
+<span style=color:#66d9ef>func</span> <span style=color:#a6e22e>MakeService</span>(<span style=color:#a6e22e>handler</span> <span style=color:#a6e22e>Handler</span>, <span style=color:#a6e22e>initState</span> <span style=color:#66d9ef>interface</span>{}) <span style=color:#f92672>*</span><span style=color:#a6e22e>Service</span> {
+	<span style=color:#a6e22e>inChan</span> <span style=color:#f92672>:=</span> make(<span style=color:#66d9ef>chan</span> <span style=color:#a6e22e>InMessage</span>)
+	<span style=color:#66d9ef>go</span> <span style=color:#66d9ef>func</span>(<span style=color:#a6e22e>state</span> <span style=color:#66d9ef>interface</span>{}) {
+		<span style=color:#66d9ef>for</span> {
+			<span style=color:#a6e22e>in</span> <span style=color:#f92672>:=</span> <span style=color:#f92672>&lt;-</span><span style=color:#a6e22e>inChan</span>
+			<span style=color:#a6e22e>out</span>, <span style=color:#a6e22e>err</span> <span style=color:#f92672>:=</span> <span style=color:#a6e22e>handler</span>(<span style=color:#a6e22e>Input</span>{<span style=color:#a6e22e>in</span>.<span style=color:#a6e22e>Req</span>, <span style=color:#a6e22e>state</span>})
+			<span style=color:#66d9ef>if</span> <span style=color:#a6e22e>err</span> <span style=color:#f92672>!=</span> <span style=color:#66d9ef>nil</span> {
+				<span style=color:#a6e22e>in</span>.<span style=color:#a6e22e>OutChan</span> <span style=color:#f92672>&lt;-</span> <span style=color:#a6e22e>Response</span>{<span style=color:#66d9ef>nil</span>, <span style=color:#a6e22e>err</span>}
+			} <span style=color:#66d9ef>else</span> {
+				<span style=color:#a6e22e>state</span> = <span style=color:#a6e22e>out</span>.<span style=color:#a6e22e>State</span>
+				<span style=color:#a6e22e>in</span>.<span style=color:#a6e22e>OutChan</span> <span style=color:#f92672>&lt;-</span> <span style=color:#a6e22e>Response</span>{<span style=color:#a6e22e>out</span>.<span style=color:#a6e22e>Rsp</span>, <span style=color:#66d9ef>nil</span>}
+			}
+		}
+	}(<span style=color:#a6e22e>initState</span>)
+	<span style=color:#66d9ef>return</span> <span style=color:#f92672>&amp;</span><span style=color:#a6e22e>Service</span>{<span style=color:#a6e22e>inChan</span>}
+}
+</code></pre></div><p>这里的 <code>Service</code> 是一个服务模板，我们通过 <code>MakeService</code> 来创建它。在创建服务模板的时候，我们要求调用者传入一个请求处理函数 <code>handler func(input Input) (Output, error)</code>，从类型可以知道，它接受一个请求，然后进行处理，并返回响应。请求和响应中都带有状态，<code>handler</code> 可以借此保存和修改状态，由于模板并不知道状态是什么，因此，<code>MakeService</code> 还要求调用者传入一个初始的状态 <code>initState</code>。然后，<code>MakeService</code> 会启动一个 goroutine，这个 goroutine 不断从 <code>inChan</code> 读入请求，并调用 <code>handler</code> 进行处理，最终将响应通过 <code>outChan</code> 发回给调用方。<code>RpcCall</code> 简单封装了一下从 <code>inChan</code> 输入请求，从 <code>outChan</code> 读取响应的过程。我们可以使用这个模板这样实现一个简单的电话本服务：</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=color:#66d9ef>type</span> <span style=color:#a6e22e>Query</span> <span style=color:#66d9ef>struct</span> {
+	<span style=color:#a6e22e>Name</span> <span style=color:#66d9ef>string</span>
+}
+
+<span style=color:#66d9ef>type</span> <span style=color:#a6e22e>Insert</span> <span style=color:#66d9ef>struct</span> {
+	<span style=color:#a6e22e>Name</span>  <span style=color:#66d9ef>string</span>
+	<span style=color:#a6e22e>Phone</span> <span style=color:#66d9ef>int</span>
+}
+
+<span style=color:#66d9ef>type</span> <span style=color:#a6e22e>PhoneBookService</span> = <span style=color:#a6e22e>Service</span>
+
+<span style=color:#66d9ef>func</span> (<span style=color:#a6e22e>s</span> <span style=color:#f92672>*</span><span style=color:#a6e22e>PhoneBookService</span>) <span style=color:#a6e22e>Insert</span>(<span style=color:#a6e22e>name</span> <span style=color:#66d9ef>string</span>, <span style=color:#a6e22e>phone</span> <span style=color:#66d9ef>int</span>) {
+	<span style=color:#a6e22e>s</span>.<span style=color:#a6e22e>RpcCall</span>(<span style=color:#a6e22e>Insert</span>{<span style=color:#a6e22e>name</span>, <span style=color:#a6e22e>phone</span>})
+}
+
+<span style=color:#66d9ef>func</span> (<span style=color:#a6e22e>s</span> <span style=color:#f92672>*</span><span style=color:#a6e22e>PhoneBookService</span>) <span style=color:#a6e22e>Query</span>(<span style=color:#a6e22e>name</span> <span style=color:#66d9ef>string</span>) (<span style=color:#66d9ef>int</span>, <span style=color:#66d9ef>error</span>) {
+	<span style=color:#a6e22e>phone</span>, <span style=color:#a6e22e>err</span> <span style=color:#f92672>:=</span> <span style=color:#a6e22e>s</span>.<span style=color:#a6e22e>RpcCall</span>(<span style=color:#a6e22e>Query</span>{<span style=color:#e6db74>&#34;Tom&#34;</span>})
+	<span style=color:#66d9ef>if</span> <span style=color:#a6e22e>err</span> <span style=color:#f92672>!=</span> <span style=color:#66d9ef>nil</span> {
+		<span style=color:#66d9ef>return</span> <span style=color:#ae81ff>0</span>, <span style=color:#a6e22e>err</span>
+	}
+	<span style=color:#66d9ef>return</span> <span style=color:#a6e22e>phone</span>.(<span style=color:#66d9ef>int</span>), <span style=color:#66d9ef>nil</span>
+}
+
+<span style=color:#66d9ef>func</span> <span style=color:#a6e22e>MakePhoneBookService</span>() <span style=color:#f92672>*</span><span style=color:#a6e22e>PhoneBookService</span> {
+	<span style=color:#66d9ef>return</span> <span style=color:#a6e22e>MakeService</span>(<span style=color:#66d9ef>func</span>(<span style=color:#a6e22e>i</span> <span style=color:#a6e22e>Input</span>) (<span style=color:#a6e22e>Output</span>, <span style=color:#66d9ef>error</span>) {
+		<span style=color:#a6e22e>st</span> <span style=color:#f92672>:=</span> <span style=color:#a6e22e>i</span>.<span style=color:#a6e22e>State</span>.(<span style=color:#66d9ef>map</span>[<span style=color:#66d9ef>string</span>]<span style=color:#66d9ef>int</span>)
+		<span style=color:#66d9ef>switch</span> <span style=color:#a6e22e>req</span> <span style=color:#f92672>:=</span> <span style=color:#a6e22e>i</span>.<span style=color:#a6e22e>Req</span>.(<span style=color:#66d9ef>type</span>) {
+		<span style=color:#66d9ef>case</span> <span style=color:#a6e22e>Query</span>:
+			<span style=color:#a6e22e>x</span>, <span style=color:#a6e22e>ok</span> <span style=color:#f92672>:=</span> <span style=color:#a6e22e>st</span>[<span style=color:#a6e22e>req</span>.<span style=color:#a6e22e>Name</span>]
+			<span style=color:#66d9ef>if</span> !<span style=color:#a6e22e>ok</span> {
+				<span style=color:#66d9ef>return</span> <span style=color:#a6e22e>Output</span>{<span style=color:#66d9ef>nil</span>, <span style=color:#66d9ef>nil</span>}, <span style=color:#a6e22e>fmt</span>.<span style=color:#a6e22e>Errorf</span>(<span style=color:#e6db74>&#34;%v no found&#34;</span>, <span style=color:#a6e22e>req</span>.<span style=color:#a6e22e>Name</span>)
+			}
+			<span style=color:#66d9ef>return</span> <span style=color:#a6e22e>Output</span>{<span style=color:#a6e22e>x</span>, <span style=color:#a6e22e>st</span>}, <span style=color:#66d9ef>nil</span>
+		<span style=color:#66d9ef>case</span> <span style=color:#a6e22e>Insert</span>:
+			<span style=color:#a6e22e>st</span>[<span style=color:#a6e22e>req</span>.<span style=color:#a6e22e>Name</span>] = <span style=color:#a6e22e>req</span>.<span style=color:#a6e22e>Phone</span>
+			<span style=color:#66d9ef>return</span> <span style=color:#a6e22e>Output</span>{<span style=color:#66d9ef>nil</span>, <span style=color:#a6e22e>st</span>}, <span style=color:#66d9ef>nil</span>
+		<span style=color:#66d9ef>default</span>:
+			<span style=color:#66d9ef>return</span> <span style=color:#a6e22e>Output</span>{<span style=color:#66d9ef>nil</span>, <span style=color:#66d9ef>nil</span>}, <span style=color:#a6e22e>fmt</span>.<span style=color:#a6e22e>Errorf</span>(<span style=color:#e6db74>&#34;unknonw input: %v&#34;</span>, <span style=color:#a6e22e>req</span>)
+		}
+	}, make(<span style=color:#66d9ef>map</span>[<span style=color:#66d9ef>string</span>]<span style=color:#66d9ef>int</span>))
+}
+
+<span style=color:#66d9ef>func</span> <span style=color:#a6e22e>main</span>() {
+	<span style=color:#a6e22e>service</span> <span style=color:#f92672>:=</span> <span style=color:#a6e22e>MakePhoneBookService</span>()
+	<span style=color:#a6e22e>phone</span>, <span style=color:#a6e22e>err</span> <span style=color:#f92672>:=</span> <span style=color:#a6e22e>service</span>.<span style=color:#a6e22e>Query</span>(<span style=color:#e6db74>&#34;Tom&#34;</span>)
+	<span style=color:#66d9ef>if</span> <span style=color:#a6e22e>err</span> <span style=color:#f92672>!=</span> <span style=color:#66d9ef>nil</span> {
+		<span style=color:#a6e22e>fmt</span>.<span style=color:#a6e22e>Println</span>(<span style=color:#e6db74>&#34;query err:&#34;</span>, <span style=color:#a6e22e>err</span>)
+	} <span style=color:#66d9ef>else</span> {
+		<span style=color:#a6e22e>fmt</span>.<span style=color:#a6e22e>Println</span>(<span style=color:#e6db74>&#34;query succ:&#34;</span>, <span style=color:#a6e22e>phone</span>)
+	}
+	<span style=color:#a6e22e>service</span>.<span style=color:#a6e22e>Insert</span>(<span style=color:#e6db74>&#34;Tom&#34;</span>, <span style=color:#ae81ff>123456</span>)
+	<span style=color:#a6e22e>phone</span>, <span style=color:#a6e22e>err</span> = <span style=color:#a6e22e>service</span>.<span style=color:#a6e22e>Query</span>(<span style=color:#e6db74>&#34;Tom&#34;</span>)
+	<span style=color:#66d9ef>if</span> <span style=color:#a6e22e>err</span> <span style=color:#f92672>!=</span> <span style=color:#66d9ef>nil</span> {
+		<span style=color:#a6e22e>fmt</span>.<span style=color:#a6e22e>Println</span>(<span style=color:#e6db74>&#34;query err:&#34;</span>, <span style=color:#a6e22e>err</span>)
+	} <span style=color:#66d9ef>else</span> {
+		<span style=color:#a6e22e>fmt</span>.<span style=color:#a6e22e>Println</span>(<span style=color:#e6db74>&#34;query succ:&#34;</span>, <span style=color:#a6e22e>phone</span>)
+	}
+}
+</code></pre></div><p>这个电话本功能很简单，只有 <code>Insert</code> 和 <code>Query</code> 两种方法。<code>Service</code> 模板的作用是将整个 Go 语言的并发模型封装在函数调用内，从 <code>PhoneBookService</code> 的实现中，我们可以发现，这里没有任何 goroutine 的产生代码，也没有 channel 的使用，仅仅出现了简单的函数调用。对于 <code>handler</code> 的实现，里面也是一个简单的循环。这样一来，具体服务的实现者就不需要接触 Go 语言的并发模型，也可以实现简单的服务了。</p>
+<p>执行程序，我们可以看到如下的输出：</p>
+<pre><code>query err: Tom no found
+query succ: 123456
+</code></pre><p>在这里，我们可以注意到 Go 语言的另外两点设计，一个是使用错误返回值的错误的处理方式，另一个是只有接口没有泛型。</p>
+<p>首先说错误处理。</p>
+<p>Go 语言的错误处理方式有很大争议，支持者认为，Go 的错误返回值方式让错误的出现更加明确，不会扰乱让开发者的逻辑，更清晰地表达了意图。而反对者则认为异常抛出的缺失导致 Go 代码的错误处理非常冗长，且频繁打断主要逻辑。显然，这两个观点都有各自的道理，且在不同的语言里我们也看到了这两种错误处理方式的广泛应用，但是我认为在 Go 的并发模型的限制下，使用错误返回值的方式是一个合理正确的选择。如前所述，Go 语言每当创建一个 goroutine 之后，这个 goroutine 就和创建者没有什么关系了，它甚至不能像线程一样直接被等待执行结束。goroutine 和 goroutine 唯一进行关联的方式就是通过 channel 的消息传递。假设 Go 语言支持了抛出异常，那么，一个 goroutine 中抛出了一个没有被捕获的异常，这个异常将会导致什么呢？由于没有任何实体有责任捕获并处理这个异常，因此这里唯一正确的处理方式就是 panic 了，这个处理显然是很不可靠的，一个 goroutine 中的异常导致整个系统的 panic 无法让人接受。当然，有人会说，那在每个 goroutine 的最顶层都 try-catch 一下就可以了。那问题又来了，try-catch 之后呢？如果出现了一个已经被抛到顶层的异常，说明这个异常应该无法被这个 goroutine 自身处理了，应该交由其监视者来处理，例如上面的例子中，调用者就应该负责处理 <code>Service</code> goroutine 中产生的错误。那么，在这个时候，唯一正确的做法就是将抛出的异常以错误值的形式通过 channel 发送给监视者，以期待上层能够正确处理这个异常。那么这样一来，开发者就必须频繁混合使用两种错误处理方式，这样的开发方式是极其混乱且易错的。所以，使用错误返回值的方式应该是更加合理统一的方式了。</p>
+<p>第二点，关于泛型的问题。</p>
+<p>Go 语言只有接口没有泛型，这导致了很多麻烦，例如我们无法实现带有静态检查的自定义容器，泛型算法也难以实现。许多 Go 语言的开发者对于泛型的看法是：你不需要这个。我承认在实际工程中泛型的使用场合远少于接口，但是，即便从服务开发这个 Go 语言的主战场来看，泛型的必要性也依然很高。从上面的例子中我们可以看到，代码中大量充斥着 <code>interface{}</code> 和对 <code>interface{}</code> 的类型转换。其原因就是我们在实现这样一个服务模板时，我们并不知道模板的使用者需要处理怎样的 request，返回怎样的 response，也不知道这里的 state 是什么。由于泛型的缺失，我们的代码相当于失去了静态的类型检查，将静态的类型错误变为了运行时错误，这样一来，Go 语言的静态能力就缺失了很多，甚至我们可以说，Go 语言泛型的缺失使得 Go 语言在类型安全性上不如带有泛型能力的静态类型语言，却比这些语言在使用上还要更啰嗦（各种类型转换和错误判断）。</p>
+<h1 id=总结>总结</h1>
+<p>Go 语言是一个原生支持并发的语言，其并发模型基于 CSP 模型。通过使用 Go 语言的并发能力，我们可以设计出非常直观易懂的代码。经过上面几个例子的分析中我们可以看出，从并发模型和并发程序设计的角度来看，Go 在语言设计上的优势在于：</p>
+<ul>
+<li>拥有轻量的应用层进程 goroutine，允许开发者基于大量 goroutine 来设计并发程序</li>
+<li>First class channel 的支持，使得 goroutine 之间能够很轻易地相互合作</li>
+<li><code>select</code> 关键字的随机能力使得开发者可以基于 channel 来对程序实现调度</li>
+<li>使用返回值的形式处理错误，很好地契合了 goroutine + channel 的并发模型</li>
+</ul>
+<p>而 Go 在语言设计上的劣势在于：</p>
+<ul>
+<li>泛型的缺失导致许多程序设计变得脆弱，增加代码量且失去了安全性</li>
+</ul>
+</div>
+<div class="row middle-xs">
+<div class=col-xs-12>
+<div class=post-tags>
+<a href=/tags/go/>
+Go
+</a>
+</div>
+</div>
+</div>
+<div class=row>
+<div class=col-xs-12>
+</div>
+</div>
+<div style=height:50px></div>
+<div class=post-comments>
+<div id=disqus_thread></div>
+<script>window.addEventListener("load",()=>{(function(){var a=document,b=a.createElement("script");b.src="https://ZhiruiLi.disqus.com/embed.js",b.setAttribute("data-timestamp",+new Date),(a.head||a.body).appendChild(b)})()})</script>
+<noscript>Please enable JavaScript to view the
+<a href=https://disqus.com/?ref_noscript>comments powered by Disqus.</a></noscript>
+</div>
+<div class=site-footer>
+</div>
+</div>
+</div>
+</article>
+<script src=https://unpkg.com/quicklink@0.1.1/dist/quicklink.umd.js></script>
+<script>var posts=document.getElementById('posts-list');posts&&quicklink({el:posts,priority:!0})</script>
+<script>MathJax={tex:{inlineMath:[['$','$'],['\\(','\\)']]},svg:{fontCache:'global'}}</script>
+<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script id=MathJax-script async src=https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js></script>
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-80302213-1"></script>
+</body>
+</html>

@@ -1,0 +1,303 @@
+<!doctype html><html lang=en>
+<head>
+<meta charset=utf-8>
+<meta name=generator content="Hugo 0.87.0">
+<meta http-equiv=x-ua-compatible content="IE=edge">
+<meta name=viewport content="width=device-width,initial-scale=1">
+<meta name=author content="Zhirui Li">
+<meta property="og:url" content="https://zhiruili.github.io/posts/cpp-error-handling/">
+<link rel=canonical href=https://zhiruili.github.io/posts/cpp-error-handling/><link rel=alternate type=application/atom+xml href=https://zhiruili.github.ioindex.xml title="简单易懂的现代魔法 - Zhirui Li">
+<script type=application/ld+json>{"@context":"http://schema.org","@type":"BlogPosting","mainEntityOfPage":{"@type":"WebPage","@id":"https:\/\/zhiruili.github.io"},"articleSection":"posts","name":"另一种 C\u002b\u002b 程序错误处理方式","headline":"另一种 C\u002b\u002b 程序错误处理方式","description":"C\u002b\u002b 是一个很灵活的语言，这把双刃剑一方面使得 C\u002b\u002b 有很强大的表达能力，但也使得其编程风格相当混乱，就连错误处理到底是使用错误码还是异常都常常争论不休。例如在 C 中我们默认用错误码处理错误，而在 Python、Java 中， 则默认用异常来处理错误。而在 C\u002b\u002b 中，使用这两种形式的错误处理形式都有，而目前来看，在我所在的团队中，除非是外部库，否则基本都是使用错误码。在这篇文章中，我将聊一下 C\u002b\u002b 错误处理的方式优劣，以及我们团队是如何进行 C\u002b\u002b 错误处理的。\n错误码的问题 在我们的工程实践中，错误码首先带来的问题是代码中充斥着大量的 -1、-2、-10000 这样的错误码，这样错误码在日志中出现总是让人头痛，在代码中一搜就出来数不清的匹配项，根本无法定位问题。当然，你可能会说，这个主要是开发者水平参差不齐和开发规范不够严明的问题，我们可以通过全局统一错误码来解决问题。这当然是一个合理的反对意见，但问题是，即便确定要全局统一错误码，但这个全局统一错误码应该做到什么层级呢？\n例如，在我们的后台采用了微服务架构，那么一个很显然的处理方案就是全局统一错误码是在服务级别的，A 服务调用 B 服务的时候，通过错误码来获知调用过程中出了什么错误。但是，这事实上并没有解决问题，例如我们现在发现 B 服务给 A 服务返回了 12345 这个错误码，然后我们尝试查看 B 服务的代码，看看为什么会导致这样的错误：\nenum Errors { kErrFailToCallSomeFunction = 12345, }; int Handle(Req const \u0026amp;req, Rsp *rsp) { int ret = SomeFunction(); if (ret) { ERRORLOG(\u0026#34;call SomeFunction fail: %d\\n\u0026#34;, ret); return kErrFailToCallSomeFunction; } \/\/ ... } 因为错误码统一，我们很快就发现了是调用 SomeFunction 失败导致了这个错误，然后我们知道了应该找 call SomeFunction fail:  这条日志，可以我们一查阅这条日志就发现，call SomeFunction fail: -1，结果我们又回到了之前的问题，尤其是我们可能在 SomeFunction 中看到这样的实现：","inLanguage":"en-US","author":"Zhirui Li","creator":"Zhirui Li","publisher":"Zhirui Li","accountablePerson":"Zhirui Li","copyrightHolder":"Zhirui Li","copyrightYear":"2020","datePublished":"2020-03-22 00:00:00 \u002b0000 UTC","dateModified":"2020-03-22 00:00:00 \u002b0000 UTC","url":"https:\/\/zhiruili.github.io\/posts\/cpp-error-handling\/","keywords":["C\u002b\u002b","Go"]}</script>
+<title>另一种 C++ 程序错误处理方式</title>
+<meta property="og:title" content="另一种 C++ 程序错误处理方式">
+<meta property="og:type" content="article">
+<meta property="og:description" content="C++ 是一个很灵活的语言，这把双刃剑一方面使得 C++ 有很强大的表达能力，但也使得其编程风格相当混乱，就连错误处理到底是使用错误码还是异常都常常争论不休。例如在 C 中我们默认用错误码处理错误，而在 Python、Java 中， 则默认用异常来处理错误。而在 C++ 中，使用这两种形式的错误处理形式都有，而目前来看，在我所在的团队中，除非是外部库，否则基本都是使用错误码。在这篇文章中，我将聊一下 C++ 错误处理的方式优劣，以及我们团队是如何进行 C++ 错误处理的。
+错误码的问题 在我们的工程实践中，错误码首先带来的问题是代码中充斥着大量的 -1、-2、-10000 这样的错误码，这样错误码在日志中出现总是让人头痛，在代码中一搜就出来数不清的匹配项，根本无法定位问题。当然，你可能会说，这个主要是开发者水平参差不齐和开发规范不够严明的问题，我们可以通过全局统一错误码来解决问题。这当然是一个合理的反对意见，但问题是，即便确定要全局统一错误码，但这个全局统一错误码应该做到什么层级呢？
+例如，在我们的后台采用了微服务架构，那么一个很显然的处理方案就是全局统一错误码是在服务级别的，A 服务调用 B 服务的时候，通过错误码来获知调用过程中出了什么错误。但是，这事实上并没有解决问题，例如我们现在发现 B 服务给 A 服务返回了 12345 这个错误码，然后我们尝试查看 B 服务的代码，看看为什么会导致这样的错误：
+enum Errors { kErrFailToCallSomeFunction = 12345, }; int Handle(Req const &amp;amp;req, Rsp *rsp) { int ret = SomeFunction(); if (ret) { ERRORLOG(&amp;#34;call SomeFunction fail: %d\n&amp;#34;, ret); return kErrFailToCallSomeFunction; } // ... } 因为错误码统一，我们很快就发现了是调用 SomeFunction 失败导致了这个错误，然后我们知道了应该找 call SomeFunction fail:  这条日志，可以我们一查阅这条日志就发现，call SomeFunction fail: -1，结果我们又回到了之前的问题，尤其是我们可能在 SomeFunction 中看到这样的实现：">
+<meta name=description content="C++ 是一个很灵活的语言，这把双刃剑一方面使得 C++ 有很强大的表达能力，但也使得其编程风格相当混乱，就连错误处理到底是使用错误码还是异常都常常争论不休。例如在 C 中我们默认用错误码处理错误，而在 Python、Java 中， 则默认用异常来处理错误。而在 C++ 中，使用这两种形式的错误处理形式都有，而目前来看，在我所在的团队中，除非是外部库，否则基本都是使用错误码。在这篇文章中，我将聊一下 C++ 错误处理的方式优劣，以及我们团队是如何进行 C++ 错误处理的。
+错误码的问题 在我们的工程实践中，错误码首先带来的问题是代码中充斥着大量的 -1、-2、-10000 这样的错误码，这样错误码在日志中出现总是让人头痛，在代码中一搜就出来数不清的匹配项，根本无法定位问题。当然，你可能会说，这个主要是开发者水平参差不齐和开发规范不够严明的问题，我们可以通过全局统一错误码来解决问题。这当然是一个合理的反对意见，但问题是，即便确定要全局统一错误码，但这个全局统一错误码应该做到什么层级呢？
+例如，在我们的后台采用了微服务架构，那么一个很显然的处理方案就是全局统一错误码是在服务级别的，A 服务调用 B 服务的时候，通过错误码来获知调用过程中出了什么错误。但是，这事实上并没有解决问题，例如我们现在发现 B 服务给 A 服务返回了 12345 这个错误码，然后我们尝试查看 B 服务的代码，看看为什么会导致这样的错误：
+enum Errors { kErrFailToCallSomeFunction = 12345, }; int Handle(Req const &amp;amp;req, Rsp *rsp) { int ret = SomeFunction(); if (ret) { ERRORLOG(&amp;#34;call SomeFunction fail: %d\n&amp;#34;, ret); return kErrFailToCallSomeFunction; } // ... } 因为错误码统一，我们很快就发现了是调用 SomeFunction 失败导致了这个错误，然后我们知道了应该找 call SomeFunction fail:  这条日志，可以我们一查阅这条日志就发现，call SomeFunction fail: -1，结果我们又回到了之前的问题，尤其是我们可能在 SomeFunction 中看到这样的实现：">
+<meta property="og:locale" content="zh-cn">
+<style>body{font-family:bree serif,sans-serif;-webkit-font-smoothing:antialiased;margin:0 20px}article{max-width:800px;margin-left:auto;margin-right:auto}a{color:#000;text-decoration:none}a:hover{font-weight:600;text-decoration:underline}.post-ads{margin:50px 0}.markdown-body{font-size:18px;max-width:100%}.markdown-body a{text-decoration:underline;text-decoration-color:#000}.markdown-body pre{padding:16px;overflow:auto;border-radius:10px}.markdown-body code{padding:.2em .4em;font-size:85%;background-color:#f6f8fa;border-radius:6px}.markdown-body pre>code{padding:0;font-size:100%;background-color:inherit;border:0}.Chinese .markdown-body{line-height:200%}.site-date-catalog{font-size:2rem}.header-title{font-size:2rem;font-weight:700;margin-top:32px;font-family:bungee shade,sans-serif}.header-title a{text-decoration:none}.header-subtitle{color:#666}.header-items{margin:10px 0}.header-item{margin:0 5px}.header-line{width:100%;border-width:2px;border-color:#482936;border-style:solid none none none}.lang-switch{font-weight:600}#posts-list{min-height:600px}.posts-line{font-size:1.2rem;margin:12px 0}.posts-categories{font-size:.8rem;margin:auto;text-align:center}.posts-category{padding:3px 0;border:#000 2px solid;border-radius:5px}.site-footer{margin-top:50px}.site-footer-item{margin-right:12px}.post-content img{max-width:100%;display:block;margin-right:auto;margin-top:12px}.post-header{margin-bottom:50px}.post-title{font-size:2rem;font-weight:600}.post-tags{display:inline;font-weight:600;padding:2px 5px;margin-right:6px;border:#000 2px solid;border-radius:5px}.post-date{font-weight:800;font-style:italic}.post-author{float:right;font-weight:600}.page-content{min-height:60%}.post-content{margin-bottom:50px}.post-content p{hyphens:auto;line-height:1.8;text-justify:ideographic;margin-bottom:1em}.related-content{border-width:3px;border-style:solid;border-color:#000;padding:0 10px;margin-bottom:50px;margin-top:100px}.related-content li{margin:5px 0}.taxonomy-term{font-size:3rem}.gallery-img{text-align:center}.gallery-img span{text-align:center}.gallery-img-desc{font-size:.8em;font-weight:800}#disqus_thread{position:relative}#disqus_thread:after{content:"";display:block;height:55px;width:100%;position:absolute;bottom:0;background:#fff}@media screen and (max-width:600px){.header-title,.header-subtitle,.header-items{text-align:center}.posts-line{font-size:16px}.markdown-body{font-size:16px}.post-title{font-size:2rem}.post-content p{letter-spacing:.05em}}@media screen and (max-width:48em){.posts-category{display:none}}</style>
+<style>.container,.container-fluid{margin-right:auto;margin-left:auto}.container-fluid{padding-right:2rem;padding-left:2rem}.row{box-sizing:border-box;display:-webkit-box;display:-ms-flexbox;display:flex;-webkit-box-flex:0;-ms-flex:0 1 auto;flex:initial;-webkit-box-orient:horizontal;-webkit-box-direction:normal;-ms-flex-direction:row;flex-direction:row;-ms-flex-wrap:wrap;flex-wrap:wrap;margin-right:-.5rem;margin-left:-.5rem}.row.reverse{-webkit-box-orient:horizontal;-webkit-box-direction:reverse;-ms-flex-direction:row-reverse;flex-direction:row-reverse}.col.reverse{-webkit-box-orient:vertical;-webkit-box-direction:reverse;-ms-flex-direction:column-reverse;flex-direction:column-reverse}.col-xs,.col-xs-1,.col-xs-10,.col-xs-11,.col-xs-12,.col-xs-2,.col-xs-3,.col-xs-4,.col-xs-5,.col-xs-6,.col-xs-7,.col-xs-8,.col-xs-9,.col-xs-offset-0,.col-xs-offset-1,.col-xs-offset-10,.col-xs-offset-11,.col-xs-offset-12,.col-xs-offset-2,.col-xs-offset-3,.col-xs-offset-4,.col-xs-offset-5,.col-xs-offset-6,.col-xs-offset-7,.col-xs-offset-8,.col-xs-offset-9{box-sizing:border-box;-webkit-box-flex:0;-ms-flex:0 0 auto;flex:none;padding-right:.5rem;padding-left:.5rem}.col-xs{-webkit-box-flex:1;-ms-flex-positive:1;flex-grow:1;-ms-flex-preferred-size:0;flex-basis:0;max-width:100%}.col-xs-1{-ms-flex-preferred-size:8.33333333%;flex-basis:8.33333333%;max-width:8.33333333%}.col-xs-2{-ms-flex-preferred-size:16.66666667%;flex-basis:16.66666667%;max-width:16.66666667%}.col-xs-3{-ms-flex-preferred-size:25%;flex-basis:25%;max-width:25%}.col-xs-4{-ms-flex-preferred-size:33.33333333%;flex-basis:33.33333333%;max-width:33.33333333%}.col-xs-5{-ms-flex-preferred-size:41.66666667%;flex-basis:41.66666667%;max-width:41.66666667%}.col-xs-6{-ms-flex-preferred-size:50%;flex-basis:50%;max-width:50%}.col-xs-7{-ms-flex-preferred-size:58.33333333%;flex-basis:58.33333333%;max-width:58.33333333%}.col-xs-8{-ms-flex-preferred-size:66.66666667%;flex-basis:66.66666667%;max-width:66.66666667%}.col-xs-9{-ms-flex-preferred-size:75%;flex-basis:75%;max-width:75%}.col-xs-10{-ms-flex-preferred-size:83.33333333%;flex-basis:83.33333333%;max-width:83.33333333%}.col-xs-11{-ms-flex-preferred-size:91.66666667%;flex-basis:91.66666667%;max-width:91.66666667%}.col-xs-12{-ms-flex-preferred-size:100%;flex-basis:100%;max-width:100%}.col-xs-offset-0{margin-left:0}.col-xs-offset-1{margin-left:8.33333333%}.col-xs-offset-2{margin-left:16.66666667%}.col-xs-offset-3{margin-left:25%}.col-xs-offset-4{margin-left:33.33333333%}.col-xs-offset-5{margin-left:41.66666667%}.col-xs-offset-6{margin-left:50%}.col-xs-offset-7{margin-left:58.33333333%}.col-xs-offset-8{margin-left:66.66666667%}.col-xs-offset-9{margin-left:75%}.col-xs-offset-10{margin-left:83.33333333%}.col-xs-offset-11{margin-left:91.66666667%}.start-xs{-webkit-box-pack:start;-ms-flex-pack:start;justify-content:flex-start;text-align:start}.center-xs{-webkit-box-pack:center;-ms-flex-pack:center;justify-content:center;text-align:center}.end-xs{-webkit-box-pack:end;-ms-flex-pack:end;justify-content:flex-end;text-align:end}.top-xs{-webkit-box-align:start;-ms-flex-align:start;align-items:flex-start}.middle-xs{-webkit-box-align:center;-ms-flex-align:center;align-items:center}.bottom-xs{-webkit-box-align:end;-ms-flex-align:end;align-items:flex-end}.around-xs{-ms-flex-pack:distribute;justify-content:space-around}.between-xs{-webkit-box-pack:justify;-ms-flex-pack:justify;justify-content:space-between}.first-xs{-webkit-box-ordinal-group:0;-ms-flex-order:-1;order:-1}.last-xs{-webkit-box-ordinal-group:2;-ms-flex-order:1;order:1}@media only screen and (min-width:48em){.container{width:49rem}.col-sm,.col-sm-1,.col-sm-10,.col-sm-11,.col-sm-12,.col-sm-2,.col-sm-3,.col-sm-4,.col-sm-5,.col-sm-6,.col-sm-7,.col-sm-8,.col-sm-9,.col-sm-offset-0,.col-sm-offset-1,.col-sm-offset-10,.col-sm-offset-11,.col-sm-offset-12,.col-sm-offset-2,.col-sm-offset-3,.col-sm-offset-4,.col-sm-offset-5,.col-sm-offset-6,.col-sm-offset-7,.col-sm-offset-8,.col-sm-offset-9{box-sizing:border-box;-webkit-box-flex:0;-ms-flex:0 0 auto;flex:none;padding-right:.5rem;padding-left:.5rem}.col-sm{-webkit-box-flex:1;-ms-flex-positive:1;flex-grow:1;-ms-flex-preferred-size:0;flex-basis:0;max-width:100%}.col-sm-1{-ms-flex-preferred-size:8.33333333%;flex-basis:8.33333333%;max-width:8.33333333%}.col-sm-2{-ms-flex-preferred-size:16.66666667%;flex-basis:16.66666667%;max-width:16.66666667%}.col-sm-3{-ms-flex-preferred-size:25%;flex-basis:25%;max-width:25%}.col-sm-4{-ms-flex-preferred-size:33.33333333%;flex-basis:33.33333333%;max-width:33.33333333%}.col-sm-5{-ms-flex-preferred-size:41.66666667%;flex-basis:41.66666667%;max-width:41.66666667%}.col-sm-6{-ms-flex-preferred-size:50%;flex-basis:50%;max-width:50%}.col-sm-7{-ms-flex-preferred-size:58.33333333%;flex-basis:58.33333333%;max-width:58.33333333%}.col-sm-8{-ms-flex-preferred-size:66.66666667%;flex-basis:66.66666667%;max-width:66.66666667%}.col-sm-9{-ms-flex-preferred-size:75%;flex-basis:75%;max-width:75%}.col-sm-10{-ms-flex-preferred-size:83.33333333%;flex-basis:83.33333333%;max-width:83.33333333%}.col-sm-11{-ms-flex-preferred-size:91.66666667%;flex-basis:91.66666667%;max-width:91.66666667%}.col-sm-12{-ms-flex-preferred-size:100%;flex-basis:100%;max-width:100%}.col-sm-offset-0{margin-left:0}.col-sm-offset-1{margin-left:8.33333333%}.col-sm-offset-2{margin-left:16.66666667%}.col-sm-offset-3{margin-left:25%}.col-sm-offset-4{margin-left:33.33333333%}.col-sm-offset-5{margin-left:41.66666667%}.col-sm-offset-6{margin-left:50%}.col-sm-offset-7{margin-left:58.33333333%}.col-sm-offset-8{margin-left:66.66666667%}.col-sm-offset-9{margin-left:75%}.col-sm-offset-10{margin-left:83.33333333%}.col-sm-offset-11{margin-left:91.66666667%}.start-sm{-webkit-box-pack:start;-ms-flex-pack:start;justify-content:flex-start;text-align:start}.center-sm{-webkit-box-pack:center;-ms-flex-pack:center;justify-content:center;text-align:center}.end-sm{-webkit-box-pack:end;-ms-flex-pack:end;justify-content:flex-end;text-align:end}.top-sm{-webkit-box-align:start;-ms-flex-align:start;align-items:flex-start}.middle-sm{-webkit-box-align:center;-ms-flex-align:center;align-items:center}.bottom-sm{-webkit-box-align:end;-ms-flex-align:end;align-items:flex-end}.around-sm{-ms-flex-pack:distribute;justify-content:space-around}.between-sm{-webkit-box-pack:justify;-ms-flex-pack:justify;justify-content:space-between}.first-sm{-webkit-box-ordinal-group:0;-ms-flex-order:-1;order:-1}.last-sm{-webkit-box-ordinal-group:2;-ms-flex-order:1;order:1}}@media only screen and (min-width:64em){.container{width:65rem}.col-md,.col-md-1,.col-md-10,.col-md-11,.col-md-12,.col-md-2,.col-md-3,.col-md-4,.col-md-5,.col-md-6,.col-md-7,.col-md-8,.col-md-9,.col-md-offset-0,.col-md-offset-1,.col-md-offset-10,.col-md-offset-11,.col-md-offset-12,.col-md-offset-2,.col-md-offset-3,.col-md-offset-4,.col-md-offset-5,.col-md-offset-6,.col-md-offset-7,.col-md-offset-8,.col-md-offset-9{box-sizing:border-box;-webkit-box-flex:0;-ms-flex:0 0 auto;flex:none;padding-right:.5rem;padding-left:.5rem}.col-md{-webkit-box-flex:1;-ms-flex-positive:1;flex-grow:1;-ms-flex-preferred-size:0;flex-basis:0;max-width:100%}.col-md-1{-ms-flex-preferred-size:8.33333333%;flex-basis:8.33333333%;max-width:8.33333333%}.col-md-2{-ms-flex-preferred-size:16.66666667%;flex-basis:16.66666667%;max-width:16.66666667%}.col-md-3{-ms-flex-preferred-size:25%;flex-basis:25%;max-width:25%}.col-md-4{-ms-flex-preferred-size:33.33333333%;flex-basis:33.33333333%;max-width:33.33333333%}.col-md-5{-ms-flex-preferred-size:41.66666667%;flex-basis:41.66666667%;max-width:41.66666667%}.col-md-6{-ms-flex-preferred-size:50%;flex-basis:50%;max-width:50%}.col-md-7{-ms-flex-preferred-size:58.33333333%;flex-basis:58.33333333%;max-width:58.33333333%}.col-md-8{-ms-flex-preferred-size:66.66666667%;flex-basis:66.66666667%;max-width:66.66666667%}.col-md-9{-ms-flex-preferred-size:75%;flex-basis:75%;max-width:75%}.col-md-10{-ms-flex-preferred-size:83.33333333%;flex-basis:83.33333333%;max-width:83.33333333%}.col-md-11{-ms-flex-preferred-size:91.66666667%;flex-basis:91.66666667%;max-width:91.66666667%}.col-md-12{-ms-flex-preferred-size:100%;flex-basis:100%;max-width:100%}.col-md-offset-0{margin-left:0}.col-md-offset-1{margin-left:8.33333333%}.col-md-offset-2{margin-left:16.66666667%}.col-md-offset-3{margin-left:25%}.col-md-offset-4{margin-left:33.33333333%}.col-md-offset-5{margin-left:41.66666667%}.col-md-offset-6{margin-left:50%}.col-md-offset-7{margin-left:58.33333333%}.col-md-offset-8{margin-left:66.66666667%}.col-md-offset-9{margin-left:75%}.col-md-offset-10{margin-left:83.33333333%}.col-md-offset-11{margin-left:91.66666667%}.start-md{-webkit-box-pack:start;-ms-flex-pack:start;justify-content:flex-start;text-align:start}.center-md{-webkit-box-pack:center;-ms-flex-pack:center;justify-content:center;text-align:center}.end-md{-webkit-box-pack:end;-ms-flex-pack:end;justify-content:flex-end;text-align:end}.top-md{-webkit-box-align:start;-ms-flex-align:start;align-items:flex-start}.middle-md{-webkit-box-align:center;-ms-flex-align:center;align-items:center}.bottom-md{-webkit-box-align:end;-ms-flex-align:end;align-items:flex-end}.around-md{-ms-flex-pack:distribute;justify-content:space-around}.between-md{-webkit-box-pack:justify;-ms-flex-pack:justify;justify-content:space-between}.first-md{-webkit-box-ordinal-group:0;-ms-flex-order:-1;order:-1}.last-md{-webkit-box-ordinal-group:2;-ms-flex-order:1;order:1}}@media only screen and (min-width:75em){.container{width:76rem}.col-lg,.col-lg-1,.col-lg-10,.col-lg-11,.col-lg-12,.col-lg-2,.col-lg-3,.col-lg-4,.col-lg-5,.col-lg-6,.col-lg-7,.col-lg-8,.col-lg-9,.col-lg-offset-0,.col-lg-offset-1,.col-lg-offset-10,.col-lg-offset-11,.col-lg-offset-12,.col-lg-offset-2,.col-lg-offset-3,.col-lg-offset-4,.col-lg-offset-5,.col-lg-offset-6,.col-lg-offset-7,.col-lg-offset-8,.col-lg-offset-9{box-sizing:border-box;-webkit-box-flex:0;-ms-flex:0 0 auto;flex:none;padding-right:.5rem;padding-left:.5rem}.col-lg{-webkit-box-flex:1;-ms-flex-positive:1;flex-grow:1;-ms-flex-preferred-size:0;flex-basis:0;max-width:100%}.col-lg-1{-ms-flex-preferred-size:8.33333333%;flex-basis:8.33333333%;max-width:8.33333333%}.col-lg-2{-ms-flex-preferred-size:16.66666667%;flex-basis:16.66666667%;max-width:16.66666667%}.col-lg-3{-ms-flex-preferred-size:25%;flex-basis:25%;max-width:25%}.col-lg-4{-ms-flex-preferred-size:33.33333333%;flex-basis:33.33333333%;max-width:33.33333333%}.col-lg-5{-ms-flex-preferred-size:41.66666667%;flex-basis:41.66666667%;max-width:41.66666667%}.col-lg-6{-ms-flex-preferred-size:50%;flex-basis:50%;max-width:50%}.col-lg-7{-ms-flex-preferred-size:58.33333333%;flex-basis:58.33333333%;max-width:58.33333333%}.col-lg-8{-ms-flex-preferred-size:66.66666667%;flex-basis:66.66666667%;max-width:66.66666667%}.col-lg-9{-ms-flex-preferred-size:75%;flex-basis:75%;max-width:75%}.col-lg-10{-ms-flex-preferred-size:83.33333333%;flex-basis:83.33333333%;max-width:83.33333333%}.col-lg-11{-ms-flex-preferred-size:91.66666667%;flex-basis:91.66666667%;max-width:91.66666667%}.col-lg-12{-ms-flex-preferred-size:100%;flex-basis:100%;max-width:100%}.col-lg-offset-0{margin-left:0}.col-lg-offset-1{margin-left:8.33333333%}.col-lg-offset-2{margin-left:16.66666667%}.col-lg-offset-3{margin-left:25%}.col-lg-offset-4{margin-left:33.33333333%}.col-lg-offset-5{margin-left:41.66666667%}.col-lg-offset-6{margin-left:50%}.col-lg-offset-7{margin-left:58.33333333%}.col-lg-offset-8{margin-left:66.66666667%}.col-lg-offset-9{margin-left:75%}.col-lg-offset-10{margin-left:83.33333333%}.col-lg-offset-11{margin-left:91.66666667%}.start-lg{-webkit-box-pack:start;-ms-flex-pack:start;justify-content:flex-start;text-align:start}.center-lg{-webkit-box-pack:center;-ms-flex-pack:center;justify-content:center;text-align:center}.end-lg{-webkit-box-pack:end;-ms-flex-pack:end;justify-content:flex-end;text-align:end}.top-lg{-webkit-box-align:start;-ms-flex-align:start;align-items:flex-start}.middle-lg{-webkit-box-align:center;-ms-flex-align:center;align-items:center}.bottom-lg{-webkit-box-align:end;-ms-flex-align:end;align-items:flex-end}.around-lg{-ms-flex-pack:distribute;justify-content:space-around}.between-lg{-webkit-box-pack:justify;-ms-flex-pack:justify;justify-content:space-between}.first-lg{-webkit-box-ordinal-group:0;-ms-flex-order:-1;order:-1}.last-lg{-webkit-box-ordinal-group:2;-ms-flex-order:1;order:1}}</style>
+<link href=/index.xml rel=alternate type=application/rss+xml title="简单易懂的现代魔法 - Zhirui Li">
+<link rel=preconnect href=https://fonts.gstatic.com>
+<link href="https://fonts.googleapis.com/css?family=Bree+Serif|Bungee+Shade" rel=stylesheet>
+</head>
+<body>
+<article class="post Chinese" id=article>
+<div class=row>
+<div class=col-xs-12>
+<div class=site-header>
+<header>
+<div class=header-title>
+<a href=/>简单易懂的现代魔法</a>
+</div>
+<div class=header-subtitle></div>
+</header>
+<div class="row end-md center-xs header-items">
+<div class=header-item>
+<a href=/index.xml target=_blank>RSS</a>
+</div>
+<div class=header-item>
+<a href=mailto:zr.public@outlook.com target=_blank>E-mail</a>
+</div>
+<div class=header-item>
+<a href=https://www.github.com/ZhiruiLi target=_blank>Github</a>
+</div>
+</div>
+<div class="row end-xs">
+</div>
+<div class=header-line></div>
+</div>
+<header class=post-header>
+<h1 class=post-title>另一种 C++ 程序错误处理方式</h1>
+<div class="row post-desc">
+<div class=col-xs-6>
+<time class=post-date datetime="2020-03-22 00:00:00 UTC">
+22 Mar 2020
+</time>
+</div>
+<div class=col-xs-6>
+<div class=post-author>
+<a target=_blank href=https://www.github.com/ZhiruiLi>@Zhirui Li</a>
+</div>
+</div>
+</div>
+</header>
+<div class="post-content markdown-body">
+<p>C++ 是一个很灵活的语言，这把双刃剑一方面使得 C++ 有很强大的表达能力，但也使得其编程风格相当混乱，就连错误处理到底是使用错误码还是异常都常常争论不休。例如在 C 中我们默认用错误码处理错误，而在 Python、Java 中， 则默认用异常来处理错误。而在 C++ 中，使用这两种形式的错误处理形式都有，而目前来看，在我所在的团队中，除非是外部库，否则基本都是使用错误码。在这篇文章中，我将聊一下 C++ 错误处理的方式优劣，以及我们团队是如何进行 C++ 错误处理的。</p>
+<h1 id=错误码的问题>错误码的问题</h1>
+<p>在我们的工程实践中，错误码首先带来的问题是代码中充斥着大量的 <code>-1</code>、<code>-2</code>、<code>-10000</code> 这样的错误码，这样错误码在日志中出现总是让人头痛，在代码中一搜就出来数不清的匹配项，根本无法定位问题。当然，你可能会说，这个主要是开发者水平参差不齐和开发规范不够严明的问题，我们可以通过全局统一错误码来解决问题。这当然是一个合理的反对意见，但问题是，即便确定要全局统一错误码，但这个全局统一错误码应该做到什么层级呢？</p>
+<p>例如，在我们的后台采用了微服务架构，那么一个很显然的处理方案就是全局统一错误码是在服务级别的，A 服务调用 B 服务的时候，通过错误码来获知调用过程中出了什么错误。但是，这事实上并没有解决问题，例如我们现在发现 B 服务给 A 服务返回了 <code>12345</code> 这个错误码，然后我们尝试查看 B 服务的代码，看看为什么会导致这样的错误：</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style=color:#66d9ef>enum</span> <span style=color:#a6e22e>Errors</span> {
+  kErrFailToCallSomeFunction <span style=color:#f92672>=</span> <span style=color:#ae81ff>12345</span>,
+};
+
+<span style=color:#66d9ef>int</span> <span style=color:#a6e22e>Handle</span>(Req <span style=color:#66d9ef>const</span> <span style=color:#f92672>&amp;</span>req, Rsp <span style=color:#f92672>*</span>rsp) {
+  <span style=color:#66d9ef>int</span> ret <span style=color:#f92672>=</span> SomeFunction();
+  <span style=color:#66d9ef>if</span> (ret) {
+    ERRORLOG(<span style=color:#e6db74>&#34;call SomeFunction fail: %d</span><span style=color:#ae81ff>\n</span><span style=color:#e6db74>&#34;</span>, ret);
+    <span style=color:#66d9ef>return</span> kErrFailToCallSomeFunction;
+  }
+  <span style=color:#75715e>// ...
+</span><span style=color:#75715e></span>}
+</code></pre></div><p>因为错误码统一，我们很快就发现了是调用 <code>SomeFunction</code> 失败导致了这个错误，然后我们知道了应该找 <code>call SomeFunction fail: </code> 这条日志，可以我们一查阅这条日志就发现，<code>call SomeFunction fail: -1</code>，结果我们又回到了之前的问题，尤其是我们可能在 <code>SomeFunction</code> 中看到这样的实现：</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style=color:#66d9ef>int</span> <span style=color:#a6e22e>SomeFunction</span>() {
+  <span style=color:#66d9ef>if</span> (xxx) {
+    <span style=color:#66d9ef>return</span> <span style=color:#f92672>-</span><span style=color:#ae81ff>1</span>;
+  }
+  <span style=color:#66d9ef>int</span> ret <span style=color:#f92672>=</span> AnotherFunction();
+  <span style=color:#66d9ef>if</span> (ret) {
+    <span style=color:#66d9ef>return</span> ret;
+  }
+  <span style=color:#66d9ef>return</span> <span style=color:#ae81ff>0</span>;
+}
+</code></pre></div><p>这就更麻烦了，我们根本不知道到底是 <code>SomeFunction</code> 返回了 <code>-1</code> 还是 <code>AnotherFunction</code> 返回了 <code>-1</code> 然后被向上传递。</p>
+<p>如果要解决这个问题，那就只能让所有的错误码都统一了。这样，每一层都可以自由地向上传递错误码。不过这个做法也有很明显的缺陷。首先，要全局统一错误码到各个函数中，这件事情是很麻烦的，而太过麻烦的事情只会导致大家都不愿意去做，推广困难。另外，在很多时候，太过底层的错误码并没有太大意义，举个例子，请求超时，这样的错误直接向上传递就没什么意义，因为每一个远程调用的路径上都可能请求超时，如果随意向上传递，结果就是我们拿到了请求超时的错误码却无法定位是什么地方导致的这个错误，结果就是我们依然需要将错误码进行转换。</p>
+<p>另外，使用错误码还会导致一个问题，就是错误码仅仅是一个数字，它可以表示错误发生的位置，却无法说明错误发生的原因和发生的环境，于是我们为了知道具体发生的错误，就需要在出错时打印一些错误日志记录一些当时的环境信息，但同时，由于在多级的调用中， 每一级信息总是不全的，这导致我们经常需要逐级调用都打印日志，来记录那一级才知道的信息。这不但使得错误日志经常出现大量冗余打印的情况，而且使得多框架环境下开发库变得困难，因为不同框架的日志库的接口可能不太一样，结果可能又需要搞一个 log 的 adapter 层来处理这种麻烦。</p>
+<h1 id=使用异常>使用异常？</h1>
+<p>异常是 C++ 的一个重要特性，当年就是因为要加入这个特性，Bjarne Stroustrup 才放弃了将 C++ 转换为 C 再交给 C 编译器进行编译的处理方式，改为直接编译。也许我们没有意识到，但是异常其实遍布在我们的代码之中，只要我们使用了 STL，那么就必然接触过异常。例如我们常用的 <code>std::vector</code>，如果调用 <code>at</code> 函数越界了，那么就会抛出 <code>std::out_of_range</code> 异常。而 <a href=https://isocpp.org/wiki/faq/exceptions>ISOCPP</a> 也是建议我们使用异常而不是错误码来处理错误。</p>
+<p>在上述的 ISOCPP FAQ 中，指出了使用异常而不是错误码原因主要是<a href=https://isocpp.org/wiki/faq/exceptions#why-exceptions>让代码简洁以及不容易忽视错误</a>，具体而言，有如下的几个原因：</p>
+<ul>
+<li><a href=https://isocpp.org/wiki/faq/exceptions#exceptions-eliminate-ifs>相比 if-else 判断而言能提高代码质量、提高开发效率</a></li>
+<li><a href=https://isocpp.org/wiki/faq/exceptions#exceptions-avoid-spreading-out-error-logic>在实际的复杂工程中能大幅度简化错误传递</a></li>
+<li><a href=https://isocpp.org/wiki/faq/exceptions#exceptions-separate-good-and-bad-path>区分 Good Path 和 Bad Path</a></li>
+<li><a href=https://isocpp.org/wiki/faq/exceptions#exceptions-avoid-two-return-types>简化参数类型和返回类型</a></li>
+</ul>
+<p>上述的每一点确实都是返回码的不足之处，但是，异常真如这篇 FAQ 说的这么好吗？让我们一条条来看。</p>
+<p>第一点，文章认为 if 语句很容易出错，而且增加测试的复杂度。但事实上，在使用错误码的时候，由于都是判定 <code>if (ret != 0)</code> 或是写为 <code>if (ret)</code>，因此这个判断写错的可能性并不是很高。而且即便是抛出异常，测试的时候难道就不需要测试异常分支了么？事实上也是需要的，至于文章所说的测试覆盖度的问题，下面会再讨论到。</p>
+<p>第二点，文章认为简单情况下异常虽不能体现其优势，但是复杂情况下，异常能大幅度减化错误传递。在文章给出的例子中，<code>f1</code> 到 <code>f10</code> 层层调用，最终 <code>f10</code> 抛出的异常直接被 <code>f1</code> 捕获，代码比错误码的形式简化了非常多。这看起来很美好，但是，我们此时应该记得一句话：</p>
+<blockquote>
+<p>For every complex problem there is an answer that is clear, simple, and wrong.</p>
+<p>—— H. L. Mencken</p>
+</blockquote>
+<p>对于复杂业务而言，这样处理错误的方式往往反而是不合适的，而游戏正是一个业务逻辑相当复杂的场景，很少有「纯粹」的东西。正如前文所述，在每一层的函数调用中，往往会存在那一层调用才存在的一些环境变量，例如下面这个例子：</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style=color:#66d9ef>void</span> <span style=color:#a6e22e>F1</span>() {
+  <span style=color:#66d9ef>try</span> {
+    F2();
+  } <span style=color:#66d9ef>catch</span> (SomeException <span style=color:#f92672>&amp;</span>e) {
+    ...
+  }
+}
+
+<span style=color:#66d9ef>void</span> <span style=color:#a6e22e>F2</span>() {
+  <span style=color:#66d9ef>auto</span> ret1 <span style=color:#f92672>=</span> Fx();
+  <span style=color:#66d9ef>auto</span> ret2 <span style=color:#f92672>=</span> Fy(ret1);
+  F3(ret2);
+}
+
+<span style=color:#66d9ef>void</span> <span style=color:#a6e22e>F3</span>(X in) {
+  <span style=color:#66d9ef>if</span> (...) { <span style=color:#66d9ef>throw</span> SomeException(); }
+}
+</code></pre></div><p>当 <code>F1</code> 捕获到异常时，我们会希望知道导致这个异常的原因是什么，此时由于异常的抛出点是在 <code>F3</code> 中， 因此它并不知道 <code>F2</code> 是如何计算出它的输入参数的。而 <code>F2</code> 中的 <code>ret1</code> 却很有可能是查问题的关键。这意味着，我们可能在使用异常的情况下需要层层捕获异常，逐层添加错误信息，以便查找问题。实际操作起来，这反倒使得代码变得啰嗦了。</p>
+<p>第三点和第二点其实是类似的，在一个复杂的业务中，想要 Good Path 直接走完其实是不现实的，比如下面这个简单例子：</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style=color:#66d9ef>void</span> <span style=color:#a6e22e>F</span>() {
+  <span style=color:#66d9ef>try</span> {
+    GResult gg <span style=color:#f92672>=</span> G(); <span style=color:#75715e>// 1
+</span><span style=color:#75715e></span>    HResult hh <span style=color:#f92672>=</span> H(gg);
+    IResult ii <span style=color:#f92672>=</span> I(hh);
+    JResult jj <span style=color:#f92672>=</span> J(ii); <span style=color:#75715e>// 2
+</span><span style=color:#75715e></span>  } <span style=color:#66d9ef>catch</span> (FooError <span style=color:#f92672>&amp;</span>e) {
+    ...
+  } <span style=color:#66d9ef>catch</span> (BarError <span style=color:#f92672>&amp;</span>e) {
+  	...
+  }
+}
+</code></pre></div><p>这里有两个问题，首先，和刚刚类似，我们在某一个异常出现的时候希望打印环境信息，例如 <code>J(ii)</code> 这个调用其实和 <code>ii</code>、<code>hh</code>、<code>gg</code> 都有一定的关系，因此，我们会希望在 <code>J</code> 抛出异常的时候，将前面这几个变量打印出来，而在 Good Path 和 Bad Path 分离的状况下，我们做不到这一点。第二，<code>J</code> 可能本身调用了 <code>G</code>，而 <code>G</code> 会抛出 <code>FooError</code>，那么我们捕捉到 <code>FooError</code> 的情况下，就并不清楚代码究竟执行到 1 处还是 2 处。为了解决这两个问题，结果就是我们可能需要写出层层嵌套的 try-catch 代码，这使得使用异常的代码甚至比 if-else 的 early return 更加难读。而且当异常出现多层的嵌套的时候，异常分支会和 if-else 分支一样多，测试代码覆盖的难度并不会因为使用异常而下降。</p>
+<p>至于第四点，返回错误码确实无能为力，这一点在本文后面会提到我们的解决方法。</p>
+<h1 id=我们应该如何选择方案>我们应该如何选择方案</h1>
+<p>在思考我们团队的 C++ 错误处理改进方案的时候，除了要考虑方案本身的优劣，还需要面对团队自身存在的问题，我相信我们团队遇到的问题许多团队也或多或少会遇到。</p>
+<p>首先，我们团队的代码历史悠久，C++ 曾被仅仅当作 C with class 来使用，其中存在许多不是异常安全的代码，贸然使用异常很可能会造成修改存量代码时开发新功能时引入很多难以排查的问题。</p>
+<p>另外，我们的工程使用了自研的 C++ 协程框架，而这个框架事实上是很难和异常特性融合使用的。</p>
+<p>而且，不管是对于存量代码的风格还是团队成员的开发习惯而言，使用错误码传递错误都是一个默认的做法。如果使用异常，那么会导致代码中长期两种错误处理风格混用，不但让人不知如何处理错误，而且也不太会受到团队成员的支持。</p>
+<p>所以，我们在选择改进方案的时候，至少要考虑如下几点限制：</p>
+<ul>
+<li>要能和现有的处理方式比较好地融合，能平滑过渡</li>
+<li>不要过分挑战已有的开发习惯，要让团队成员易于接受新的方案</li>
+<li>最好能用起来比较简单，不要反而降低了开发效率</li>
+</ul>
+<p>而这个方案希望能够解决如下几个问题：</p>
+<ul>
+<li>能够避免代码中处处打日志记录当时环境信息的情况</li>
+<li>在下层发生错误时，上层能够在转换成别的错误的同时，保留下层的错误信息</li>
+<li>上层除了能够判定有错误发生，还要能判定发生了哪一个错误</li>
+</ul>
+<p>最近我们团队开始试水使用 Golang 来开发一些服务，在这个过程中，发现 Golang 风格的错误处理虽然各种被喷，但是它也有其可取之处，尤其是它相当符合我们团队的开发习惯，所以我们尝试在 C++ 中实现类似的处理方式。</p>
+<h1 id=我们的解决方案>我们的解决方案</h1>
+<p>我们参考 Golang 的错误处理模式用 C++ 实现了一个简单易用 <a href=https://github.com/ZhiruiLi/GErr>GErr</a> 库，使用了这个库，之前我们这样的函数：</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style=color:#66d9ef>int</span> <span style=color:#a6e22e>Function1</span>(<span style=color:#66d9ef>int</span> i) {
+  <span style=color:#66d9ef>if</span> (i <span style=color:#f92672>&lt;</span> <span style=color:#ae81ff>0</span>) {
+    <span style=color:#66d9ef>return</span> <span style=color:#f92672>-</span><span style=color:#ae81ff>1</span>;
+  }
+  <span style=color:#66d9ef>int</span> ret <span style=color:#f92672>=</span> api.Call(i);
+  <span style=color:#66d9ef>if</span> (ret <span style=color:#f92672>!=</span> <span style=color:#ae81ff>0</span>) {
+    ERRORLOG(<span style=color:#e6db74>&#34;call api fail, i = %d, ret = %d</span><span style=color:#ae81ff>\n</span><span style=color:#e6db74>&#34;</span>, i, ret);
+    <span style=color:#66d9ef>return</span> <span style=color:#f92672>-</span><span style=color:#ae81ff>2</span>;
+  }
+  <span style=color:#66d9ef>return</span> <span style=color:#ae81ff>0</span>;
+}
+</code></pre></div><p>可以变为这样：</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++>gerr<span style=color:#f92672>::</span>Error Function1(<span style=color:#66d9ef>int</span> i) {
+  <span style=color:#66d9ef>if</span> (i <span style=color:#f92672>&lt;</span> <span style=color:#ae81ff>0</span>) {
+    <span style=color:#66d9ef>return</span> gerr<span style=color:#f92672>::</span>New(<span style=color:#e6db74>&#34;i = {} &lt; 0 is illegal&#34;</span>, i); <span style=color:#75715e>// 基于 fmt 库格式化字符串
+</span><span style=color:#75715e></span>  }
+  <span style=color:#66d9ef>int</span> ret <span style=color:#f92672>=</span> api.Call(i);
+  <span style=color:#66d9ef>if</span> (ret <span style=color:#f92672>!=</span> <span style=color:#ae81ff>0</span>) {
+    <span style=color:#66d9ef>return</span> gerr<span style=color:#f92672>::</span>New(ret, <span style=color:#e6db74>&#34;call api fail, i = {}&#34;</span>, i); <span style=color:#75715e>// 携带错误信息和错误码
+</span><span style=color:#75715e></span>  }
+  <span style=color:#66d9ef>return</span> <span style=color:#66d9ef>nullptr</span>; <span style=color:#75715e>// 返回 nullptr 代表没有错误发生
+</span><span style=color:#75715e></span>}
+</code></pre></div><p>这里，对于简单的情况，我们可以通过 <code>gerr::New</code> 来创建一个匿名的错误，携带一段错误信息。对于调用者，可以从 <code>if (ret != 0) {...}</code> 改为 <code>if (err != nullptr) {...}</code>，来判断是否出现错误，如果你习惯写 <code>if (ret) {...}</code> 这样的形式，那么你甚至不需要修改，直接写 <code>if (err) {...}</code> 即可，代码非常类似。注意到，<code>int ret = api.Call(i);</code> 是一个旧有的 API，返回了一个错误码，而 <code>gerr::New</code> 可以简单封装了底层返回的错误码的同时附带了错误信息。</p>
+<p>如果底层返回了一个 <code>gerr::Error</code>，那么，上层可以在判断是否有错误的基础上，包装当时的一些环境信息：</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++>gerr<span style=color:#f92672>::</span>Error MyFunction2(<span style=color:#66d9ef>int</span> i) {
+  <span style=color:#66d9ef>auto</span> err <span style=color:#f92672>=</span> MyFunction1(i);
+  <span style=color:#66d9ef>if</span> (err <span style=color:#f92672>!=</span> <span style=color:#66d9ef>nullptr</span>) {
+    <span style=color:#66d9ef>return</span> gerr<span style=color:#f92672>::</span>Wrap(err, <span style=color:#e6db74>&#34;fail to call 1, i = {}&#34;</span>, i); <span style=color:#75715e>// 仅附加错误信息
+</span><span style=color:#75715e></span>  }
+  err <span style=color:#f92672>=</span> MyFunction1(i <span style=color:#f92672>+</span> <span style=color:#ae81ff>1</span>);
+  <span style=color:#66d9ef>if</span> (err <span style=color:#f92672>!=</span> <span style=color:#66d9ef>nullptr</span>) {
+    <span style=color:#66d9ef>return</span> gerr<span style=color:#f92672>::</span>Wrap(err, <span style=color:#ae81ff>123456</span>, <span style=color:#e6db74>&#34;call fail, i = {}&#34;</span>, i); <span style=color:#75715e>// 附加错误码和信息
+</span><span style=color:#75715e></span>  }
+  <span style=color:#66d9ef>return</span> <span style=color:#66d9ef>nullptr</span>;
+}
+</code></pre></div><p>这样一来，我们就不需要每一层打印错误日志，直接在上层统一打印即可，甚至如果框架支持，直接由框架来打印，都不是问题。</p>
+<p>处理好错误的传递之后，我们需要知道如何判定底层返回的特定错误，例如我们在拉取用户数据的时候，会判定一个特定的错误码，即用户数据不存在。如果错误码为 0 或者是代表用户数据不存在的错误码，那么我们就不认为这是一个错误，可以继续往下处理。在 <code>GErr</code> 中，我们可以用 <code>DEFINE_ERROR</code> 和 <code>DEFINE_CODE_ERROR</code> 来定义错误：</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style=color:#75715e>// 定义一个错误类型 MyError1，附带错误信息
+</span><span style=color:#75715e></span>DEFINE_ERROR(MyError1, <span style=color:#e6db74>&#34;my error message1&#34;</span>); 
+<span style=color:#75715e>// 定义一个错误类型 MyError2，附带错误码和错误信息
+</span><span style=color:#75715e></span>DEFINE_CODE_ERROR(MyError2, <span style=color:#ae81ff>1000001</span>, <span style=color:#e6db74>&#34;my error message2&#34;</span>); 
+
+<span style=color:#75715e>// 使用的时候需要用静态函数 E 来获取错误值
+</span><span style=color:#75715e></span>gerr<span style=color:#f92672>::</span>Error MyFunction3(<span style=color:#66d9ef>int</span> i) {
+  <span style=color:#66d9ef>if</span> (i <span style=color:#f92672>&lt;</span> <span style=color:#ae81ff>0</span>) { <span style=color:#66d9ef>return</span> MyError1<span style=color:#f92672>::</span>E(); }
+  <span style=color:#66d9ef>auto</span> err <span style=color:#f92672>=</span> MyFunction1(i);
+  <span style=color:#66d9ef>if</span> (err <span style=color:#f92672>!=</span> <span style=color:#66d9ef>nullptr</span>) {
+    <span style=color:#75715e>// 自定义的错误类型也可以 wrap 父错误
+</span><span style=color:#75715e></span>    <span style=color:#66d9ef>return</span> MyError2<span style=color:#f92672>::</span>E(err);
+  }
+  <span style=color:#66d9ef>return</span> <span style=color:#66d9ef>nullptr</span>;
+}
+</code></pre></div><p>可以看到，定义一个错误非常方便，相对于过往使用 <code>enum</code> 定义错误码的方式，这里并不会让开发者多写多少代码。而且由于这里定义的错误是带具体类型的，调用者也可以很容易进行错误类型的判定：</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style=color:#66d9ef>void</span> <span style=color:#a6e22e>MyFunction4</span>(<span style=color:#66d9ef>unsigned</span> uin, <span style=color:#66d9ef>int</span> i) {
+  <span style=color:#66d9ef>auto</span> err <span style=color:#f92672>=</span> SomeOtherFunction(uin, i)
+  <span style=color:#75715e>// 判定一个错误链条上是不是包含 MyError1 类型的错误，
+</span><span style=color:#75715e></span>  <span style=color:#75715e>// 这里不需要先判定 err 是否为空，Is 函数是 nullptr 安全的，
+</span><span style=color:#75715e></span>  <span style=color:#75715e>// 如果一个 err 是 nullptr，那么 Is 函数总会返回 false。
+</span><span style=color:#75715e></span>  <span style=color:#66d9ef>if</span> (gerr<span style=color:#f92672>::</span>Is<span style=color:#f92672>&lt;</span>MyError1<span style=color:#f92672>&gt;</span>(err)) {
+    std<span style=color:#f92672>::</span>cerr <span style=color:#f92672>&lt;&lt;</span> <span style=color:#e6db74>&#34;error 1&#34;</span>;
+    <span style=color:#66d9ef>return</span>;
+  }
+  <span style=color:#75715e>// 其他未知错误，直接打印一下
+</span><span style=color:#75715e></span>  <span style=color:#66d9ef>if</span> (err <span style=color:#f92672>!=</span> <span style=color:#66d9ef>nullptr</span>) {
+    <span style=color:#75715e>// String 函数也是 nullptr 安全的，nullptr 会被格式化为 &lt;nil&gt;
+</span><span style=color:#75715e></span>    std<span style=color:#f92672>::</span>cerr <span style=color:#f92672>&lt;&lt;</span> gerr<span style=color:#f92672>::</span>String(err); 
+    <span style=color:#66d9ef>return</span>;
+  }
+}
+</code></pre></div><p>前面提到了使用异常可以<a href=https://isocpp.org/wiki/faq/exceptions#exceptions-avoid-two-return-types>简化参数类型和返回类型</a>，而在这里，我们的返回值被 <code>gerr::Error</code> 占据了，那我们要如何表达一个可能出错的返回值呢？在 Golang 中，可以通过多返回值来实现，这也是 Golang 的惯用法。C++ 不支持这样的语法，虽然我们可以直接用 <code>std::pair</code> 或 <code>std::tuple</code> 模拟多返回值，但是使用起来非常不便，到了 C++ 17 我们将可以用上 <a href=https://en.cppreference.com/w/cpp/language/structured_binding>Structure Binding</a> 语法，能够使多返回值的使用更加方便。但目前看来，我们将长期被锁在不完整的 C++ 11 版本上，因此在 <code>GErr</code> 的例子中，给出了一个 <a href=https://github.com/ZhiruiLi/GErr/blob/master/examples/simpletry/try.hpp><code>Try</code> 模板</a>的简单实现，使得我们可以这样写代码：</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++>Try<span style=color:#f92672>&lt;</span><span style=color:#66d9ef>int</span><span style=color:#f92672>&gt;</span> SafeDiv(<span style=color:#66d9ef>int</span> a, <span style=color:#66d9ef>int</span> b) {
+  <span style=color:#66d9ef>if</span> (b <span style=color:#f92672>==</span> <span style=color:#ae81ff>0</span>) {
+    <span style=color:#66d9ef>return</span> gerr<span style=color:#f92672>::</span>New(<span style=color:#e6db74>&#34;div 0&#34;</span>);
+  }
+  <span style=color:#66d9ef>return</span> a <span style=color:#f92672>/</span> b;
+}
+
+<span style=color:#75715e>// Usage
+</span><span style=color:#75715e></span><span style=color:#66d9ef>auto</span> <span style=color:#66d9ef>const</span> t <span style=color:#f92672>=</span> SafeDiv(a, b);
+<span style=color:#66d9ef>if</span> (t) { <span style=color:#75715e>// 转为 bool 判断是否成功
+</span><span style=color:#75715e></span>  std<span style=color:#f92672>::</span>cout <span style=color:#f92672>&lt;&lt;</span> <span style=color:#e6db74>&#34;No error, result = &#34;</span> <span style=color:#f92672>&lt;&lt;</span> t.Value(); <span style=color:#75715e>// Value 获取值
+</span><span style=color:#75715e></span>} <span style=color:#66d9ef>else</span> {
+  std<span style=color:#f92672>::</span>cout <span style=color:#f92672>&lt;&lt;</span> <span style=color:#e6db74>&#34;Error occurs: &#34;</span> <span style=color:#f92672>&lt;&lt;</span> gerr<span style=color:#f92672>::</span>String(t.Error()); <span style=color:#75715e>// Error 获取错误
+</span><span style=color:#75715e></span>}
+</code></pre></div><p>更多关于 <code>GErr</code> 的用法，可以参考 <a href=https://github.com/ZhiruiLi/GErr/blob/master/README.md>README</a> 和其中的 examples。</p>
+<p>在这篇文章中，我们讨论了 C++ 的两种主要错误处理方式，以及我们团队遇到的问题，并提出了一个简单可行的解决方案。通过使用 <code>GErr</code>，我们可以较为平滑地从旧的基于错误码的错误传递方式切换到新的方式上，在一定程度上解决我们现有的问题，既保证了使用心智负担足够小，又足够简洁易用，且避免了到处打印错误日志的情况，上层也能很轻松地对下层的错误进行判断和错误的打印。</p>
+</div>
+<div class="row middle-xs">
+<div class=col-xs-12>
+<div class=post-tags>
+<a href=/tags/c++/>
+C++
+</a>
+</div>
+<div class=post-tags>
+<a href=/tags/go/>
+Go
+</a>
+</div>
+</div>
+</div>
+<div class=row>
+<div class=col-xs-12>
+</div>
+</div>
+<div class=related-content>
+<h3>Related Posts</h3>
+<ul>
+<li><a href=/posts/real-world-cpp-template/>实际工程中的 C++ 模板</a></li>
+<li><a href=/posts/golang-design-study/>从并发模型看 Go 的语言设计</a></li>
+<li><a href=/posts/dynamic-scope/>静态作用域和动态作用域</a></li>
+</ul>
+</div>
+<div style=height:50px></div>
+<div class=post-comments>
+<div id=disqus_thread></div>
+<script>window.addEventListener("load",()=>{(function(){var a=document,b=a.createElement("script");b.src="https://ZhiruiLi.disqus.com/embed.js",b.setAttribute("data-timestamp",+new Date),(a.head||a.body).appendChild(b)})()})</script>
+<noscript>Please enable JavaScript to view the
+<a href=https://disqus.com/?ref_noscript>comments powered by Disqus.</a></noscript>
+</div>
+<div class=site-footer>
+</div>
+</div>
+</div>
+</article>
+<script src=https://unpkg.com/quicklink@0.1.1/dist/quicklink.umd.js></script>
+<script>var posts=document.getElementById('posts-list');posts&&quicklink({el:posts,priority:!0})</script>
+<script>MathJax={tex:{inlineMath:[['$','$'],['\\(','\\)']]},svg:{fontCache:'global'}}</script>
+<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script id=MathJax-script async src=https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js></script>
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-80302213-1"></script>
+</body>
+</html>
