@@ -3,4 +3,4 @@ I call it my billion-dollar mistake. It was the invention of the null reference 
 协变 在 Java 中，数组是协变的，也就是说，假设有一个基类 Person 和一个 Person 的子类 Student。因为 Student 类型是 Person 类型的子类，所以 Student[] 类型是 Person[] 类型的子类，这个设计似乎相当符合直觉，一个学生（Student）是一个人（Person），那一个存放着学生的数组当然也应该是一个存放着人的数组了。
 然而这是错误的。
 假设 Person 有另一个子类 Teacher，考虑如下代码：
-Student[] students = { new Student() } students[0].study(); Person[] persons = students; persons[0] = new Teacher(); students[0].study(); // Oops! 这段代码显然错了，看一下刚刚做了什么。我们在 Student 数组里存放了一个 Student 实例，紧接着调用了这个对象的 study 方法，这个显然没错；然后将这个数组赋值给一个 Person 数组，由于数组是协变的，所以这步没问题；然后，向 Person 数组里添加一个 Teacher 的实例，这步也没问题，因为一个 Teacher 是一个 Person；接下来是获取 Student 数组里的对象，调用 Student 类的 study 方法，这似乎也是合理的。那问题在哪呢？</description></item></channel></rss>
+1 2 3 4 5 Student[] students = { new Student() } students[0].study(); Person[] persons = students; persons[0] = new Teacher(); students[0].</description></item></channel></rss>

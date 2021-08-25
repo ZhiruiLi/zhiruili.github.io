@@ -150,17 +150,33 @@
 <p>块的一个关键优势是它们可以使用它们自己的词法作用域（lexical scope）外部的变量。当你在一个函数或方法中定义一个块的时候，这个块将以某种形式充当传统的代码块。例如，一个块可以读取定义于其父作用域中的变量的值。被块访问的变量被复制到堆上的块数据结构中，这使得它们能够在之后被块获取。当一个块被添加进一个分派队列中时，这些值通常被设置为只读的格式。但是，被同步执行的块也可以使用带有 <code>__block</code> 关键字的变量来将数据返回到父调用域（parent’s calling scope）中。</p>
 <p>你可以使用类似函数指针的语法来在你的代码中内联（inline）声明一个块。块和函数指针在语法上的主要区别在于块名前面是一个插入符（^），而函数指针名前面是一个星号（*）。类似于函数指针，你可以给一个块传入参数，并获取返回值。代码清单 1 展示了如何在你的代码中定义和同步执行一个块。变量 <code>aBlock</code> 被声明为一个接受一个整数参数并且不返回任何值的块。一个符合这个块原型（prototype）的实际块被内联声明并赋值给 <code>aBlock</code>。最后一行代码立即执行了这个块，向标准输出打印了指定的整数。</p>
 <p><strong>代码清单 1</strong>：块的一个简单例子</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c data-lang=c><span style=color:#66d9ef>int</span> x <span style=color:#f92672>=</span> <span style=color:#ae81ff>123</span>;
-<span style=color:#66d9ef>int</span> y <span style=color:#f92672>=</span> <span style=color:#ae81ff>456</span>;
+<div class=highlight><div style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4>
+<table style=border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block><tr><td style=vertical-align:top;padding:0;margin:0;border:0>
+<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 4
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 5
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 6
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 7
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 8
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 9
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">10
+</span></code></pre></td>
+<td style=vertical-align:top;padding:0;margin:0;border:0;width:100%>
+<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c data-lang=c><span style=color:#204a87;font-weight:700>int</span> <span style=color:#000>x</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#0000cf;font-weight:700>123</span><span style=color:#000;font-weight:700>;</span>
+<span style=color:#204a87;font-weight:700>int</span> <span style=color:#000>y</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#0000cf;font-weight:700>456</span><span style=color:#000;font-weight:700>;</span>
 
-<span style=color:#75715e>// Block declaration and assignment
-</span><span style=color:#75715e></span><span style=color:#66d9ef>void</span> (<span style=color:#f92672>^</span>aBlock)(<span style=color:#66d9ef>int</span>) <span style=color:#f92672>=</span> <span style=color:#f92672>^</span>(<span style=color:#66d9ef>int</span> z) {
-    printf(<span style=color:#e6db74>&#34;%d %d %d</span><span style=color:#ae81ff>\n</span><span style=color:#e6db74>&#34;</span>, x, y, z);
-};
+<span style=color:#8f5902;font-style:italic>// Block declaration and assignment
+</span><span style=color:#8f5902;font-style:italic></span><span style=color:#204a87;font-weight:700>void</span> <span style=color:#000;font-weight:700>(</span><span style=color:#ce5c00;font-weight:700>^</span><span style=color:#000>aBlock</span><span style=color:#000;font-weight:700>)(</span><span style=color:#204a87;font-weight:700>int</span><span style=color:#000;font-weight:700>)</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#ce5c00;font-weight:700>^</span><span style=color:#000;font-weight:700>(</span><span style=color:#204a87;font-weight:700>int</span> <span style=color:#000>z</span><span style=color:#000;font-weight:700>)</span> <span style=color:#000;font-weight:700>{</span>
+    <span style=color:#000>printf</span><span style=color:#000;font-weight:700>(</span><span style=color:#4e9a06>&#34;%d %d %d</span><span style=color:#4e9a06>\n</span><span style=color:#4e9a06>&#34;</span><span style=color:#000;font-weight:700>,</span> <span style=color:#000>x</span><span style=color:#000;font-weight:700>,</span> <span style=color:#000>y</span><span style=color:#000;font-weight:700>,</span> <span style=color:#000>z</span><span style=color:#000;font-weight:700>);</span>
+<span style=color:#000;font-weight:700>};</span>
 
-<span style=color:#75715e>// Execute the block
-</span><span style=color:#75715e></span>aBlock(<span style=color:#ae81ff>789</span>);   <span style=color:#75715e>// prints: 123 456 789
-</span></code></pre></div><p>下面总结了一些在设计你的块时你需要考虑的关键指导方针：</p>
+<span style=color:#8f5902;font-style:italic>// Execute the block
+</span><span style=color:#8f5902;font-style:italic></span><span style=color:#000>aBlock</span><span style=color:#000;font-weight:700>(</span><span style=color:#0000cf;font-weight:700>789</span><span style=color:#000;font-weight:700>);</span>   <span style=color:#8f5902;font-style:italic>// prints: 123 456 789
+</span></code></pre></td></tr></table>
+</div>
+</div><p>下面总结了一些在设计你的块时你需要考虑的关键指导方针：</p>
 <ul>
 <li>对于你计划使用分派队列进行异步处理的块，从父函数或方法捕获标量变量（scalar variables）并在块中使用它们是安全的。然而，你不应该尝试去捕获那些由调用环境（calling context）负责申请和删除的大型数据结构（large structures）或者其他基于指针的变量（pointer-based variables）。在你的块被执行的时候，指针所引用的内存可能会被释放掉。当然，如果你自己申请一块内存（或一个对象）并显式地将其所有权交给块，那么调用就是安全的了。</li>
 <li>分派队列会复制那些被添加进队列的块，并在块执行结束的时候释放它们。换句话说，你不需要在向队列添加块时显式复制这些块。</li>
@@ -174,8 +190,15 @@
 <h2 id=获取全局并发分派队列>获取全局并发分派队列</h2>
 <p>当你有多个可以并行（parallel）运行的任务时，并发分派队列就非常有用了。并发队列仍然是一个队列，所以其中的任务在出队时仍然遵守先进先出的顺序，然而，并发队列可能在任何先前的任务执行完毕之前就令更多的任务出队。在任一给定的时刻，实际被并发队列执行的任务数是一个变量，它可以动态地根据你的应用程序状态进行改变。许多因素都会影响并发队列同时执行的任务数量，包括可用的核心数量，其他进程正在完成的工作数以及其他串行分派队列的任务数和优先级。</p>
 <p>系统向每一个应用程序提供了四个并发分派队列。这些队列在单个应用程序内是全局共享的，它们之间的区别仅在于其优先级。由于它们是全局的，所以你不会去显式创建它们，而是通过 <a href=https://developer.apple.com/reference/dispatch/1452927-dispatch_get_global_queue><code>dispatch_get_global_queue</code></a> 来获取其中任意一个队列，如下面的代码所示：</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c data-lang=c>dispatch_queue_t aQueue <span style=color:#f92672>=</span> dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, <span style=color:#ae81ff>0</span>);
-</code></pre></div><p>除了获取默认的并发队列之外，你还可以通过分别将常量 <a href=https://developer.apple.com/reference/dispatch/dispatch_queue_priority_high><code>DISPATCH_QUEUE_PRIORITY_HIGH</code></a> 和 <a href=https://developer.apple.com/reference/dispatch/dispatch_queue_priority_low><code>DISPATCH_QUEUE_PRIORITY_LOW</code></a> 传入该函数来获取高优先级和低优先级的分派队列，或者你还可以通过传入 <a href=https://developer.apple.com/reference/dispatch/dispatch_queue_priority_background><code>DISPATCH_QUEUE_PRIORITY_BACKGROUND</code></a> 常量来获取一个后台分派队列。正如你可能预计的一样，高优先级并发队列中的任务在默认和低优先级队列中的任务之前被分派。类似地，默认的队列中的任务在低优先级队列中的任务之前被分派。</p>
+<div class=highlight><div style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4>
+<table style=border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block><tr><td style=vertical-align:top;padding:0;margin:0;border:0>
+<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span></code></pre></td>
+<td style=vertical-align:top;padding:0;margin:0;border:0;width:100%>
+<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c data-lang=c><span style=color:#000>dispatch_queue_t</span> <span style=color:#000>aQueue</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>dispatch_get_global_queue</span><span style=color:#000;font-weight:700>(</span><span style=color:#000>DISPATCH_QUEUE_PRIORITY_DEFAULT</span><span style=color:#000;font-weight:700>,</span> <span style=color:#0000cf;font-weight:700>0</span><span style=color:#000;font-weight:700>);</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>除了获取默认的并发队列之外，你还可以通过分别将常量 <a href=https://developer.apple.com/reference/dispatch/dispatch_queue_priority_high><code>DISPATCH_QUEUE_PRIORITY_HIGH</code></a> 和 <a href=https://developer.apple.com/reference/dispatch/dispatch_queue_priority_low><code>DISPATCH_QUEUE_PRIORITY_LOW</code></a> 传入该函数来获取高优先级和低优先级的分派队列，或者你还可以通过传入 <a href=https://developer.apple.com/reference/dispatch/dispatch_queue_priority_background><code>DISPATCH_QUEUE_PRIORITY_BACKGROUND</code></a> 常量来获取一个后台分派队列。正如你可能预计的一样，高优先级并发队列中的任务在默认和低优先级队列中的任务之前被分派。类似地，默认的队列中的任务在低优先级队列中的任务之前被分派。</p>
 <blockquote>
 <p><strong>注意</strong>：<code>dispatch_get_global_queue</code> 函数的第二个参数被保留作未来的扩展使用，你应该永远给该参数传递 <code>0</code>。</p>
 </blockquote>
@@ -185,9 +208,17 @@
 <p>并发队列被系统创建好供你使用，而串行队列则需要你自己去显式地创建和管理。你可以为你的应用程序创建任意数量的串行队列，但你应该避免完全为了尽可能多地同时执行任务而创建大量的串行队列。如果你希望并发地执行大量的任务，那你应该将它们提交到一个全局的并发队列中。当创建串行队列的时候，你应该试着去将每一个队列与一个特定的目的联系起来，例如保护一个资源或是同步一些你的应用程序的关键行为。</p>
 <p>代码清单 2 展示了创建一个串行队列所需要的步骤。<a href=https://developer.apple.com/reference/dispatch/1453030-dispatch_queue_create><code>dispatch_queue_create</code></a> 函数有两个参数：一个是队列的名称，另一个是队列的一组属性。调试器和性能工具会显示队列的名称来帮你跟踪你的任务是如何被执行的。队列的属性被保留作未来的扩展使用，它应该永远被设置为 <code>NULL</code>。</p>
 <p><strong>代码清单 2</strong>：创建一个新的串行队列</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c data-lang=c>dispatch_queue_t queue;
-queue <span style=color:#f92672>=</span> dispatch_queue_create(<span style=color:#e6db74>&#34;com.example.MyQueue&#34;</span>, NULL);
-</code></pre></div><p>除了你创建的串行队列之外，系统还自动创建了一个串行队列并将其绑定在你的应用程序的主线程上。参看「在运行时获取公用分派队列」一节以获取更多有关获取主线程队列的信息。</p>
+<div class=highlight><div style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4>
+<table style=border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block><tr><td style=vertical-align:top;padding:0;margin:0;border:0>
+<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span></code></pre></td>
+<td style=vertical-align:top;padding:0;margin:0;border:0;width:100%>
+<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c data-lang=c><span style=color:#000>dispatch_queue_t</span> <span style=color:#000>queue</span><span style=color:#000;font-weight:700>;</span>
+<span style=color:#000>queue</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>dispatch_queue_create</span><span style=color:#000;font-weight:700>(</span><span style=color:#4e9a06>&#34;com.example.MyQueue&#34;</span><span style=color:#000;font-weight:700>,</span> <span style=color:#204a87>NULL</span><span style=color:#000;font-weight:700>);</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>除了你创建的串行队列之外，系统还自动创建了一个串行队列并将其绑定在你的应用程序的主线程上。参看「在运行时获取公用分派队列」一节以获取更多有关获取主线程队列的信息。</p>
 <h2 id=在运行时获取公用分派队列>在运行时获取公用分派队列</h2>
 <p>GCD 为你提供了一些函数来让你在应用程序中获取几个公用分派队列：</p>
 <ul>
@@ -209,30 +240,59 @@ queue <span style=color:#f92672>=</span> dispatch_queue_create(<span style=color
 <p>在你创建一个串行分派队列之后，你可以给它附上一个终止器函数，以便于在分派队列被释放时完成你自定义的清理工作。分派队列是引用计数的对象，你可以使用 <a href=https://developer.apple.com/reference/dispatch/1453100-dispatch_set_finalizer_f><code>dispatch_set_finalizer_f</code></a> 函数来指定一个当你的队列的引用计数变为零的时候执行的函数。该函数被用来清理与队列相关联的上下文数据，而且仅当上下文指针不为 <code>NULL</code> 时，该函数才会被调用。</p>
 <p>代码清单 3 展示了一个自定义的终止器函数以及一个用于创建分派队列并给分派队列装配该终止器函数的函数。该分派队列使用该终止器函数来释放存储于队列上下文指针中的数据。（代码中所使用的 <code>myInitializeDataContextFunction</code> 和 <code>myCleanUpDataContextFunction</code> 两个函数是你可能会提供的用于初始化和清理该数据结构本身内容的函数。）被传入终止器的上下文指针包含了与分派队列相关联的数据。</p>
 <p><strong>代码清单 3</strong>：给一个分派队列装配清理函数</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c data-lang=c><span style=color:#66d9ef>void</span> <span style=color:#a6e22e>myFinalizerFunction</span>(<span style=color:#66d9ef>void</span> <span style=color:#f92672>*</span>context)
-{
-    MyDataContext<span style=color:#f92672>*</span> theData <span style=color:#f92672>=</span> (MyDataContext<span style=color:#f92672>*</span>)context;
+<div class=highlight><div style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4>
+<table style=border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block><tr><td style=vertical-align:top;padding:0;margin:0;border:0>
+<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 4
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 5
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 6
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 7
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 8
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 9
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">10
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">11
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">12
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">13
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">14
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">15
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">16
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">17
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">18
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">19
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">20
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">21
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">22
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">23
+</span></code></pre></td>
+<td style=vertical-align:top;padding:0;margin:0;border:0;width:100%>
+<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c data-lang=c><span style=color:#204a87;font-weight:700>void</span> <span style=color:#000>myFinalizerFunction</span><span style=color:#000;font-weight:700>(</span><span style=color:#204a87;font-weight:700>void</span> <span style=color:#ce5c00;font-weight:700>*</span><span style=color:#000>context</span><span style=color:#000;font-weight:700>)</span>
+<span style=color:#000;font-weight:700>{</span>
+    <span style=color:#000>MyDataContext</span><span style=color:#ce5c00;font-weight:700>*</span> <span style=color:#000>theData</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000;font-weight:700>(</span><span style=color:#000>MyDataContext</span><span style=color:#ce5c00;font-weight:700>*</span><span style=color:#000;font-weight:700>)</span><span style=color:#000>context</span><span style=color:#000;font-weight:700>;</span>
 
-    <span style=color:#75715e>// Clean up the contents of the structure
-</span><span style=color:#75715e></span>    myCleanUpDataContextFunction(theData);
+    <span style=color:#8f5902;font-style:italic>// Clean up the contents of the structure
+</span><span style=color:#8f5902;font-style:italic></span>    <span style=color:#000>myCleanUpDataContextFunction</span><span style=color:#000;font-weight:700>(</span><span style=color:#000>theData</span><span style=color:#000;font-weight:700>);</span>
 
-    <span style=color:#75715e>// Now release the structure itself.
-</span><span style=color:#75715e></span>    free(theData);
-}
+    <span style=color:#8f5902;font-style:italic>// Now release the structure itself.
+</span><span style=color:#8f5902;font-style:italic></span>    <span style=color:#000>free</span><span style=color:#000;font-weight:700>(</span><span style=color:#000>theData</span><span style=color:#000;font-weight:700>);</span>
+<span style=color:#000;font-weight:700>}</span>
 
-dispatch_queue_t <span style=color:#a6e22e>createMyQueue</span>()
-{
-    MyDataContext<span style=color:#f92672>*</span>  data <span style=color:#f92672>=</span> (MyDataContext<span style=color:#f92672>*</span>) malloc(<span style=color:#66d9ef>sizeof</span>(MyDataContext));
-    myInitializeDataContextFunction(data);
+<span style=color:#000>dispatch_queue_t</span> <span style=color:#000>createMyQueue</span><span style=color:#000;font-weight:700>()</span>
+<span style=color:#000;font-weight:700>{</span>
+    <span style=color:#000>MyDataContext</span><span style=color:#ce5c00;font-weight:700>*</span>  <span style=color:#000>data</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000;font-weight:700>(</span><span style=color:#000>MyDataContext</span><span style=color:#ce5c00;font-weight:700>*</span><span style=color:#000;font-weight:700>)</span> <span style=color:#000>malloc</span><span style=color:#000;font-weight:700>(</span><span style=color:#204a87;font-weight:700>sizeof</span><span style=color:#000;font-weight:700>(</span><span style=color:#000>MyDataContext</span><span style=color:#000;font-weight:700>));</span>
+    <span style=color:#000>myInitializeDataContextFunction</span><span style=color:#000;font-weight:700>(</span><span style=color:#000>data</span><span style=color:#000;font-weight:700>);</span>
 
-    <span style=color:#75715e>// Create the queue and set the context data.
-</span><span style=color:#75715e></span>    dispatch_queue_t serialQueue <span style=color:#f92672>=</span> dispatch_queue_create(<span style=color:#e6db74>&#34;com.example.CriticalTaskQueue&#34;</span>, NULL);
-    dispatch_set_context(serialQueue, data);
-    dispatch_set_finalizer_f(serialQueue, <span style=color:#f92672>&amp;</span>myFinalizerFunction);
+    <span style=color:#8f5902;font-style:italic>// Create the queue and set the context data.
+</span><span style=color:#8f5902;font-style:italic></span>    <span style=color:#000>dispatch_queue_t</span> <span style=color:#000>serialQueue</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>dispatch_queue_create</span><span style=color:#000;font-weight:700>(</span><span style=color:#4e9a06>&#34;com.example.CriticalTaskQueue&#34;</span><span style=color:#000;font-weight:700>,</span> <span style=color:#204a87>NULL</span><span style=color:#000;font-weight:700>);</span>
+    <span style=color:#000>dispatch_set_context</span><span style=color:#000;font-weight:700>(</span><span style=color:#000>serialQueue</span><span style=color:#000;font-weight:700>,</span> <span style=color:#000>data</span><span style=color:#000;font-weight:700>);</span>
+    <span style=color:#000>dispatch_set_finalizer_f</span><span style=color:#000;font-weight:700>(</span><span style=color:#000>serialQueue</span><span style=color:#000;font-weight:700>,</span> <span style=color:#ce5c00;font-weight:700>&amp;</span><span style=color:#000>myFinalizerFunction</span><span style=color:#000;font-weight:700>);</span>
 
-    <span style=color:#66d9ef>return</span> serialQueue;
-}
-</code></pre></div><h1 id=向分派队列添加任务>向分派队列添加任务</h1>
+    <span style=color:#204a87;font-weight:700>return</span> <span style=color:#000>serialQueue</span><span style=color:#000;font-weight:700>;</span>
+<span style=color:#000;font-weight:700>}</span>
+</code></pre></td></tr></table>
+</div>
+</div><h1 id=向分派队列添加任务>向分派队列添加任务</h1>
 <p>你需要将一个任务分派给一个合适的分派队列来执行该任务。你可以同步或异步地、单个或成组地将任务分派给分派队列。一旦一个任务进入了分派队列，该队列就将负责尽快地执行你的任务，该过程会受到当前环境的约束以及已存在于队列中的任务的影响。这一节将向你展示一些关于将任务分派给分派队列的技术并将向你阐述它们的优点。</p>
 <h2 id=向分派队列添加单个任务>向分派队列添加单个任务</h2>
 <p>有两种方式可以向分派队列添加任务：异步或同步。如果可能的话，使用 <a href=https://developer.apple.com/reference/dispatch/1453057-dispatch_async><code>dispatch_async</code></a> 和 <a href=https://developer.apple.com/reference/dispatch/1452834-dispatch_async_f><code>dispatch_async_f</code></a> 两个函数来异步地执行任务会比使用同步的方式更好。当你向一个分派队列中添加一个块对象或是一个函数时，你是无法知道你添加的代码什么时候会被执行的。因此，异步地添加块或函数使得你可以调度（schedule）一段代码的执行并调用线程里继续其他工作。当你需要在你的应用程序的主线程中调度一个任务的时候——或许是响应一些用户事件，这显得尤为重要。</p>
@@ -241,48 +301,100 @@ dispatch_queue_t <span style=color:#a6e22e>createMyQueue</span>()
 <p><strong>重要</strong>：永远不要在一个任务中调用 <code>dispatch_sync</code> 和 <code>dispatch_sync_f</code> 向该任务所属的队列添加新的任务。这对于串行队列来说尤为重要，这一定会导致死锁，而且你也应该避免对并发队列做这件事。</p>
 </blockquote>
 <p>下面的例子展示了如何分别使用同步和异步的方式基于块来派发任务：</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c data-lang=c>dispatch_queue_t myCustomQueue;
-myCustomQueue <span style=color:#f92672>=</span> dispatch_queue_create(<span style=color:#e6db74>&#34;com.example.MyCustomQueue&#34;</span>, NULL);
+<div class=highlight><div style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4>
+<table style=border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block><tr><td style=vertical-align:top;padding:0;margin:0;border:0>
+<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 4
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 5
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 6
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 7
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 8
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 9
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">10
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">11
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">12
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">13
+</span></code></pre></td>
+<td style=vertical-align:top;padding:0;margin:0;border:0;width:100%>
+<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c data-lang=c><span style=color:#000>dispatch_queue_t</span> <span style=color:#000>myCustomQueue</span><span style=color:#000;font-weight:700>;</span>
+<span style=color:#000>myCustomQueue</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>dispatch_queue_create</span><span style=color:#000;font-weight:700>(</span><span style=color:#4e9a06>&#34;com.example.MyCustomQueue&#34;</span><span style=color:#000;font-weight:700>,</span> <span style=color:#204a87>NULL</span><span style=color:#000;font-weight:700>);</span>
  
-dispatch_async(myCustomQueue, <span style=color:#f92672>^</span>{
-    printf(<span style=color:#e6db74>&#34;Do some work here.</span><span style=color:#ae81ff>\n</span><span style=color:#e6db74>&#34;</span>);
-});
+<span style=color:#000>dispatch_async</span><span style=color:#000;font-weight:700>(</span><span style=color:#000>myCustomQueue</span><span style=color:#000;font-weight:700>,</span> <span style=color:#ce5c00;font-weight:700>^</span><span style=color:#000;font-weight:700>{</span>
+    <span style=color:#000>printf</span><span style=color:#000;font-weight:700>(</span><span style=color:#4e9a06>&#34;Do some work here.</span><span style=color:#4e9a06>\n</span><span style=color:#4e9a06>&#34;</span><span style=color:#000;font-weight:700>);</span>
+<span style=color:#000;font-weight:700>});</span>
  
-printf(<span style=color:#e6db74>&#34;The first block may or may not have run.</span><span style=color:#ae81ff>\n</span><span style=color:#e6db74>&#34;</span>);
+<span style=color:#000>printf</span><span style=color:#000;font-weight:700>(</span><span style=color:#4e9a06>&#34;The first block may or may not have run.</span><span style=color:#4e9a06>\n</span><span style=color:#4e9a06>&#34;</span><span style=color:#000;font-weight:700>);</span>
  
-dispatch_sync(myCustomQueue, <span style=color:#f92672>^</span>{
-    printf(<span style=color:#e6db74>&#34;Do some more work here.</span><span style=color:#ae81ff>\n</span><span style=color:#e6db74>&#34;</span>);
-});
-printf(<span style=color:#e6db74>&#34;Both blocks have completed.</span><span style=color:#ae81ff>\n</span><span style=color:#e6db74>&#34;</span>);
-</code></pre></div><h2 id=当任务完成时执行一个完成块>当任务完成时执行一个完成块</h2>
+<span style=color:#000>dispatch_sync</span><span style=color:#000;font-weight:700>(</span><span style=color:#000>myCustomQueue</span><span style=color:#000;font-weight:700>,</span> <span style=color:#ce5c00;font-weight:700>^</span><span style=color:#000;font-weight:700>{</span>
+    <span style=color:#000>printf</span><span style=color:#000;font-weight:700>(</span><span style=color:#4e9a06>&#34;Do some more work here.</span><span style=color:#4e9a06>\n</span><span style=color:#4e9a06>&#34;</span><span style=color:#000;font-weight:700>);</span>
+<span style=color:#000;font-weight:700>});</span>
+<span style=color:#000>printf</span><span style=color:#000;font-weight:700>(</span><span style=color:#4e9a06>&#34;Both blocks have completed.</span><span style=color:#4e9a06>\n</span><span style=color:#4e9a06>&#34;</span><span style=color:#000;font-weight:700>);</span>
+</code></pre></td></tr></table>
+</div>
+</div><h2 id=当任务完成时执行一个完成块>当任务完成时执行一个完成块</h2>
 <p>分派到队列的任务天生就独立于创建它们的代码来运行。然而，你的应用程序仍可能希望当任务结束的时候获得一个通知，以便于它获取任务执行的结果。在传统的异步编程中你可能会使用回调机制来做这件事，而对于派发队列，你可以使用完成块（completion block）。</p>
 <p>一个完成块只不过是另一段你分派给一个队列并添加到原始任务结束处的代码。典型的做法是调用代码在开始一个任务的时候以参数的形式提供一个完成块。所有的任务代码都需要在它完成其工作的时候向指定的分派队列提交指定的块或函数。</p>
 <p>代码清单 4 展示了一个用块实现的求平均数的函数。这个求平均数的函数的最后两个参数允许调用者指定一个分派队列和一个块用于回报结果。在这个求平均数的函数计算出其结果之后，它将把结果传递给指定的块，并将其分派到指定的队列中。为了防止分派队列被过早地释放，你应该在一开始先保持该队列并在完成块被分派出去后释放该队列。</p>
 <p><strong>代码清单 4</strong>：在一个任务结束之后执行一个完成回调</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c data-lang=c><span style=color:#66d9ef>void</span> <span style=color:#a6e22e>average_async</span>(<span style=color:#66d9ef>int</span> <span style=color:#f92672>*</span>data, size_t len,
-   dispatch_queue_t queue, <span style=color:#66d9ef>void</span> (<span style=color:#f92672>^</span>block)(<span style=color:#66d9ef>int</span>))
-{
-   <span style=color:#75715e>// Retain the queue provided by the user to make
-</span><span style=color:#75715e></span>   <span style=color:#75715e>// sure it does not disappear before the completion
-</span><span style=color:#75715e></span>   <span style=color:#75715e>// block can be called.
-</span><span style=color:#75715e></span>   dispatch_retain(queue);
+<div class=highlight><div style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4>
+<table style=border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block><tr><td style=vertical-align:top;padding:0;margin:0;border:0>
+<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 4
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 5
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 6
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 7
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 8
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 9
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">10
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">11
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">12
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">13
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">14
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">15
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">16
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">17
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">18
+</span></code></pre></td>
+<td style=vertical-align:top;padding:0;margin:0;border:0;width:100%>
+<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c data-lang=c><span style=color:#204a87;font-weight:700>void</span> <span style=color:#000>average_async</span><span style=color:#000;font-weight:700>(</span><span style=color:#204a87;font-weight:700>int</span> <span style=color:#ce5c00;font-weight:700>*</span><span style=color:#000>data</span><span style=color:#000;font-weight:700>,</span> <span style=color:#000>size_t</span> <span style=color:#000>len</span><span style=color:#000;font-weight:700>,</span>
+   <span style=color:#000>dispatch_queue_t</span> <span style=color:#000>queue</span><span style=color:#000;font-weight:700>,</span> <span style=color:#204a87;font-weight:700>void</span> <span style=color:#000;font-weight:700>(</span><span style=color:#ce5c00;font-weight:700>^</span><span style=color:#000>block</span><span style=color:#000;font-weight:700>)(</span><span style=color:#204a87;font-weight:700>int</span><span style=color:#000;font-weight:700>))</span>
+<span style=color:#000;font-weight:700>{</span>
+   <span style=color:#8f5902;font-style:italic>// Retain the queue provided by the user to make
+</span><span style=color:#8f5902;font-style:italic></span>   <span style=color:#8f5902;font-style:italic>// sure it does not disappear before the completion
+</span><span style=color:#8f5902;font-style:italic></span>   <span style=color:#8f5902;font-style:italic>// block can be called.
+</span><span style=color:#8f5902;font-style:italic></span>   <span style=color:#000>dispatch_retain</span><span style=color:#000;font-weight:700>(</span><span style=color:#000>queue</span><span style=color:#000;font-weight:700>);</span>
  
-   <span style=color:#75715e>// Do the work on the default concurrent queue and then
-</span><span style=color:#75715e></span>   <span style=color:#75715e>// call the user-provided block with the results.
-</span><span style=color:#75715e></span>   dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, <span style=color:#ae81ff>0</span>), <span style=color:#f92672>^</span>{
-      <span style=color:#66d9ef>int</span> avg <span style=color:#f92672>=</span> average(data, len);
-      dispatch_async(queue, <span style=color:#f92672>^</span>{ block(avg);});
+   <span style=color:#8f5902;font-style:italic>// Do the work on the default concurrent queue and then
+</span><span style=color:#8f5902;font-style:italic></span>   <span style=color:#8f5902;font-style:italic>// call the user-provided block with the results.
+</span><span style=color:#8f5902;font-style:italic></span>   <span style=color:#000>dispatch_async</span><span style=color:#000;font-weight:700>(</span><span style=color:#000>dispatch_get_global_queue</span><span style=color:#000;font-weight:700>(</span><span style=color:#000>DISPATCH_QUEUE_PRIORITY_DEFAULT</span><span style=color:#000;font-weight:700>,</span> <span style=color:#0000cf;font-weight:700>0</span><span style=color:#000;font-weight:700>),</span> <span style=color:#ce5c00;font-weight:700>^</span><span style=color:#000;font-weight:700>{</span>
+      <span style=color:#204a87;font-weight:700>int</span> <span style=color:#000>avg</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>average</span><span style=color:#000;font-weight:700>(</span><span style=color:#000>data</span><span style=color:#000;font-weight:700>,</span> <span style=color:#000>len</span><span style=color:#000;font-weight:700>);</span>
+      <span style=color:#000>dispatch_async</span><span style=color:#000;font-weight:700>(</span><span style=color:#000>queue</span><span style=color:#000;font-weight:700>,</span> <span style=color:#ce5c00;font-weight:700>^</span><span style=color:#000;font-weight:700>{</span> <span style=color:#000>block</span><span style=color:#000;font-weight:700>(</span><span style=color:#000>avg</span><span style=color:#000;font-weight:700>);});</span>
  
-      <span style=color:#75715e>// Release the user-provided queue when done
-</span><span style=color:#75715e></span>      dispatch_release(queue);
-   });
-}
-</code></pre></div><h2 id=并发处理循环迭代>并发处理循环迭代</h2>
+      <span style=color:#8f5902;font-style:italic>// Release the user-provided queue when done
+</span><span style=color:#8f5902;font-style:italic></span>      <span style=color:#000>dispatch_release</span><span style=color:#000;font-weight:700>(</span><span style=color:#000>queue</span><span style=color:#000;font-weight:700>);</span>
+   <span style=color:#000;font-weight:700>});</span>
+<span style=color:#000;font-weight:700>}</span>
+</code></pre></td></tr></table>
+</div>
+</div><h2 id=并发处理循环迭代>并发处理循环迭代</h2>
 <p>一个可能可以通过使用并发分派队列来提升性能的地方是你需要处理有固定迭代次数的循环的时候。例如，假设你有一个 <code>for</code> 循环在每次迭代的时候都做一些工作：</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c data-lang=c><span style=color:#66d9ef>for</span> (i <span style=color:#f92672>=</span> <span style=color:#ae81ff>0</span>; i <span style=color:#f92672>&lt;</span> count; i<span style=color:#f92672>++</span>) {
-   printf(<span style=color:#e6db74>&#34;%u</span><span style=color:#ae81ff>\n</span><span style=color:#e6db74>&#34;</span>,i);
-}
-</code></pre></div><p>如果在每次迭代时处理的工作相对于其他迭代来说是独立的，而且循环的每一次迭代完成的顺序不重要的话，你可以将循环替换为调用 <a href=https://developer.apple.com/reference/dispatch/1453050-dispatch_apply><code>dispatch_apply</code></a> 或 <a href=https://developer.apple.com/reference/dispatch/1452846-dispatch_apply_f><code>dispatch_apply_f</code></a> 函数。这两个函数在每一次循环迭代的时候都将指定的块或函数提交到一个分派队列中。当任务被分派到一个并发队列的时候，就有可能使得多个循环迭代在同一时间进行处理。</p>
+<div class=highlight><div style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4>
+<table style=border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block><tr><td style=vertical-align:top;padding:0;margin:0;border:0>
+<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
+</span></code></pre></td>
+<td style=vertical-align:top;padding:0;margin:0;border:0;width:100%>
+<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c data-lang=c><span style=color:#204a87;font-weight:700>for</span> <span style=color:#000;font-weight:700>(</span><span style=color:#000>i</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#0000cf;font-weight:700>0</span><span style=color:#000;font-weight:700>;</span> <span style=color:#000>i</span> <span style=color:#ce5c00;font-weight:700>&lt;</span> <span style=color:#000>count</span><span style=color:#000;font-weight:700>;</span> <span style=color:#000>i</span><span style=color:#ce5c00;font-weight:700>++</span><span style=color:#000;font-weight:700>)</span> <span style=color:#000;font-weight:700>{</span>
+   <span style=color:#000>printf</span><span style=color:#000;font-weight:700>(</span><span style=color:#4e9a06>&#34;%u</span><span style=color:#4e9a06>\n</span><span style=color:#4e9a06>&#34;</span><span style=color:#000;font-weight:700>,</span><span style=color:#000>i</span><span style=color:#000;font-weight:700>);</span>
+<span style=color:#000;font-weight:700>}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>如果在每次迭代时处理的工作相对于其他迭代来说是独立的，而且循环的每一次迭代完成的顺序不重要的话，你可以将循环替换为调用 <a href=https://developer.apple.com/reference/dispatch/1453050-dispatch_apply><code>dispatch_apply</code></a> 或 <a href=https://developer.apple.com/reference/dispatch/1452846-dispatch_apply_f><code>dispatch_apply_f</code></a> 函数。这两个函数在每一次循环迭代的时候都将指定的块或函数提交到一个分派队列中。当任务被分派到一个并发队列的时候，就有可能使得多个循环迭代在同一时间进行处理。</p>
 <p>在调用 <code>dispatch_apply</code> 或 <code>dispatch_apply_f</code> 的时候，你可以指定使用的是串行还是并发的分派队列。将并发分派队列传入这两个函数将使你可以同时处理循环的多次迭代，这也是这两个函数最常见的使用方式。尽管你也可以在代码中使用串行分派队列并得到正确的结果，但这相较于直接使用循环来说并不能获得任何性能上的提升。</p>
 <blockquote>
 <p><strong>重要</strong>：就像通常的 <code>for</code> 循环一样，<code>dispatch_apply</code> 和 <code>dispatch_apply_f</code> 函数在所有的循环迭代结束之前并不会返回。所以当你需要在已经在队列的上下文中执行的代码里调用这两个函数的时候需要非常小心。如果你将正在执行当前代码的队列作为参数传入这两个函数而且这个队列又是串行队列的话，那该调用将造成队列的死锁。</p>
@@ -290,12 +402,23 @@ printf(<span style=color:#e6db74>&#34;Both blocks have completed.</span><span st
 </blockquote>
 <p>代码清单 5 展示了如何将之前的 <code>for</code> 循环代码替换为使用 <code>dispatch_apply</code> 的代码。你传入 <code>diapatch_apply</code> 函数的块必须能接收一个参数用以识别当前的循环。当这个块被执行的时候，对于第一次迭代，该参数的值会为 <code>0</code>，对于第二次迭代，该参数的值会为 <code>1</code>，以此类推。对于最后一次迭代，该参数的值会为 <code>count - 1</code>，其中，<code>count</code> 是迭代的总次数。</p>
 <p><strong>代码清单 5</strong>：并发地处理 <code>for</code> 循环的迭代</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c data-lang=c>dispatch_queue_t queue <span style=color:#f92672>=</span> dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, <span style=color:#ae81ff>0</span>);
+<div class=highlight><div style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4>
+<table style=border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block><tr><td style=vertical-align:top;padding:0;margin:0;border:0>
+<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">4
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">5
+</span></code></pre></td>
+<td style=vertical-align:top;padding:0;margin:0;border:0;width:100%>
+<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c data-lang=c><span style=color:#000>dispatch_queue_t</span> <span style=color:#000>queue</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>dispatch_get_global_queue</span><span style=color:#000;font-weight:700>(</span><span style=color:#000>DISPATCH_QUEUE_PRIORITY_DEFAULT</span><span style=color:#000;font-weight:700>,</span> <span style=color:#0000cf;font-weight:700>0</span><span style=color:#000;font-weight:700>);</span>
  
-dispatch_apply(count, queue, <span style=color:#f92672>^</span>(size_t i) {
-   printf(<span style=color:#e6db74>&#34;%u</span><span style=color:#ae81ff>\n</span><span style=color:#e6db74>&#34;</span>,i);
-});
-</code></pre></div><p>你应该确保你的任务代码在每次迭代中都做了合理数量的任务，因为你派发到队列的每一个块或函数都会造成调度执行它们的代码的开销。如果你的循环中每一次迭代都只处理了很少量的任务，那么调度代码所造成的开销可能将超过你将其分派到队列来执行所得到的性能提升。如果你在测试中发现上述情况属实，那么你可以考虑以加大步长的方式增加循环的每一次迭代所处理的工作量。你可以将多次迭代合并到一个块里并加大步长，这将相应地减少迭代次数。例如，如果你本来要处理 100 次迭代，而你现在决定要将步长修改为 4，那么你现在就要在每一个块中处理循环中的 4 次迭代，同时，迭代的次数将变为 25。参看 <a href=https://developer.apple.com/library/content/documentation/General/Conceptual/ConcurrencyProgrammingGuide/ThreadMigration/ThreadMigration.html#//apple_ref/doc/uid/TP40008091-CH105-SW2>Improving on Loop Code</a> 以查看有关如何修改步长的例子。</p>
+<span style=color:#000>dispatch_apply</span><span style=color:#000;font-weight:700>(</span><span style=color:#000>count</span><span style=color:#000;font-weight:700>,</span> <span style=color:#000>queue</span><span style=color:#000;font-weight:700>,</span> <span style=color:#ce5c00;font-weight:700>^</span><span style=color:#000;font-weight:700>(</span><span style=color:#000>size_t</span> <span style=color:#000>i</span><span style=color:#000;font-weight:700>)</span> <span style=color:#000;font-weight:700>{</span>
+   <span style=color:#000>printf</span><span style=color:#000;font-weight:700>(</span><span style=color:#4e9a06>&#34;%u</span><span style=color:#4e9a06>\n</span><span style=color:#4e9a06>&#34;</span><span style=color:#000;font-weight:700>,</span><span style=color:#000>i</span><span style=color:#000;font-weight:700>);</span>
+<span style=color:#000;font-weight:700>});</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>你应该确保你的任务代码在每次迭代中都做了合理数量的任务，因为你派发到队列的每一个块或函数都会造成调度执行它们的代码的开销。如果你的循环中每一次迭代都只处理了很少量的任务，那么调度代码所造成的开销可能将超过你将其分派到队列来执行所得到的性能提升。如果你在测试中发现上述情况属实，那么你可以考虑以加大步长的方式增加循环的每一次迭代所处理的工作量。你可以将多次迭代合并到一个块里并加大步长，这将相应地减少迭代次数。例如，如果你本来要处理 100 次迭代，而你现在决定要将步长修改为 4，那么你现在就要在每一个块中处理循环中的 4 次迭代，同时，迭代的次数将变为 25。参看 <a href=https://developer.apple.com/library/content/documentation/General/Conceptual/ConcurrencyProgrammingGuide/ThreadMigration/ThreadMigration.html#//apple_ref/doc/uid/TP40008091-CH105-SW2>Improving on Loop Code</a> 以查看有关如何修改步长的例子。</p>
 <h2 id=在主线程处理任务>在主线程处理任务</h2>
 <p>GCD 提供了一个特殊的串行分派队列使得你可以在你的应用的主线程里执行任务。该队列由系统自动提供给每一个应用程序，而且所有在主线程上设置了运行循环（用 <a href=https://developer.apple.com/reference/corefoundation/cfrunloop><code>CFRunLoopRef</code></a> 类型或是 <a href=https://developer.apple.com/reference/foundation/nsrunloop><code>NSRunLoop</code></a> 对象进行管理）的应用程序都会自动声明该队列。如果你不是在创建一个 Cocoa 应用程序而且你也不想显式地创建一个运行循环，你就必须要调用 <a href=https://developer.apple.com/reference/dispatch/1452860-dispatchmain><code>dispatch_main</code></a> 函数来显式声明主分派队列。即使上述的条件不满足，你仍然可以向该队列中添加任务，但这些任务永远都不会被执行。</p>
 <p>你可以通过调用 <code>dispatch_get_main_queue</code> 函数来获取你的应用程序主线程的分派队列。被添加进该队列的任务将被串行地在主线程上处理。所以，你可以将该队列用作被你的应用程序中其他部分完成的工作的同步点。</p>
@@ -318,38 +441,76 @@ dispatch_apply(count, queue, <span style=color:#f92672>^</span>(size_t i) {
 <li>在你使用完该资源后，你就可以释放资源并调用 <a href=https://developer.apple.com/reference/dispatch/dispatchsemaphore/1452919-signal><code>dispatch_semaphore_signal</code></a> 函数来向信号量发出信号。</li>
 </ol>
 <p>举一个关于这几个步骤的例子，考虑使用系统的文件描述符的场景。每一个应用程序都只能使用有限个文件描述符。如果你有一个需要处理大量文件的任务，你不会想同时打开如此多的文件以至于文件描述符被耗尽。相反，你可以使用一个信号量来限制你的文件处理程序在任意时间点上同时占用的文件描述符的数量。下面的代码片段是你将会包含进你的任务中的基本代码：</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c data-lang=c><span style=color:#75715e>// Create the semaphore, specifying the initial pool size
-</span><span style=color:#75715e></span>dispatch_semaphore_t fd_sema <span style=color:#f92672>=</span> dispatch_semaphore_create(getdtablesize() <span style=color:#f92672>/</span> <span style=color:#ae81ff>2</span>);
+<div class=highlight><div style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4>
+<table style=border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block><tr><td style=vertical-align:top;padding:0;margin:0;border:0>
+<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 4
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 5
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 6
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 7
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 8
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 9
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">10
+</span></code></pre></td>
+<td style=vertical-align:top;padding:0;margin:0;border:0;width:100%>
+<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c data-lang=c><span style=color:#8f5902;font-style:italic>// Create the semaphore, specifying the initial pool size
+</span><span style=color:#8f5902;font-style:italic></span><span style=color:#000>dispatch_semaphore_t</span> <span style=color:#000>fd_sema</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>dispatch_semaphore_create</span><span style=color:#000;font-weight:700>(</span><span style=color:#000>getdtablesize</span><span style=color:#000;font-weight:700>()</span> <span style=color:#ce5c00;font-weight:700>/</span> <span style=color:#0000cf;font-weight:700>2</span><span style=color:#000;font-weight:700>);</span>
  
-<span style=color:#75715e>// Wait for a free file descriptor
-</span><span style=color:#75715e></span>dispatch_semaphore_wait(fd_sema, DISPATCH_TIME_FOREVER);
-fd <span style=color:#f92672>=</span> open(<span style=color:#e6db74>&#34;/etc/services&#34;</span>, O_RDONLY);
+<span style=color:#8f5902;font-style:italic>// Wait for a free file descriptor
+</span><span style=color:#8f5902;font-style:italic></span><span style=color:#000>dispatch_semaphore_wait</span><span style=color:#000;font-weight:700>(</span><span style=color:#000>fd_sema</span><span style=color:#000;font-weight:700>,</span> <span style=color:#000>DISPATCH_TIME_FOREVER</span><span style=color:#000;font-weight:700>);</span>
+<span style=color:#000>fd</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>open</span><span style=color:#000;font-weight:700>(</span><span style=color:#4e9a06>&#34;/etc/services&#34;</span><span style=color:#000;font-weight:700>,</span> <span style=color:#000>O_RDONLY</span><span style=color:#000;font-weight:700>);</span>
  
-<span style=color:#75715e>// Release the file descriptor when done
-</span><span style=color:#75715e></span>close(fd);
-dispatch_semaphore_signal(fd_sema);
-</code></pre></div><p>当你创建一个信号量的时候，你需要指定可用资源的数量。这个值将会作为信号量的初始计数值。每当你去等待一个信号量的时候，<code>dispatch_semaphore_wait</code> 函数会将该计数值减 1。如果减少后的结果是一个负数，那么该函数会通知内核将你的线程阻塞。另一方面，<code>dispatch_semaphore_signal</code> 函数将计数值增 1 以指示资源已经被释放。如果有任务正在阻塞等待一个资源，那么其中一个任务就会被解除阻塞并被允许进行其工作。</p>
+<span style=color:#8f5902;font-style:italic>// Release the file descriptor when done
+</span><span style=color:#8f5902;font-style:italic></span><span style=color:#000>close</span><span style=color:#000;font-weight:700>(</span><span style=color:#000>fd</span><span style=color:#000;font-weight:700>);</span>
+<span style=color:#000>dispatch_semaphore_signal</span><span style=color:#000;font-weight:700>(</span><span style=color:#000>fd_sema</span><span style=color:#000;font-weight:700>);</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>当你创建一个信号量的时候，你需要指定可用资源的数量。这个值将会作为信号量的初始计数值。每当你去等待一个信号量的时候，<code>dispatch_semaphore_wait</code> 函数会将该计数值减 1。如果减少后的结果是一个负数，那么该函数会通知内核将你的线程阻塞。另一方面，<code>dispatch_semaphore_signal</code> 函数将计数值增 1 以指示资源已经被释放。如果有任务正在阻塞等待一个资源，那么其中一个任务就会被解除阻塞并被允许进行其工作。</p>
 <h1 id=等待排队中的任务组>等待排队中的任务组</h1>
 <p>分派组是一个用于阻塞等待一个或多个任务执行结束的方法。当下一步的工作需要等待特定任务结束之后才能进行的时候你可以使用这一行为。例如，在分派了多个任务去计算一些数据之后，你可以使用一个组来等待这些任务，然后在它们都执行完毕后处理它们计算的结果。另一个使用分派组的场景是用它取代线程的连接（join）。你可以将多个任务加入一个分派组中并等待整个组的完成，而非开启多个子线程然后将当前线程与每一个线程进行连接。</p>
 <p>代码清单 6 展示了设置分派组，向其分派任务以及等待其结果的基本过程。在向队列分派任务时，你不应该使用 <a href=https://developer.apple.com/reference/dispatch/1453057-dispatch_async><code>dispatch_async</code></a> 函数而应该使用 <a href=https://developer.apple.com/reference/dispatch/1453084-dispatch_group_async><code>dispatch_group_async</code></a> 函数。这个函数将任务和一个组关联起来，并将其排队等待执行。在此之后，你可以通过调用 <a href=https://developer.apple.com/reference/dispatch/1452794-dispatch_group_wait><code>dispatch_group_wait</code></a> 函数并传入一个组来等待该组的任务的完成。</p>
 <p><strong>代码清单 6</strong>: 等待异步任务</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c data-lang=c>dispatch_queue_t queue <span style=color:#f92672>=</span> dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, <span style=color:#ae81ff>0</span>);
-dispatch_group_t group <span style=color:#f92672>=</span> dispatch_group_create();
+<div class=highlight><div style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4>
+<table style=border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block><tr><td style=vertical-align:top;padding:0;margin:0;border:0>
+<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 4
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 5
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 6
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 7
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 8
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 9
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">10
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">11
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">12
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">13
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">14
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">15
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">16
+</span></code></pre></td>
+<td style=vertical-align:top;padding:0;margin:0;border:0;width:100%>
+<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c data-lang=c><span style=color:#000>dispatch_queue_t</span> <span style=color:#000>queue</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>dispatch_get_global_queue</span><span style=color:#000;font-weight:700>(</span><span style=color:#000>DISPATCH_QUEUE_PRIORITY_DEFAULT</span><span style=color:#000;font-weight:700>,</span> <span style=color:#0000cf;font-weight:700>0</span><span style=color:#000;font-weight:700>);</span>
+<span style=color:#000>dispatch_group_t</span> <span style=color:#000>group</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>dispatch_group_create</span><span style=color:#000;font-weight:700>();</span>
  
-<span style=color:#75715e>// Add a task to the group
-</span><span style=color:#75715e></span>dispatch_group_async(group, queue, <span style=color:#f92672>^</span>{
-   <span style=color:#75715e>// Some asynchronous work
-</span><span style=color:#75715e></span>});
+<span style=color:#8f5902;font-style:italic>// Add a task to the group
+</span><span style=color:#8f5902;font-style:italic></span><span style=color:#000>dispatch_group_async</span><span style=color:#000;font-weight:700>(</span><span style=color:#000>group</span><span style=color:#000;font-weight:700>,</span> <span style=color:#000>queue</span><span style=color:#000;font-weight:700>,</span> <span style=color:#ce5c00;font-weight:700>^</span><span style=color:#000;font-weight:700>{</span>
+   <span style=color:#8f5902;font-style:italic>// Some asynchronous work
+</span><span style=color:#8f5902;font-style:italic></span><span style=color:#000;font-weight:700>});</span>
  
-<span style=color:#75715e>// Do some other work while the tasks execute.
-</span><span style=color:#75715e></span> 
-<span style=color:#75715e>// When you cannot make any more forward progress,
-</span><span style=color:#75715e>// wait on the group to block the current thread.
-</span><span style=color:#75715e></span>dispatch_group_wait(group, DISPATCH_TIME_FOREVER);
+<span style=color:#8f5902;font-style:italic>// Do some other work while the tasks execute.
+</span><span style=color:#8f5902;font-style:italic></span> 
+<span style=color:#8f5902;font-style:italic>// When you cannot make any more forward progress,
+</span><span style=color:#8f5902;font-style:italic>// wait on the group to block the current thread.
+</span><span style=color:#8f5902;font-style:italic></span><span style=color:#000>dispatch_group_wait</span><span style=color:#000;font-weight:700>(</span><span style=color:#000>group</span><span style=color:#000;font-weight:700>,</span> <span style=color:#000>DISPATCH_TIME_FOREVER</span><span style=color:#000;font-weight:700>);</span>
  
-<span style=color:#75715e>// Release the group when it is no longer needed.
-</span><span style=color:#75715e></span>dispatch_release(group);
-</code></pre></div><h1 id=分派队列和线程安全>分派队列和线程安全</h1>
+<span style=color:#8f5902;font-style:italic>// Release the group when it is no longer needed.
+</span><span style=color:#8f5902;font-style:italic></span><span style=color:#000>dispatch_release</span><span style=color:#000;font-weight:700>(</span><span style=color:#000>group</span><span style=color:#000;font-weight:700>);</span>
+</code></pre></td></tr></table>
+</div>
+</div><h1 id=分派队列和线程安全>分派队列和线程安全</h1>
 <p>也许在使用分派队列的场景下讨论线程安全看起来很奇怪，但线程安全仍然是一个与之相关的话题。当你想在你的应用中实现并发的时候，你应该知道以下事情：</p>
 <ul>
 <li>分派队列本身是线程安全的。换句话说，你可以从任何线程向分派队列提交任务而无需事先获取一个锁或是同步访问该队列。</li>

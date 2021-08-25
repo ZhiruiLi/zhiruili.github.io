@@ -177,34 +177,78 @@
 </ul>
 <h3 id=使用-valueanimator-实现动画>使用 <code>ValueAnimator</code> 实现动画</h3>
 <p><a href=https://developer.android.google.cn/reference/android/animation/ValueAnimator.html><code>ValueAnimator</code></a> 类使你可以将某类型的值动画化，并且可以指定动画时长。通过调用它的工厂方法：<a href=https://developer.android.google.cn/reference/android/animation/ValueAnimator.html#ofInt(int...)><code>ofInt()</code></a>、<a href=https://developer.android.google.cn/reference/android/animation/ValueAnimator.html#ofFloat(float...)><code>ofFloat()</code></a> 或是 <a href=https://developer.android.google.cn/reference/android/animation/ValueAnimator.html#ofObject(android.animation.TypeEvaluator,%20java.lang.Object...)><code>ofObject()</code></a> 来获取一个 <a href=https://developer.android.google.cn/reference/android/animation/ValueAnimator.html><code>ValueAnimator</code></a> 对象，例如：</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java>ValueAnimator animation <span style=color:#f92672>=</span> ValueAnimator<span style=color:#f92672>.</span><span style=color:#a6e22e>ofFloat</span><span style=color:#f92672>(</span>0f<span style=color:#f92672>,</span> 100f<span style=color:#f92672>);</span>
-animation<span style=color:#f92672>.</span><span style=color:#a6e22e>setDuration</span><span style=color:#f92672>(</span>1000<span style=color:#f92672>);</span>
-animation<span style=color:#f92672>.</span><span style=color:#a6e22e>start</span><span style=color:#f92672>();</span>
-</code></pre></div><p>在上面的代码里，当调用 <a href=https://developer.android.com/reference/android/animation/ValueAnimator.html#start()><code>start()</code></a> 之后，<a href=https://developer.android.google.cn/reference/android/animation/ValueAnimator.html><code>ValueAnimator</code></a> 就会开始在 100 ms 的持续时间内，从 0 到 100 计算动画的值，下面的代码演示了如何为自定义的类型的值实现动画：</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java>ValueAnimator animation <span style=color:#f92672>=</span> 
-  ValueAnimator<span style=color:#f92672>.</span><span style=color:#a6e22e>ofObject</span><span style=color:#f92672>(</span><span style=color:#66d9ef>new</span> MyTypeEvaluator<span style=color:#f92672>(),</span> startPropertyValue<span style=color:#f92672>,</span> endPropertyValue<span style=color:#f92672>);</span>
-animation<span style=color:#f92672>.</span><span style=color:#a6e22e>setDuration</span><span style=color:#f92672>(</span>1000<span style=color:#f92672>);</span>
-animation<span style=color:#f92672>.</span><span style=color:#a6e22e>start</span><span style=color:#f92672>();</span>
-</code></pre></div><p>在上面的代码里，当调用 <a href=https://developer.android.com/reference/android/animation/ValueAnimator.html#start()><code>start()</code></a> 之后，<a href=https://developer.android.google.cn/reference/android/animation/ValueAnimator.html><code>ValueAnimator</code></a> 就会开始在 100 ms 的持续时间内，用 <code>MyTypeEvaluator</code> 提供的逻辑从 <code>startPropertyValue</code> 到 <code>endPropertyValue</code> 计算属性值。</p>
+<div class=highlight><div style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4>
+<table style=border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block><tr><td style=vertical-align:top;padding:0;margin:0;border:0>
+<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
+</span></code></pre></td>
+<td style=vertical-align:top;padding:0;margin:0;border:0;width:100%>
+<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=color:#000>ValueAnimator</span> <span style=color:#000>animation</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>ValueAnimator</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>ofFloat</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>0f</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>100f</span><span style=color:#ce5c00;font-weight:700>);</span>
+<span style=color:#000>animation</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>setDuration</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>1000</span><span style=color:#ce5c00;font-weight:700>);</span>
+<span style=color:#000>animation</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>start</span><span style=color:#ce5c00;font-weight:700>();</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>在上面的代码里，当调用 <a href=https://developer.android.com/reference/android/animation/ValueAnimator.html#start()><code>start()</code></a> 之后，<a href=https://developer.android.google.cn/reference/android/animation/ValueAnimator.html><code>ValueAnimator</code></a> 就会开始在 100 ms 的持续时间内，从 0 到 100 计算动画的值，下面的代码演示了如何为自定义的类型的值实现动画：</p>
+<div class=highlight><div style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4>
+<table style=border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block><tr><td style=vertical-align:top;padding:0;margin:0;border:0>
+<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">4
+</span></code></pre></td>
+<td style=vertical-align:top;padding:0;margin:0;border:0;width:100%>
+<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=color:#000>ValueAnimator</span> <span style=color:#000>animation</span> <span style=color:#ce5c00;font-weight:700>=</span> 
+  <span style=color:#000>ValueAnimator</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>ofObject</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#204a87;font-weight:700>new</span> <span style=color:#000>MyTypeEvaluator</span><span style=color:#ce5c00;font-weight:700>(),</span> <span style=color:#000>startPropertyValue</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>endPropertyValue</span><span style=color:#ce5c00;font-weight:700>);</span>
+<span style=color:#000>animation</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>setDuration</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>1000</span><span style=color:#ce5c00;font-weight:700>);</span>
+<span style=color:#000>animation</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>start</span><span style=color:#ce5c00;font-weight:700>();</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>在上面的代码里，当调用 <a href=https://developer.android.com/reference/android/animation/ValueAnimator.html#start()><code>start()</code></a> 之后，<a href=https://developer.android.google.cn/reference/android/animation/ValueAnimator.html><code>ValueAnimator</code></a> 就会开始在 100 ms 的持续时间内，用 <code>MyTypeEvaluator</code> 提供的逻辑从 <code>startPropertyValue</code> 到 <code>endPropertyValue</code> 计算属性值。</p>
 <p><a href=https://developer.android.google.cn/reference/android/animation/ValueAnimator.html><code>ValueAnimator</code></a> 计算的结果可以通过注册 <a href=https://developer.android.google.cn/reference/android/animation/ValueAnimator.AnimatorUpdateListener.html><code>AnimatorUpdateListener</code></a> 回调的方式来使用：</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java>animation<span style=color:#f92672>.</span><span style=color:#a6e22e>addUpdateListener</span><span style=color:#f92672>(</span><span style=color:#66d9ef>new</span> ValueAnimator<span style=color:#f92672>.</span><span style=color:#a6e22e>AnimatorUpdateListener</span><span style=color:#f92672>()</span> <span style=color:#f92672>{</span>
-  <span style=color:#a6e22e>@Override</span>
-  <span style=color:#66d9ef>public</span> <span style=color:#66d9ef>void</span> <span style=color:#a6e22e>onAnimationUpdate</span><span style=color:#f92672>(</span>ValueAnimator updatedAnimation<span style=color:#f92672>)</span> <span style=color:#f92672>{</span>
-    <span style=color:#75715e>// You can use the animated value in a property that uses the
-</span><span style=color:#75715e></span>    <span style=color:#75715e>// same type as the animation. In this case, you can use the
-</span><span style=color:#75715e></span>    <span style=color:#75715e>// float value in the translationX property.
-</span><span style=color:#75715e></span>    <span style=color:#66d9ef>float</span> animatedValue <span style=color:#f92672>=</span> <span style=color:#f92672>(</span><span style=color:#66d9ef>float</span><span style=color:#f92672>)</span>updatedAnimation<span style=color:#f92672>.</span><span style=color:#a6e22e>getAnimatedValue</span><span style=color:#f92672>();</span>
-    textView<span style=color:#f92672>.</span><span style=color:#a6e22e>setTranslationX</span><span style=color:#f92672>(</span>animatedValue<span style=color:#f92672>);</span>
-  <span style=color:#f92672>}</span>
-<span style=color:#f92672>});</span>
-</code></pre></div><p>在 <a href=https://developer.android.google.cn/reference/android/animation/ValueAnimator.AnimatorUpdateListener.html#onAnimationUpdate(android.animation.ValueAnimator)><code>onAnimationUpdate()</code></a> 方法里你可以获取到更新的动画值，然后将其应用到目标属性里。</p>
+<div class=highlight><div style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4>
+<table style=border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block><tr><td style=vertical-align:top;padding:0;margin:0;border:0>
+<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 4
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 5
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 6
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 7
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 8
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 9
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">10
+</span></code></pre></td>
+<td style=vertical-align:top;padding:0;margin:0;border:0;width:100%>
+<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=color:#000>animation</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>addUpdateListener</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#204a87;font-weight:700>new</span> <span style=color:#000>ValueAnimator</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>AnimatorUpdateListener</span><span style=color:#ce5c00;font-weight:700>()</span> <span style=color:#ce5c00;font-weight:700>{</span>
+  <span style=color:#5c35cc;font-weight:700>@Override</span>
+  <span style=color:#204a87;font-weight:700>public</span> <span style=color:#204a87;font-weight:700>void</span> <span style=color:#000>onAnimationUpdate</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>ValueAnimator</span> <span style=color:#000>updatedAnimation</span><span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#ce5c00;font-weight:700>{</span>
+    <span style=color:#8f5902;font-style:italic>// You can use the animated value in a property that uses the
+</span><span style=color:#8f5902;font-style:italic></span>    <span style=color:#8f5902;font-style:italic>// same type as the animation. In this case, you can use the
+</span><span style=color:#8f5902;font-style:italic></span>    <span style=color:#8f5902;font-style:italic>// float value in the translationX property.
+</span><span style=color:#8f5902;font-style:italic></span>    <span style=color:#204a87;font-weight:700>float</span> <span style=color:#000>animatedValue</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#ce5c00;font-weight:700>(</span><span style=color:#204a87;font-weight:700>float</span><span style=color:#ce5c00;font-weight:700>)</span><span style=color:#000>updatedAnimation</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>getAnimatedValue</span><span style=color:#ce5c00;font-weight:700>();</span>
+    <span style=color:#000>textView</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>setTranslationX</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>animatedValue</span><span style=color:#ce5c00;font-weight:700>);</span>
+  <span style=color:#ce5c00;font-weight:700>}</span>
+<span style=color:#ce5c00;font-weight:700>});</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>在 <a href=https://developer.android.google.cn/reference/android/animation/ValueAnimator.AnimatorUpdateListener.html#onAnimationUpdate(android.animation.ValueAnimator)><code>onAnimationUpdate()</code></a> 方法里你可以获取到更新的动画值，然后将其应用到目标属性里。</p>
 <h3 id=使用-objectanimator-实现动画>使用 <code>ObjectAnimator</code> 实现动画</h3>
 <p><a href=https://developer.android.google.cn/reference/android/animation/ObjectAnimator.html><code>ObjectAnimator</code></a> 是 <a href=https://developer.android.google.cn/reference/android/animation/ValueAnimator.html><code>ValueAnimator</code></a> 的子类，它整合了 <a href=https://developer.android.google.cn/reference/android/animation/ValueAnimator.html><code>ValueAnimator</code></a> 的功能与将目标对象的属性动画化的能力。这使得对任意对象的动画化更加容易，你不需要每次都去实现 <a href=https://developer.android.google.cn/reference/android/animation/ValueAnimator.AnimatorUpdateListener.html><code>ValueAnimator.AnimatorUpdateListener</code></a> 了，因为属性可以自动更新。</p>
 <p>初始化一个 <a href=https://developer.android.google.cn/reference/android/animation/ObjectAnimator.html><code>ObjectAnimator</code></a> 的方式和初始化 <a href=https://developer.android.google.cn/reference/android/animation/ValueAnimator.html><code>ValueAnimator</code></a> 的方式类似，但你也可以同时指定目标对象和对应属性的字符串：</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java>ObjectAnimator animation <span style=color:#f92672>=</span> ObjectAnimator<span style=color:#f92672>.</span><span style=color:#a6e22e>ofFloat</span><span style=color:#f92672>(</span>textView<span style=color:#f92672>,</span> <span style=color:#e6db74>&#34;translationX&#34;</span><span style=color:#f92672>,</span> 100f<span style=color:#f92672>);</span>
-animation<span style=color:#f92672>.</span><span style=color:#a6e22e>setDuration</span><span style=color:#f92672>(</span>1000<span style=color:#f92672>);</span>
-animation<span style=color:#f92672>.</span><span style=color:#a6e22e>start</span><span style=color:#f92672>();</span>
-</code></pre></div><p>为了使 <a href=https://developer.android.google.cn/reference/android/animation/ObjectAnimator.html><code>ObjectAnimator</code></a> 正确更新属性，代码必须满足如下要求：</p>
+<div class=highlight><div style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4>
+<table style=border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block><tr><td style=vertical-align:top;padding:0;margin:0;border:0>
+<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
+</span></code></pre></td>
+<td style=vertical-align:top;padding:0;margin:0;border:0;width:100%>
+<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=color:#000>ObjectAnimator</span> <span style=color:#000>animation</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>ObjectAnimator</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>ofFloat</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>textView</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#4e9a06>&#34;translationX&#34;</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>100f</span><span style=color:#ce5c00;font-weight:700>);</span>
+<span style=color:#000>animation</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>setDuration</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>1000</span><span style=color:#ce5c00;font-weight:700>);</span>
+<span style=color:#000>animation</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>start</span><span style=color:#ce5c00;font-weight:700>();</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>为了使 <a href=https://developer.android.google.cn/reference/android/animation/ObjectAnimator.html><code>ObjectAnimator</code></a> 正确更新属性，代码必须满足如下要求：</p>
 <ul>
 <li>
 <p>动画化的对象属性必须有一个 setter 函数（用驼峰法命名），形式为：<code>set&lt;PropertyName>()</code>。由于 <a href=https://developer.android.google.cn/reference/android/animation/ObjectAnimator.html><code>ObjectAnimator</code></a> 会自动更新属性，所以它必须要有访问这些 setter 方法的权限。例如，如果属性值是 <code>foo</code>，那么你需要一个 <code>setFoo()</code> 方法。如果这个 setter 方法不存在，你有以下几个解决方案：</p>
@@ -219,8 +263,15 @@ animation<span style=color:#f92672>.</span><span style=color:#a6e22e>start</span
 </li>
 <li>
 <p>属性的 getter 方法（如果需要的话）和 setter 方法所操作的值的类型必须要和初始值和最终值的类型相同。例如，如果你用了如下方式构建 <a href=https://developer.android.google.cn/reference/android/animation/ObjectAnimator.html><code>ObjectAnimator</code></a>：</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java>ObjectAnimator<span style=color:#f92672>.</span><span style=color:#a6e22e>ofFloat</span><span style=color:#f92672>(</span>targetObject<span style=color:#f92672>,</span> <span style=color:#e6db74>&#34;propName&#34;</span><span style=color:#f92672>,</span> 1f<span style=color:#f92672>)</span>
-</code></pre></div><p>那你就必须要提供 <code>targetObject.setPropName(float)</code> 和 <code>targetObject.setPropName(float)</code> 两个方法。</p>
+<div class=highlight><div style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4>
+<table style=border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block><tr><td style=vertical-align:top;padding:0;margin:0;border:0>
+<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span></code></pre></td>
+<td style=vertical-align:top;padding:0;margin:0;border:0;width:100%>
+<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=color:#000>ObjectAnimator</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>ofFloat</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>targetObject</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#4e9a06>&#34;propName&#34;</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>1f</span><span style=color:#ce5c00;font-weight:700>)</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>那你就必须要提供 <code>targetObject.setPropName(float)</code> 和 <code>targetObject.setPropName(float)</code> 两个方法。</p>
 </li>
 <li>
 <p>某些属性或者对象可能会要求你去对 <code>View</code> 对象调用 <a href=https://developer.android.google.cn/reference/android/view/View.html#invalidate()><code>invalidate()</code></a> 方法来强制屏幕去重绘以显示更新后的效果。你需要在 <a href=https://developer.android.google.cn/reference/android/animation/ValueAnimator.AnimatorUpdateListener.html#onAnimationUpdate(android.animation.ValueAnimator)><code>onAnimationUpdate()</code></a> 方法里完成这件事。例如，对一个 <code>Drawable</code> 对象的颜色进行动画化的时候，它的显示效果仅会在它重绘自己的时候产生变化。<code>View</code> 中的所有属性 setter 方法，例如 <a href=https://developer.android.google.cn/reference/android/view/View.html#setAlpha(float)><code>setAlpha()</code></a> 和 <a href=https://developer.android.google.cn/reference/android/view/View.html#setTranslationX(float)><code>setTranslationX()</code></a> 都会导致属性的失效（invalidate），所以你无须调用手动去调用 <a href=https://developer.android.google.cn/reference/android/view/View.html#invalidate()><code>invalidate()</code></a> 方法。</p>
@@ -235,18 +286,35 @@ animation<span style=color:#f92672>.</span><span style=color:#a6e22e>start</span
 <li>播放 <code>bounceBackAnim</code>。</li>
 <li>播放 <code>fadeAnim</code>。</li>
 </ol>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java>AnimatorSet bouncer <span style=color:#f92672>=</span> <span style=color:#66d9ef>new</span> AnimatorSet<span style=color:#f92672>();</span>
-bouncer<span style=color:#f92672>.</span><span style=color:#a6e22e>play</span><span style=color:#f92672>(</span>bounceAnim<span style=color:#f92672>).</span><span style=color:#a6e22e>before</span><span style=color:#f92672>(</span>squashAnim1<span style=color:#f92672>);</span>
-bouncer<span style=color:#f92672>.</span><span style=color:#a6e22e>play</span><span style=color:#f92672>(</span>squashAnim1<span style=color:#f92672>).</span><span style=color:#a6e22e>with</span><span style=color:#f92672>(</span>squashAnim2<span style=color:#f92672>);</span>
-bouncer<span style=color:#f92672>.</span><span style=color:#a6e22e>play</span><span style=color:#f92672>(</span>squashAnim1<span style=color:#f92672>).</span><span style=color:#a6e22e>with</span><span style=color:#f92672>(</span>stretchAnim1<span style=color:#f92672>);</span>
-bouncer<span style=color:#f92672>.</span><span style=color:#a6e22e>play</span><span style=color:#f92672>(</span>squashAnim1<span style=color:#f92672>).</span><span style=color:#a6e22e>with</span><span style=color:#f92672>(</span>stretchAnim2<span style=color:#f92672>);</span>
-bouncer<span style=color:#f92672>.</span><span style=color:#a6e22e>play</span><span style=color:#f92672>(</span>bounceBackAnim<span style=color:#f92672>).</span><span style=color:#a6e22e>after</span><span style=color:#f92672>(</span>stretchAnim2<span style=color:#f92672>);</span>
-ValueAnimator fadeAnim <span style=color:#f92672>=</span> ObjectAnimator<span style=color:#f92672>.</span><span style=color:#a6e22e>ofFloat</span><span style=color:#f92672>(</span>newBall<span style=color:#f92672>,</span> <span style=color:#e6db74>&#34;alpha&#34;</span><span style=color:#f92672>,</span> 1f<span style=color:#f92672>,</span> 0f<span style=color:#f92672>);</span>
-fadeAnim<span style=color:#f92672>.</span><span style=color:#a6e22e>setDuration</span><span style=color:#f92672>(</span>250<span style=color:#f92672>);</span>
-AnimatorSet animatorSet <span style=color:#f92672>=</span> <span style=color:#66d9ef>new</span> AnimatorSet<span style=color:#f92672>();</span>
-animatorSet<span style=color:#f92672>.</span><span style=color:#a6e22e>play</span><span style=color:#f92672>(</span>bouncer<span style=color:#f92672>).</span><span style=color:#a6e22e>before</span><span style=color:#f92672>(</span>fadeAnim<span style=color:#f92672>);</span>
-animatorSet<span style=color:#f92672>.</span><span style=color:#a6e22e>start</span><span style=color:#f92672>();</span>
-</code></pre></div><h3 id=动画监听者>动画监听者</h3>
+<div class=highlight><div style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4>
+<table style=border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block><tr><td style=vertical-align:top;padding:0;margin:0;border:0>
+<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 4
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 5
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 6
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 7
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 8
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 9
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">10
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">11
+</span></code></pre></td>
+<td style=vertical-align:top;padding:0;margin:0;border:0;width:100%>
+<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=color:#000>AnimatorSet</span> <span style=color:#000>bouncer</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#204a87;font-weight:700>new</span> <span style=color:#000>AnimatorSet</span><span style=color:#ce5c00;font-weight:700>();</span>
+<span style=color:#000>bouncer</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>play</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>bounceAnim</span><span style=color:#ce5c00;font-weight:700>).</span><span style=color:#c4a000>before</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>squashAnim1</span><span style=color:#ce5c00;font-weight:700>);</span>
+<span style=color:#000>bouncer</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>play</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>squashAnim1</span><span style=color:#ce5c00;font-weight:700>).</span><span style=color:#c4a000>with</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>squashAnim2</span><span style=color:#ce5c00;font-weight:700>);</span>
+<span style=color:#000>bouncer</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>play</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>squashAnim1</span><span style=color:#ce5c00;font-weight:700>).</span><span style=color:#c4a000>with</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>stretchAnim1</span><span style=color:#ce5c00;font-weight:700>);</span>
+<span style=color:#000>bouncer</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>play</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>squashAnim1</span><span style=color:#ce5c00;font-weight:700>).</span><span style=color:#c4a000>with</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>stretchAnim2</span><span style=color:#ce5c00;font-weight:700>);</span>
+<span style=color:#000>bouncer</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>play</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>bounceBackAnim</span><span style=color:#ce5c00;font-weight:700>).</span><span style=color:#c4a000>after</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>stretchAnim2</span><span style=color:#ce5c00;font-weight:700>);</span>
+<span style=color:#000>ValueAnimator</span> <span style=color:#000>fadeAnim</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>ObjectAnimator</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>ofFloat</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>newBall</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#4e9a06>&#34;alpha&#34;</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>1f</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>0f</span><span style=color:#ce5c00;font-weight:700>);</span>
+<span style=color:#000>fadeAnim</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>setDuration</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>250</span><span style=color:#ce5c00;font-weight:700>);</span>
+<span style=color:#000>AnimatorSet</span> <span style=color:#000>animatorSet</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#204a87;font-weight:700>new</span> <span style=color:#000>AnimatorSet</span><span style=color:#ce5c00;font-weight:700>();</span>
+<span style=color:#000>animatorSet</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>play</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>bouncer</span><span style=color:#ce5c00;font-weight:700>).</span><span style=color:#c4a000>before</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>fadeAnim</span><span style=color:#ce5c00;font-weight:700>);</span>
+<span style=color:#000>animatorSet</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>start</span><span style=color:#ce5c00;font-weight:700>();</span>
+</code></pre></td></tr></table>
+</div>
+</div><h3 id=动画监听者>动画监听者</h3>
 <p>你可以在动画播放的过程中监听以下的事件：</p>
 <ul>
 <li>
@@ -270,44 +338,99 @@ animatorSet<span style=color:#f92672>.</span><span style=color:#a6e22e>start</sp
 </ul>
 <p>如果你不希望实现 <a href=https://developer.android.google.cn/reference/android/animation/Animator.AnimatorListener.html><code>Animator.AnimatorListener</code></a> 接口的所有方法，你也可以选择继承 <a href=https://developer.android.google.cn/reference/android/animation/AnimatorListenerAdapter.html><code>AnimatorListenerAdapter</code></a> 类而非实现 <a href=https://developer.android.google.cn/reference/android/animation/Animator.AnimatorListener.html><code>Animator.AnimatorListener</code></a> 接口。<a href=https://developer.android.google.cn/reference/android/animation/AnimatorListenerAdapter.html><code>AnimatorListenerAdapter</code></a> 类提供了对这些方法的空实现，你可以选择你想要的方法进行 override。</p>
 <p>例如：</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java>ValueAnimator fadeAnim <span style=color:#f92672>=</span> ObjectAnimator<span style=color:#f92672>.</span><span style=color:#a6e22e>ofFloat</span><span style=color:#f92672>(</span>newBall<span style=color:#f92672>,</span> <span style=color:#e6db74>&#34;alpha&#34;</span><span style=color:#f92672>,</span> 1f<span style=color:#f92672>,</span> 0f<span style=color:#f92672>);</span>
-fadeAnim<span style=color:#f92672>.</span><span style=color:#a6e22e>setDuration</span><span style=color:#f92672>(</span>250<span style=color:#f92672>);</span>
-fadeAnim<span style=color:#f92672>.</span><span style=color:#a6e22e>addListener</span><span style=color:#f92672>(</span><span style=color:#66d9ef>new</span> AnimatorListenerAdapter<span style=color:#f92672>()</span> <span style=color:#f92672>{</span>
-<span style=color:#66d9ef>public</span> <span style=color:#66d9ef>void</span> <span style=color:#a6e22e>onAnimationEnd</span><span style=color:#f92672>(</span>Animator animation<span style=color:#f92672>)</span> <span style=color:#f92672>{</span>
-  balls<span style=color:#f92672>.</span><span style=color:#a6e22e>remove</span><span style=color:#f92672>(((</span>ObjectAnimator<span style=color:#f92672>)</span>animation<span style=color:#f92672>).</span><span style=color:#a6e22e>getTarget</span><span style=color:#f92672>());</span>
-<span style=color:#f92672>}</span>
-</code></pre></div><h3 id=使用-typeevaluator>使用 <code>TypeEvaluator</code></h3>
+<div class=highlight><div style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4>
+<table style=border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block><tr><td style=vertical-align:top;padding:0;margin:0;border:0>
+<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">4
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">5
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">6
+</span></code></pre></td>
+<td style=vertical-align:top;padding:0;margin:0;border:0;width:100%>
+<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=color:#000>ValueAnimator</span> <span style=color:#000>fadeAnim</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>ObjectAnimator</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>ofFloat</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>newBall</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#4e9a06>&#34;alpha&#34;</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>1f</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>0f</span><span style=color:#ce5c00;font-weight:700>);</span>
+<span style=color:#000>fadeAnim</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>setDuration</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>250</span><span style=color:#ce5c00;font-weight:700>);</span>
+<span style=color:#000>fadeAnim</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>addListener</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#204a87;font-weight:700>new</span> <span style=color:#000>AnimatorListenerAdapter</span><span style=color:#ce5c00;font-weight:700>()</span> <span style=color:#ce5c00;font-weight:700>{</span>
+<span style=color:#204a87;font-weight:700>public</span> <span style=color:#204a87;font-weight:700>void</span> <span style=color:#000>onAnimationEnd</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>Animator</span> <span style=color:#000>animation</span><span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#ce5c00;font-weight:700>{</span>
+  <span style=color:#000>balls</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>remove</span><span style=color:#ce5c00;font-weight:700>(((</span><span style=color:#000>ObjectAnimator</span><span style=color:#ce5c00;font-weight:700>)</span><span style=color:#000>animation</span><span style=color:#ce5c00;font-weight:700>).</span><span style=color:#c4a000>getTarget</span><span style=color:#ce5c00;font-weight:700>());</span>
+<span style=color:#ce5c00;font-weight:700>}</span>
+</code></pre></td></tr></table>
+</div>
+</div><h3 id=使用-typeevaluator>使用 <code>TypeEvaluator</code></h3>
 <p>如果你希望对一个 Android 系统不知道的类型进行动画化，你可以实现 <a href=https://developer.android.google.cn/reference/android/animation/TypeEvaluator.html><code>TypeEvaluator</code></a> 接口来创建自己的计算器。Android 系统知道的类型有 <code>int</code>、<code>float</code> 和颜色，它们分别被 <a href=https://developer.android.google.cn/reference/android/animation/IntEvaluator.html><code>IntEvaluator</code></a>、<a href=https://developer.android.google.cn/reference/android/animation/FloatEvaluator.html><code>FloatEvaluator</code></a> 和 <a href=https://developer.android.google.cn/reference/android/animation/ArgbEvaluator.html><code>ArgbEvaluator</code></a> 支持。</p>
 <p><a href=https://developer.android.google.cn/reference/android/animation/TypeEvaluator.html><code>TypeEvaluator</code></a> 接口只需要你实现 <a href=https://developer.android.google.cn/reference/android/animation/TypeEvaluator.html#evaluate(float,%20T,%20T)><code>evaluate()</code></a> 这一个方法，例如，<a href=https://developer.android.google.cn/reference/android/animation/FloatEvaluator.html><code>FloatEvaluator</code></a> 的实现如下所示：</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=color:#66d9ef>public</span> <span style=color:#66d9ef>class</span> <span style=color:#a6e22e>FloatEvaluator</span> <span style=color:#66d9ef>implements</span> TypeEvaluator <span style=color:#f92672>{</span>
+<div class=highlight><div style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4>
+<table style=border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block><tr><td style=vertical-align:top;padding:0;margin:0;border:0>
+<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">4
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">5
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">6
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">7
+</span></code></pre></td>
+<td style=vertical-align:top;padding:0;margin:0;border:0;width:100%>
+<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=color:#204a87;font-weight:700>public</span> <span style=color:#204a87;font-weight:700>class</span> <span style=color:#000>FloatEvaluator</span> <span style=color:#204a87;font-weight:700>implements</span> <span style=color:#000>TypeEvaluator</span> <span style=color:#ce5c00;font-weight:700>{</span>
 
-  <span style=color:#66d9ef>public</span> Object <span style=color:#a6e22e>evaluate</span><span style=color:#f92672>(</span><span style=color:#66d9ef>float</span> fraction<span style=color:#f92672>,</span> Object startValue<span style=color:#f92672>,</span> Object endValue<span style=color:#f92672>)</span> <span style=color:#f92672>{</span>
-    <span style=color:#66d9ef>float</span> startFloat <span style=color:#f92672>=</span> <span style=color:#f92672>((</span>Number<span style=color:#f92672>)</span> startValue<span style=color:#f92672>).</span><span style=color:#a6e22e>floatValue</span><span style=color:#f92672>();</span>
-    <span style=color:#66d9ef>return</span> startFloat <span style=color:#f92672>+</span> fraction <span style=color:#f92672>*</span> <span style=color:#f92672>(((</span>Number<span style=color:#f92672>)</span> endValue<span style=color:#f92672>).</span><span style=color:#a6e22e>floatValue</span><span style=color:#f92672>()</span> <span style=color:#f92672>-</span> startFloat<span style=color:#f92672>);</span>
-  <span style=color:#f92672>}</span>
-<span style=color:#f92672>}</span>
-</code></pre></div><h3 id=使用插值器>使用插值器</h3>
+  <span style=color:#204a87;font-weight:700>public</span> <span style=color:#000>Object</span> <span style=color:#000>evaluate</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#204a87;font-weight:700>float</span> <span style=color:#000>fraction</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>Object</span> <span style=color:#000>startValue</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>Object</span> <span style=color:#000>endValue</span><span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#ce5c00;font-weight:700>{</span>
+    <span style=color:#204a87;font-weight:700>float</span> <span style=color:#000>startFloat</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#ce5c00;font-weight:700>((</span><span style=color:#000>Number</span><span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#000>startValue</span><span style=color:#ce5c00;font-weight:700>).</span><span style=color:#c4a000>floatValue</span><span style=color:#ce5c00;font-weight:700>();</span>
+    <span style=color:#204a87;font-weight:700>return</span> <span style=color:#000>startFloat</span> <span style=color:#ce5c00;font-weight:700>+</span> <span style=color:#000>fraction</span> <span style=color:#ce5c00;font-weight:700>*</span> <span style=color:#ce5c00;font-weight:700>(((</span><span style=color:#000>Number</span><span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#000>endValue</span><span style=color:#ce5c00;font-weight:700>).</span><span style=color:#c4a000>floatValue</span><span style=color:#ce5c00;font-weight:700>()</span> <span style=color:#ce5c00;font-weight:700>-</span> <span style=color:#000>startFloat</span><span style=color:#ce5c00;font-weight:700>);</span>
+  <span style=color:#ce5c00;font-weight:700>}</span>
+<span style=color:#ce5c00;font-weight:700>}</span>
+</code></pre></td></tr></table>
+</div>
+</div><h3 id=使用插值器>使用插值器</h3>
 <p>一个插值器定义了动画中的特定值如何被用一个关于时间的函数计算出来。例如，你可以指定一个动画在整个动画过程中线性地进行，这意味着动画的移动在整个过程中都是匀速的，或者你也可以指定一个动画去用一个非线性的函数，例如，在动画的开始或结束时使用加速或减速。</p>
 <p>动画系统中的插值器从 <code>Animator</code> 那里接收到一个用于表示动画中已流逝时间的比例值。插值器根据动画想要提供的效果来修改这个比例值。Android 系统在 <a href=https://developer.android.com/reference/android/view/animation/package-summary.html><code>android.view.animation</code></a> 包中提供了一系列常用的插值器，如果这些插值器都不符合你的要求，你可以通过实现 <a href=https://developer.android.google.cn/reference/android/animation/TimeInterpolator.html><code>TimeInterpolator</code></a> 接口来创建你自己的插值器。</p>
 <p>作为例子，下面比较了 <a href=https://developer.android.google.cn/reference/android/view/animation/AccelerateDecelerateInterpolator.html><code>AccelerateDecelerateInterpolator</code></a> 和 <a href=https://developer.android.google.cn/reference/android/view/animation/LinearInterpolator.html><code>LinearInterpolator</code></a> 这两个默认插值器的实现。</p>
 <p><strong><code>AccelerateDecelerateInterpolator</code></strong></p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=color:#66d9ef>public</span> <span style=color:#66d9ef>float</span> <span style=color:#a6e22e>getInterpolation</span><span style=color:#f92672>(</span><span style=color:#66d9ef>float</span> input<span style=color:#f92672>)</span> <span style=color:#f92672>{</span>
-  <span style=color:#66d9ef>return</span> <span style=color:#f92672>(</span><span style=color:#66d9ef>float</span><span style=color:#f92672>)(</span>Math<span style=color:#f92672>.</span><span style=color:#a6e22e>cos</span><span style=color:#f92672>((</span>input <span style=color:#f92672>+</span> 1<span style=color:#f92672>)</span> <span style=color:#f92672>*</span> Math<span style=color:#f92672>.</span><span style=color:#a6e22e>PI</span><span style=color:#f92672>)</span> <span style=color:#f92672>/</span> 2<span style=color:#f92672>.</span><span style=color:#a6e22e>0f</span><span style=color:#f92672>)</span> <span style=color:#f92672>+</span> 0<span style=color:#f92672>.</span><span style=color:#a6e22e>5f</span><span style=color:#f92672>;</span>
-<span style=color:#f92672>}</span>
-</code></pre></div><p><strong><code>LinearInterpolator</code></strong></p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=color:#66d9ef>public</span> <span style=color:#66d9ef>float</span> <span style=color:#a6e22e>getInterpolation</span><span style=color:#f92672>(</span><span style=color:#66d9ef>float</span> input<span style=color:#f92672>)</span> <span style=color:#f92672>{</span>
-  <span style=color:#66d9ef>return</span> input<span style=color:#f92672>;</span>
-<span style=color:#f92672>}</span>
-</code></pre></div><h3 id=指定关键帧>指定关键帧</h3>
+<div class=highlight><div style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4>
+<table style=border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block><tr><td style=vertical-align:top;padding:0;margin:0;border:0>
+<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
+</span></code></pre></td>
+<td style=vertical-align:top;padding:0;margin:0;border:0;width:100%>
+<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=color:#204a87;font-weight:700>public</span> <span style=color:#204a87;font-weight:700>float</span> <span style=color:#000>getInterpolation</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#204a87;font-weight:700>float</span> <span style=color:#000>input</span><span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#ce5c00;font-weight:700>{</span>
+  <span style=color:#204a87;font-weight:700>return</span> <span style=color:#ce5c00;font-weight:700>(</span><span style=color:#204a87;font-weight:700>float</span><span style=color:#ce5c00;font-weight:700>)(</span><span style=color:#000>Math</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>cos</span><span style=color:#ce5c00;font-weight:700>((</span><span style=color:#000>input</span> <span style=color:#ce5c00;font-weight:700>+</span> <span style=color:#000>1</span><span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#ce5c00;font-weight:700>*</span> <span style=color:#000>Math</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>PI</span><span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#ce5c00;font-weight:700>/</span> <span style=color:#000>2</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>0f</span><span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#ce5c00;font-weight:700>+</span> <span style=color:#000>0</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>5f</span><span style=color:#ce5c00;font-weight:700>;</span>
+<span style=color:#ce5c00;font-weight:700>}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p><strong><code>LinearInterpolator</code></strong></p>
+<div class=highlight><div style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4>
+<table style=border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block><tr><td style=vertical-align:top;padding:0;margin:0;border:0>
+<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
+</span></code></pre></td>
+<td style=vertical-align:top;padding:0;margin:0;border:0;width:100%>
+<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=color:#204a87;font-weight:700>public</span> <span style=color:#204a87;font-weight:700>float</span> <span style=color:#000>getInterpolation</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#204a87;font-weight:700>float</span> <span style=color:#000>input</span><span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#ce5c00;font-weight:700>{</span>
+  <span style=color:#204a87;font-weight:700>return</span> <span style=color:#000>input</span><span style=color:#ce5c00;font-weight:700>;</span>
+<span style=color:#ce5c00;font-weight:700>}</span>
+</code></pre></td></tr></table>
+</div>
+</div><h3 id=指定关键帧>指定关键帧</h3>
 <p>一个 <a href=https://developer.android.google.cn/reference/android/animation/Keyframe.html><code>Keyframe</code></a> 对象与一个 time/value pair 相关联，它使得你可以为动画设置特定时间点上的状态。每一个关键帧还可以拥有其自己的插值器用以控制动画在关键帧之前的行为以及在关键帧的行为。</p>
 <p>你需要通过工厂方法 <a href=https://developer.android.google.cn/reference/android/animation/Keyframe.html#ofInt(float)><code>ofInt()</code></a>、<a href=https://developer.android.google.cn/reference/android/animation/Keyframe.html#ofFloat(float)><code>ofFloat()</code></a> 或 <a href=https://developer.android.google.cn/reference/android/animation/Keyframe.html#ofObject(float)><code>ofObject()</code></a> 来创建一个 <a href=https://developer.android.google.cn/reference/android/animation/Keyframe.html><code>Keyframe</code></a> 对象，然后，你需要调用 <a href=https://developer.android.google.cn/reference/android/animation/PropertyValuesHolder.html#ofKeyframe(android.util.Property,%20android.animation.Keyframe...)><code>ofKeyframe()</code></a> 工厂方法来获取一个 <a href=https://developer.android.google.cn/reference/android/animation/PropertyValuesHolder.html><code>PropertyValuesHolder</code></a> 对象。一旦你得到了这个对象，你就可以通过这个 <a href=https://developer.android.google.cn/reference/android/animation/PropertyValuesHolder.html><code>PropertyValuesHolder</code></a> 对象和目标对象来获得一个动画了。下面的代码展示了具体的做法：</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java>Keyframe kf0 <span style=color:#f92672>=</span> Keyframe<span style=color:#f92672>.</span><span style=color:#a6e22e>ofFloat</span><span style=color:#f92672>(</span>0f<span style=color:#f92672>,</span> 0f<span style=color:#f92672>);</span>
-Keyframe kf1 <span style=color:#f92672>=</span> Keyframe<span style=color:#f92672>.</span><span style=color:#a6e22e>ofFloat</span><span style=color:#f92672>(.</span><span style=color:#a6e22e>5f</span><span style=color:#f92672>,</span> 360f<span style=color:#f92672>);</span>
-Keyframe kf2 <span style=color:#f92672>=</span> Keyframe<span style=color:#f92672>.</span><span style=color:#a6e22e>ofFloat</span><span style=color:#f92672>(</span>1f<span style=color:#f92672>,</span> 0f<span style=color:#f92672>);</span>
-PropertyValuesHolder pvhRotation <span style=color:#f92672>=</span> PropertyValuesHolder<span style=color:#f92672>.</span><span style=color:#a6e22e>ofKeyframe</span><span style=color:#f92672>(</span><span style=color:#e6db74>&#34;rotation&#34;</span><span style=color:#f92672>,</span> kf0<span style=color:#f92672>,</span> kf1<span style=color:#f92672>,</span> kf2<span style=color:#f92672>);</span>
-ObjectAnimator rotationAnim <span style=color:#f92672>=</span> ObjectAnimator<span style=color:#f92672>.</span><span style=color:#a6e22e>ofPropertyValuesHolder</span><span style=color:#f92672>(</span>target<span style=color:#f92672>,</span> pvhRotation<span style=color:#f92672>)</span>
-rotationAnim<span style=color:#f92672>.</span><span style=color:#a6e22e>setDuration</span><span style=color:#f92672>(</span>5000ms<span style=color:#f92672>);</span>
-</code></pre></div><h3 id=将-view-动画化>将 <code>View</code> 动画化</h3>
+<div class=highlight><div style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4>
+<table style=border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block><tr><td style=vertical-align:top;padding:0;margin:0;border:0>
+<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">4
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">5
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">6
+</span></code></pre></td>
+<td style=vertical-align:top;padding:0;margin:0;border:0;width:100%>
+<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=color:#000>Keyframe</span> <span style=color:#000>kf0</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>Keyframe</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>ofFloat</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>0f</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>0f</span><span style=color:#ce5c00;font-weight:700>);</span>
+<span style=color:#000>Keyframe</span> <span style=color:#000>kf1</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>Keyframe</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>ofFloat</span><span style=color:#ce5c00;font-weight:700>(.</span><span style=color:#c4a000>5f</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>360f</span><span style=color:#ce5c00;font-weight:700>);</span>
+<span style=color:#000>Keyframe</span> <span style=color:#000>kf2</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>Keyframe</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>ofFloat</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>1f</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>0f</span><span style=color:#ce5c00;font-weight:700>);</span>
+<span style=color:#000>PropertyValuesHolder</span> <span style=color:#000>pvhRotation</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>PropertyValuesHolder</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>ofKeyframe</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#4e9a06>&#34;rotation&#34;</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>kf0</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>kf1</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>kf2</span><span style=color:#ce5c00;font-weight:700>);</span>
+<span style=color:#000>ObjectAnimator</span> <span style=color:#000>rotationAnim</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>ObjectAnimator</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>ofPropertyValuesHolder</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>target</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>pvhRotation</span><span style=color:#ce5c00;font-weight:700>)</span>
+<span style=color:#000>rotationAnim</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>setDuration</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>5000ms</span><span style=color:#ce5c00;font-weight:700>);</span>
+</code></pre></td></tr></table>
+</div>
+</div><h3 id=将-view-动画化>将 <code>View</code> 动画化</h3>
 <p>属性动画系统允许你将 <code>View</code> 对象的动画流线型地组织起来，并且相对于视图动画系统而言还有一些好处。视图动画系统通过改变视图对象的绘制方式来实现对它们的转换。这个过程由 <code>View</code> 对象的容器来进行处理，因为 <code>View</code> 对象自己并没有这些被操作的属性。这种实现的结果是尽管 <code>View</code> 对象被动画化了，但它自身并没有发生改变。这将导致一些奇怪的行为，例如一个对象被绘制到了其他地方，但它仍然存在于原地。在 Android 3.0 里添加了这些新的属性以及相应的 getter 和 setter 方法来消除这个缺点。</p>
 <p>属性动画系统可以通过改变 <code>View</code> 对象里的实际属性来将其动画化。而且，<code>View</code> 对象还会在属性改变的时候自动地调用 <a href=https://developer.android.google.cn/reference/android/view/View.html#invalidate()><code>invalidate()</code></a> 方法来刷新屏幕。<code>View</code> 类型中与属性动画实现相关的新属性有：</p>
 <ul>
@@ -318,22 +441,56 @@ rotationAnim<span style=color:#f92672>.</span><span style=color:#a6e22e>setDurat
 <li><code>alpha</code>：表示 <code>View</code> 对象的 alpha 透明度。它的值默认为 1（不透明），如果设定为 0 则表示完全透明（不可见）。</li>
 </ul>
 <p>你只需要创建一个 property animator 并指定你想动画化的 <code>View</code> 对象的属性就可以将其动画化了，例如：</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java>ObjectAnimator<span style=color:#f92672>.</span><span style=color:#a6e22e>ofFloat</span><span style=color:#f92672>(</span>myView<span style=color:#f92672>,</span> <span style=color:#e6db74>&#34;rotation&#34;</span><span style=color:#f92672>,</span> 0f<span style=color:#f92672>,</span> 360f<span style=color:#f92672>);</span>
-</code></pre></div><h4 id=使用-viewpropertyanimator-进行动画化>使用 <code>ViewPropertyAnimator</code> 进行动画化</h4>
+<div class=highlight><div style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4>
+<table style=border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block><tr><td style=vertical-align:top;padding:0;margin:0;border:0>
+<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span></code></pre></td>
+<td style=vertical-align:top;padding:0;margin:0;border:0;width:100%>
+<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=color:#000>ObjectAnimator</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>ofFloat</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>myView</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#4e9a06>&#34;rotation&#34;</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>0f</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>360f</span><span style=color:#ce5c00;font-weight:700>);</span>
+</code></pre></td></tr></table>
+</div>
+</div><h4 id=使用-viewpropertyanimator-进行动画化>使用 <code>ViewPropertyAnimator</code> 进行动画化</h4>
 <p><a href=https://developer.android.google.cn/reference/android/view/ViewPropertyAnimator.html><code>ViewPropertyAnimator</code></a> 类提供了一个简单的方法来并行地动画化一个 <code>View</code> 对象的多个属性，并且在底层只用到了一个 <a href=https://developer.android.com/reference/android/animation/Animator.html><code>Animator</code></a> 对象。它的行为很像一个 <a href=https://developer.android.google.cn/reference/android/animation/ObjectAnimator.html><code>ObjectAnimator</code></a>，因为它修改了 <code>View</code> 对象的实际属性，但它在同时动画化多个属性的时候会比 <a href=https://developer.android.google.cn/reference/android/animation/ObjectAnimator.html><code>ObjectAnimator</code></a> 更加高效。而且，使用 <a href=https://developer.android.google.cn/reference/android/view/ViewPropertyAnimator.html><code>ViewPropertyAnimator</code></a> 的代码会更加清晰易读。下面的代码片段展示了使用多个 <a href=https://developer.android.google.cn/reference/android/animation/ObjectAnimator.html><code>ObjectAnimator</code></a>、使用一个 <a href=https://developer.android.google.cn/reference/android/animation/ObjectAnimator.html><code>ObjectAnimator</code></a> 以及使用 <a href=https://developer.android.google.cn/reference/android/view/ViewPropertyAnimator.html><code>ViewPropertyAnimator</code></a> 来同时动画化地改变 <code>View</code> 对象的 x 和 y 属性的区别。</p>
 <p><strong>多个 <code>ObjectAnimator</code> 对象</strong></p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java>ObjectAnimator animX <span style=color:#f92672>=</span> ObjectAnimator<span style=color:#f92672>.</span><span style=color:#a6e22e>ofFloat</span><span style=color:#f92672>(</span>myView<span style=color:#f92672>,</span> <span style=color:#e6db74>&#34;x&#34;</span><span style=color:#f92672>,</span> 50f<span style=color:#f92672>);</span>
-ObjectAnimator animY <span style=color:#f92672>=</span> ObjectAnimator<span style=color:#f92672>.</span><span style=color:#a6e22e>ofFloat</span><span style=color:#f92672>(</span>myView<span style=color:#f92672>,</span> <span style=color:#e6db74>&#34;y&#34;</span><span style=color:#f92672>,</span> 100f<span style=color:#f92672>);</span>
-AnimatorSet animSetXY <span style=color:#f92672>=</span> <span style=color:#66d9ef>new</span> AnimatorSet<span style=color:#f92672>();</span>
-animSetXY<span style=color:#f92672>.</span><span style=color:#a6e22e>playTogether</span><span style=color:#f92672>(</span>animX<span style=color:#f92672>,</span> animY<span style=color:#f92672>);</span>
-animSetXY<span style=color:#f92672>.</span><span style=color:#a6e22e>start</span><span style=color:#f92672>();</span>
-</code></pre></div><p><strong>单个 <code>ObjectAnimator</code> 对象</strong></p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java>PropertyValuesHolder pvhX <span style=color:#f92672>=</span> PropertyValuesHolder<span style=color:#f92672>.</span><span style=color:#a6e22e>ofFloat</span><span style=color:#f92672>(</span><span style=color:#e6db74>&#34;x&#34;</span><span style=color:#f92672>,</span> 50f<span style=color:#f92672>);</span>
-PropertyValuesHolder pvhY <span style=color:#f92672>=</span> PropertyValuesHolder<span style=color:#f92672>.</span><span style=color:#a6e22e>ofFloat</span><span style=color:#f92672>(</span><span style=color:#e6db74>&#34;y&#34;</span><span style=color:#f92672>,</span> 100f<span style=color:#f92672>);</span>
-ObjectAnimator<span style=color:#f92672>.</span><span style=color:#a6e22e>ofPropertyValuesHolder</span><span style=color:#f92672>(</span>myView<span style=color:#f92672>,</span> pvhX<span style=color:#f92672>,</span> pvyY<span style=color:#f92672>).</span><span style=color:#a6e22e>start</span><span style=color:#f92672>();</span>
-</code></pre></div><p><strong>使用 <code>ViewPropertyAnimator</code></strong></p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java>myView<span style=color:#f92672>.</span><span style=color:#a6e22e>animate</span><span style=color:#f92672>().</span><span style=color:#a6e22e>x</span><span style=color:#f92672>(</span>50f<span style=color:#f92672>).</span><span style=color:#a6e22e>y</span><span style=color:#f92672>(</span>100f<span style=color:#f92672>);</span>
-</code></pre></div><h3 id=在-xml-中声明动画>在 XML 中声明动画</h3>
+<div class=highlight><div style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4>
+<table style=border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block><tr><td style=vertical-align:top;padding:0;margin:0;border:0>
+<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">4
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">5
+</span></code></pre></td>
+<td style=vertical-align:top;padding:0;margin:0;border:0;width:100%>
+<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=color:#000>ObjectAnimator</span> <span style=color:#000>animX</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>ObjectAnimator</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>ofFloat</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>myView</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#4e9a06>&#34;x&#34;</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>50f</span><span style=color:#ce5c00;font-weight:700>);</span>
+<span style=color:#000>ObjectAnimator</span> <span style=color:#000>animY</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>ObjectAnimator</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>ofFloat</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>myView</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#4e9a06>&#34;y&#34;</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>100f</span><span style=color:#ce5c00;font-weight:700>);</span>
+<span style=color:#000>AnimatorSet</span> <span style=color:#000>animSetXY</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#204a87;font-weight:700>new</span> <span style=color:#000>AnimatorSet</span><span style=color:#ce5c00;font-weight:700>();</span>
+<span style=color:#000>animSetXY</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>playTogether</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>animX</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>animY</span><span style=color:#ce5c00;font-weight:700>);</span>
+<span style=color:#000>animSetXY</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>start</span><span style=color:#ce5c00;font-weight:700>();</span>
+</code></pre></td></tr></table>
+</div>
+</div><p><strong>单个 <code>ObjectAnimator</code> 对象</strong></p>
+<div class=highlight><div style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4>
+<table style=border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block><tr><td style=vertical-align:top;padding:0;margin:0;border:0>
+<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
+</span></code></pre></td>
+<td style=vertical-align:top;padding:0;margin:0;border:0;width:100%>
+<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=color:#000>PropertyValuesHolder</span> <span style=color:#000>pvhX</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>PropertyValuesHolder</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>ofFloat</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#4e9a06>&#34;x&#34;</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>50f</span><span style=color:#ce5c00;font-weight:700>);</span>
+<span style=color:#000>PropertyValuesHolder</span> <span style=color:#000>pvhY</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>PropertyValuesHolder</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>ofFloat</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#4e9a06>&#34;y&#34;</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>100f</span><span style=color:#ce5c00;font-weight:700>);</span>
+<span style=color:#000>ObjectAnimator</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>ofPropertyValuesHolder</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>myView</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>pvhX</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>pvyY</span><span style=color:#ce5c00;font-weight:700>).</span><span style=color:#c4a000>start</span><span style=color:#ce5c00;font-weight:700>();</span>
+</code></pre></td></tr></table>
+</div>
+</div><p><strong>使用 <code>ViewPropertyAnimator</code></strong></p>
+<div class=highlight><div style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4>
+<table style=border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block><tr><td style=vertical-align:top;padding:0;margin:0;border:0>
+<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span></code></pre></td>
+<td style=vertical-align:top;padding:0;margin:0;border:0;width:100%>
+<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=color:#000>myView</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>animate</span><span style=color:#ce5c00;font-weight:700>().</span><span style=color:#c4a000>x</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>50f</span><span style=color:#ce5c00;font-weight:700>).</span><span style=color:#c4a000>y</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>100f</span><span style=color:#ce5c00;font-weight:700>);</span>
+</code></pre></td></tr></table>
+</div>
+</div><h3 id=在-xml-中声明动画>在 XML 中声明动画</h3>
 <p>属性动画系统让你能够不用编程实现属性动画而是在 XML 中声明属性动画。通过在 XML 中定义你自己的动画，你可以很容易地在多个 <code>Activity</code> 里复用你的动画，而且还能更容易地修改动画序列。</p>
 <p>为了区分使用新属性动画 API 的代码和使用遗留 <a href=https://developer.android.google.cn/guide/topics/graphics/view-animation.html><code>view animation</code></a> 框架的代码，从 Android 3.1 开始，你需要将这些 XML 文件放在 <code>res/animator/</code> 文件夹下。</p>
 <p>下面是几个属性动画类和它们对应的 XML 标签列表：</p>
@@ -343,77 +500,175 @@ ObjectAnimator<span style=color:#f92672>.</span><span style=color:#a6e22e>ofProp
 <li><a href=https://developer.android.google.cn/reference/android/animation/AnimatorSet.html><code>AnimatorSet</code></a> - <code>&lt;set></code></li>
 </ul>
 <p>你可以在 <a href=https://developer.android.google.cn/guide/topics/resources/animation-resource.html#Property>Animation Resources</a> 这个链接里找到你能在 XML 声明中使用的属性。下面的例子顺序播放了两组对象动画，前一组动画里同时播放了两个对象动画：</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-xml data-lang=xml><span style=color:#f92672>&lt;set</span> <span style=color:#a6e22e>android:ordering=</span><span style=color:#e6db74>&#34;sequentially&#34;</span><span style=color:#f92672>&gt;</span>
-    <span style=color:#f92672>&lt;set&gt;</span>
-        <span style=color:#f92672>&lt;objectAnimator</span>
-            <span style=color:#a6e22e>android:propertyName=</span><span style=color:#e6db74>&#34;x&#34;</span>
-            <span style=color:#a6e22e>android:duration=</span><span style=color:#e6db74>&#34;500&#34;</span>
-            <span style=color:#a6e22e>android:valueTo=</span><span style=color:#e6db74>&#34;400&#34;</span>
-            <span style=color:#a6e22e>android:valueType=</span><span style=color:#e6db74>&#34;intType&#34;</span><span style=color:#f92672>/&gt;</span>
-        <span style=color:#f92672>&lt;objectAnimator</span>
-            <span style=color:#a6e22e>android:propertyName=</span><span style=color:#e6db74>&#34;y&#34;</span>
-            <span style=color:#a6e22e>android:duration=</span><span style=color:#e6db74>&#34;500&#34;</span>
-            <span style=color:#a6e22e>android:valueTo=</span><span style=color:#e6db74>&#34;300&#34;</span>
-            <span style=color:#a6e22e>android:valueType=</span><span style=color:#e6db74>&#34;intType&#34;</span><span style=color:#f92672>/&gt;</span>
-    <span style=color:#f92672>&lt;/set&gt;</span>
-    <span style=color:#f92672>&lt;objectAnimator</span>
-        <span style=color:#a6e22e>android:propertyName=</span><span style=color:#e6db74>&#34;alpha&#34;</span>
-        <span style=color:#a6e22e>android:duration=</span><span style=color:#e6db74>&#34;500&#34;</span>
-        <span style=color:#a6e22e>android:valueTo=</span><span style=color:#e6db74>&#34;1f&#34;</span><span style=color:#f92672>/&gt;</span>
-<span style=color:#f92672>&lt;/set&gt;</span>
-</code></pre></div><p>为了运行这个动画，你需要在运行这个动画集合前在代码中将这个 XML 资源填充到 <a href=https://developer.android.google.cn/reference/android/animation/AnimatorSet.html><code>AnimatorSet</code></a> 对象里，然后再设定这些动画的目标对象。你可以调用 <a href=https://developer.android.google.cn/reference/android/animation/AnimatorSet.html#setTarget(java.lang.Object)><code>setTarget()</code></a> 方法来方便地为 <a href=https://developer.android.google.cn/reference/android/animation/AnimatorSet.html><code>AnimatorSet</code></a> 的子类对象设置一个目标对象：</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java>AnimatorSet set <span style=color:#f92672>=</span> <span style=color:#f92672>(</span>AnimatorSet<span style=color:#f92672>)</span> AnimatorInflater<span style=color:#f92672>.</span><span style=color:#a6e22e>loadAnimator</span>
-  <span style=color:#f92672>(</span>myContext<span style=color:#f92672>,</span> R<span style=color:#f92672>.</span><span style=color:#a6e22e>anim</span><span style=color:#f92672>.</span><span style=color:#a6e22e>property_animator</span><span style=color:#f92672>);</span>
-set<span style=color:#f92672>.</span><span style=color:#a6e22e>setTarget</span><span style=color:#f92672>(</span>myObject<span style=color:#f92672>);</span>
-set<span style=color:#f92672>.</span><span style=color:#a6e22e>start</span><span style=color:#f92672>();</span>
-</code></pre></div><p>你也可以在 XML 中声明一个 <a href=https://developer.android.google.cn/reference/android/animation/ValueAnimator.html><code>ValueAnimator</code></a>：</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-xml data-lang=xml><span style=color:#f92672>&lt;animator</span> <span style=color:#a6e22e>xmlns:android=</span><span style=color:#e6db74>&#34;http://schemas.android.com/apk/res/android&#34;</span>
-    <span style=color:#a6e22e>android:duration=</span><span style=color:#e6db74>&#34;1000&#34;</span>
-    <span style=color:#a6e22e>android:valueType=</span><span style=color:#e6db74>&#34;floatType&#34;</span>
-    <span style=color:#a6e22e>android:valueFrom=</span><span style=color:#e6db74>&#34;0f&#34;</span>
-    <span style=color:#a6e22e>android:valueTo=</span><span style=color:#e6db74>&#34;-100f&#34;</span> <span style=color:#f92672>/&gt;</span>
-</code></pre></div><p>为了在你的代码中使用这个 <a href=https://developer.android.google.cn/reference/android/animation/ValueAnimator.html><code>ValueAnimator</code></a>，你需要填充一个对象，然后添加一个 <a href=https://developer.android.google.cn/reference/android/animation/ValueAnimator.AnimatorUpdateListener.html><code>AnimatorUpdateListener</code></a> 监听器，在回调中获取更新的动画值，然后将其用在你的 <code>View</code> 对象上，例如：</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java>ValueAnimator xmlAnimator <span style=color:#f92672>=</span> <span style=color:#f92672>(</span>ValueAnimator<span style=color:#f92672>)</span> AnimatorInflater<span style=color:#f92672>.</span><span style=color:#a6e22e>loadAnimator</span>
-  <span style=color:#f92672>(</span><span style=color:#66d9ef>this</span><span style=color:#f92672>,</span> R<span style=color:#f92672>.</span><span style=color:#a6e22e>animator</span><span style=color:#f92672>.</span><span style=color:#a6e22e>animator</span><span style=color:#f92672>);</span>
-xmlAnimator<span style=color:#f92672>.</span><span style=color:#a6e22e>addUpdateListener</span><span style=color:#f92672>(</span><span style=color:#66d9ef>new</span> ValueAnimator<span style=color:#f92672>.</span><span style=color:#a6e22e>AnimatorUpdateListener</span><span style=color:#f92672>()</span> <span style=color:#f92672>{</span>
-  <span style=color:#a6e22e>@Override</span>
-  <span style=color:#66d9ef>public</span> <span style=color:#66d9ef>void</span> <span style=color:#a6e22e>onAnimationUpdate</span><span style=color:#f92672>(</span>ValueAnimator updatedAnimation<span style=color:#f92672>)</span> <span style=color:#f92672>{</span>
-    <span style=color:#66d9ef>float</span> animatedValue <span style=color:#f92672>=</span> <span style=color:#f92672>(</span><span style=color:#66d9ef>float</span><span style=color:#f92672>)</span>updatedAnimation<span style=color:#f92672>.</span><span style=color:#a6e22e>getAnimatedValue</span><span style=color:#f92672>();</span>
-    textView<span style=color:#f92672>.</span><span style=color:#a6e22e>setTranslationX</span><span style=color:#f92672>(</span>animatedValue<span style=color:#f92672>);</span>
-  <span style=color:#f92672>}</span>
-<span style=color:#f92672>});</span>
+<div class=highlight><div style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4>
+<table style=border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block><tr><td style=vertical-align:top;padding:0;margin:0;border:0>
+<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 4
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 5
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 6
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 7
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 8
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 9
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">10
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">11
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">12
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">13
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">14
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">15
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">16
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">17
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">18
+</span></code></pre></td>
+<td style=vertical-align:top;padding:0;margin:0;border:0;width:100%>
+<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-xml data-lang=xml><span style=color:#204a87;font-weight:700>&lt;set</span> <span style=color:#c4a000>android:ordering=</span><span style=color:#4e9a06>&#34;sequentially&#34;</span><span style=color:#204a87;font-weight:700>&gt;</span>
+    <span style=color:#204a87;font-weight:700>&lt;set&gt;</span>
+        <span style=color:#204a87;font-weight:700>&lt;objectAnimator</span>
+            <span style=color:#c4a000>android:propertyName=</span><span style=color:#4e9a06>&#34;x&#34;</span>
+            <span style=color:#c4a000>android:duration=</span><span style=color:#4e9a06>&#34;500&#34;</span>
+            <span style=color:#c4a000>android:valueTo=</span><span style=color:#4e9a06>&#34;400&#34;</span>
+            <span style=color:#c4a000>android:valueType=</span><span style=color:#4e9a06>&#34;intType&#34;</span><span style=color:#204a87;font-weight:700>/&gt;</span>
+        <span style=color:#204a87;font-weight:700>&lt;objectAnimator</span>
+            <span style=color:#c4a000>android:propertyName=</span><span style=color:#4e9a06>&#34;y&#34;</span>
+            <span style=color:#c4a000>android:duration=</span><span style=color:#4e9a06>&#34;500&#34;</span>
+            <span style=color:#c4a000>android:valueTo=</span><span style=color:#4e9a06>&#34;300&#34;</span>
+            <span style=color:#c4a000>android:valueType=</span><span style=color:#4e9a06>&#34;intType&#34;</span><span style=color:#204a87;font-weight:700>/&gt;</span>
+    <span style=color:#204a87;font-weight:700>&lt;/set&gt;</span>
+    <span style=color:#204a87;font-weight:700>&lt;objectAnimator</span>
+        <span style=color:#c4a000>android:propertyName=</span><span style=color:#4e9a06>&#34;alpha&#34;</span>
+        <span style=color:#c4a000>android:duration=</span><span style=color:#4e9a06>&#34;500&#34;</span>
+        <span style=color:#c4a000>android:valueTo=</span><span style=color:#4e9a06>&#34;1f&#34;</span><span style=color:#204a87;font-weight:700>/&gt;</span>
+<span style=color:#204a87;font-weight:700>&lt;/set&gt;</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>为了运行这个动画，你需要在运行这个动画集合前在代码中将这个 XML 资源填充到 <a href=https://developer.android.google.cn/reference/android/animation/AnimatorSet.html><code>AnimatorSet</code></a> 对象里，然后再设定这些动画的目标对象。你可以调用 <a href=https://developer.android.google.cn/reference/android/animation/AnimatorSet.html#setTarget(java.lang.Object)><code>setTarget()</code></a> 方法来方便地为 <a href=https://developer.android.google.cn/reference/android/animation/AnimatorSet.html><code>AnimatorSet</code></a> 的子类对象设置一个目标对象：</p>
+<div class=highlight><div style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4>
+<table style=border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block><tr><td style=vertical-align:top;padding:0;margin:0;border:0>
+<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">4
+</span></code></pre></td>
+<td style=vertical-align:top;padding:0;margin:0;border:0;width:100%>
+<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=color:#000>AnimatorSet</span> <span style=color:#000>set</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>AnimatorSet</span><span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#000>AnimatorInflater</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>loadAnimator</span>
+  <span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>myContext</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>R</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>anim</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>property_animator</span><span style=color:#ce5c00;font-weight:700>);</span>
+<span style=color:#000>set</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>setTarget</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>myObject</span><span style=color:#ce5c00;font-weight:700>);</span>
+<span style=color:#000>set</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>start</span><span style=color:#ce5c00;font-weight:700>();</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>你也可以在 XML 中声明一个 <a href=https://developer.android.google.cn/reference/android/animation/ValueAnimator.html><code>ValueAnimator</code></a>：</p>
+<div class=highlight><div style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4>
+<table style=border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block><tr><td style=vertical-align:top;padding:0;margin:0;border:0>
+<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">4
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">5
+</span></code></pre></td>
+<td style=vertical-align:top;padding:0;margin:0;border:0;width:100%>
+<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-xml data-lang=xml><span style=color:#204a87;font-weight:700>&lt;animator</span> <span style=color:#c4a000>xmlns:android=</span><span style=color:#4e9a06>&#34;http://schemas.android.com/apk/res/android&#34;</span>
+    <span style=color:#c4a000>android:duration=</span><span style=color:#4e9a06>&#34;1000&#34;</span>
+    <span style=color:#c4a000>android:valueType=</span><span style=color:#4e9a06>&#34;floatType&#34;</span>
+    <span style=color:#c4a000>android:valueFrom=</span><span style=color:#4e9a06>&#34;0f&#34;</span>
+    <span style=color:#c4a000>android:valueTo=</span><span style=color:#4e9a06>&#34;-100f&#34;</span> <span style=color:#204a87;font-weight:700>/&gt;</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>为了在你的代码中使用这个 <a href=https://developer.android.google.cn/reference/android/animation/ValueAnimator.html><code>ValueAnimator</code></a>，你需要填充一个对象，然后添加一个 <a href=https://developer.android.google.cn/reference/android/animation/ValueAnimator.AnimatorUpdateListener.html><code>AnimatorUpdateListener</code></a> 监听器，在回调中获取更新的动画值，然后将其用在你的 <code>View</code> 对象上，例如：</p>
+<div class=highlight><div style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4>
+<table style=border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block><tr><td style=vertical-align:top;padding:0;margin:0;border:0>
+<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 4
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 5
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 6
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 7
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 8
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 9
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">10
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">11
+</span></code></pre></td>
+<td style=vertical-align:top;padding:0;margin:0;border:0;width:100%>
+<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=color:#000>ValueAnimator</span> <span style=color:#000>xmlAnimator</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>ValueAnimator</span><span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#000>AnimatorInflater</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>loadAnimator</span>
+  <span style=color:#ce5c00;font-weight:700>(</span><span style=color:#204a87;font-weight:700>this</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>R</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>animator</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>animator</span><span style=color:#ce5c00;font-weight:700>);</span>
+<span style=color:#000>xmlAnimator</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>addUpdateListener</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#204a87;font-weight:700>new</span> <span style=color:#000>ValueAnimator</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>AnimatorUpdateListener</span><span style=color:#ce5c00;font-weight:700>()</span> <span style=color:#ce5c00;font-weight:700>{</span>
+  <span style=color:#5c35cc;font-weight:700>@Override</span>
+  <span style=color:#204a87;font-weight:700>public</span> <span style=color:#204a87;font-weight:700>void</span> <span style=color:#000>onAnimationUpdate</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>ValueAnimator</span> <span style=color:#000>updatedAnimation</span><span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#ce5c00;font-weight:700>{</span>
+    <span style=color:#204a87;font-weight:700>float</span> <span style=color:#000>animatedValue</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#ce5c00;font-weight:700>(</span><span style=color:#204a87;font-weight:700>float</span><span style=color:#ce5c00;font-weight:700>)</span><span style=color:#000>updatedAnimation</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>getAnimatedValue</span><span style=color:#ce5c00;font-weight:700>();</span>
+    <span style=color:#000>textView</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>setTranslationX</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>animatedValue</span><span style=color:#ce5c00;font-weight:700>);</span>
+  <span style=color:#ce5c00;font-weight:700>}</span>
+<span style=color:#ce5c00;font-weight:700>});</span>
 
-xmlAnimator<span style=color:#f92672>.</span><span style=color:#a6e22e>start</span><span style=color:#f92672>();</span>
-</code></pre></div><h2 id=绘图动画>绘图动画</h2>
+<span style=color:#000>xmlAnimator</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>start</span><span style=color:#ce5c00;font-weight:700>();</span>
+</code></pre></td></tr></table>
+</div>
+</div><h2 id=绘图动画>绘图动画</h2>
 <p>绘图动画让你能够一个接一个地读取一系列可绘制的资源来构建一个动画。这是一个传统的动画实现方式，这种动画是通过像电影一样按序播放一个包含不同的图片序列来实现的。绘图动画的基础类是 <a href=https://developer.android.google.cn/reference/android/graphics/drawable/AnimationDrawable.html><code>AnimationDrawable</code></a> 类。</p>
 <p>尽管你可以在你的代码中使用 <a href=https://developer.android.google.cn/reference/android/graphics/drawable/AnimationDrawable.html><code>AnimationDrawable</code></a> 类的 API，但更容易完成工作的选择是使用一个 XML 文件来列出组成动画的帧。这类动画的 XML 文件应该被放在你的 Android 工程的 <code>res/drawable/</code> 目录下。你需要在这个文件中说明帧的顺序和持续时间。</p>
 <p>绘图动画的 XML 文件包含了一个 <code>&lt;animation-list></code> 元素作为根节点，其中浩瀚了一系列的 <code>&lt;item></code> 元素作为其子节点，每一个 <code>&lt;item></code> 元素都定义了动画的一帧：即一个该帧的可绘制资源和持续时间。例如：</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-xml data-lang=xml><span style=color:#f92672>&lt;animation-list</span> <span style=color:#a6e22e>xmlns:android=</span><span style=color:#e6db74>&#34;http://schemas.android.com/apk/res/android&#34;</span>
-    <span style=color:#a6e22e>android:oneshot=</span><span style=color:#e6db74>&#34;true&#34;</span><span style=color:#f92672>&gt;</span>
-    <span style=color:#f92672>&lt;item</span> <span style=color:#a6e22e>android:drawable=</span><span style=color:#e6db74>&#34;@drawable/rocket_thrust1&#34;</span> <span style=color:#a6e22e>android:duration=</span><span style=color:#e6db74>&#34;200&#34;</span> <span style=color:#f92672>/&gt;</span>
-    <span style=color:#f92672>&lt;item</span> <span style=color:#a6e22e>android:drawable=</span><span style=color:#e6db74>&#34;@drawable/rocket_thrust2&#34;</span> <span style=color:#a6e22e>android:duration=</span><span style=color:#e6db74>&#34;200&#34;</span> <span style=color:#f92672>/&gt;</span>
-    <span style=color:#f92672>&lt;item</span> <span style=color:#a6e22e>android:drawable=</span><span style=color:#e6db74>&#34;@drawable/rocket_thrust3&#34;</span> <span style=color:#a6e22e>android:duration=</span><span style=color:#e6db74>&#34;200&#34;</span> <span style=color:#f92672>/&gt;</span>
-<span style=color:#f92672>&lt;/animation-list&gt;</span>
-</code></pre></div><p>这个动画仅仅播放了三帧。通过将 <code>android:oneshot</code> 属性设置为 <code>true</code> 来使得动画仅播放一次并停在最后一帧。如果设定为 <code>false</code>，那么这个动画就会循环播放。假设这段 XML 被保存在 <code>res/drawable/</code> 目录下的 <code>rocket_thrust.xml</code> 文件里，那么它就可以像下面的例子一样添加进 <code>View</code> 对象的背景并在被触控时开始播放：</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java>AnimationDrawable rocketAnimation<span style=color:#f92672>;</span>
+<div class=highlight><div style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4>
+<table style=border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block><tr><td style=vertical-align:top;padding:0;margin:0;border:0>
+<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">4
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">5
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">6
+</span></code></pre></td>
+<td style=vertical-align:top;padding:0;margin:0;border:0;width:100%>
+<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-xml data-lang=xml><span style=color:#204a87;font-weight:700>&lt;animation-list</span> <span style=color:#c4a000>xmlns:android=</span><span style=color:#4e9a06>&#34;http://schemas.android.com/apk/res/android&#34;</span>
+    <span style=color:#c4a000>android:oneshot=</span><span style=color:#4e9a06>&#34;true&#34;</span><span style=color:#204a87;font-weight:700>&gt;</span>
+    <span style=color:#204a87;font-weight:700>&lt;item</span> <span style=color:#c4a000>android:drawable=</span><span style=color:#4e9a06>&#34;@drawable/rocket_thrust1&#34;</span> <span style=color:#c4a000>android:duration=</span><span style=color:#4e9a06>&#34;200&#34;</span> <span style=color:#204a87;font-weight:700>/&gt;</span>
+    <span style=color:#204a87;font-weight:700>&lt;item</span> <span style=color:#c4a000>android:drawable=</span><span style=color:#4e9a06>&#34;@drawable/rocket_thrust2&#34;</span> <span style=color:#c4a000>android:duration=</span><span style=color:#4e9a06>&#34;200&#34;</span> <span style=color:#204a87;font-weight:700>/&gt;</span>
+    <span style=color:#204a87;font-weight:700>&lt;item</span> <span style=color:#c4a000>android:drawable=</span><span style=color:#4e9a06>&#34;@drawable/rocket_thrust3&#34;</span> <span style=color:#c4a000>android:duration=</span><span style=color:#4e9a06>&#34;200&#34;</span> <span style=color:#204a87;font-weight:700>/&gt;</span>
+<span style=color:#204a87;font-weight:700>&lt;/animation-list&gt;</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>这个动画仅仅播放了三帧。通过将 <code>android:oneshot</code> 属性设置为 <code>true</code> 来使得动画仅播放一次并停在最后一帧。如果设定为 <code>false</code>，那么这个动画就会循环播放。假设这段 XML 被保存在 <code>res/drawable/</code> 目录下的 <code>rocket_thrust.xml</code> 文件里，那么它就可以像下面的例子一样添加进 <code>View</code> 对象的背景并在被触控时开始播放：</p>
+<div class=highlight><div style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4>
+<table style=border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block><tr><td style=vertical-align:top;padding:0;margin:0;border:0>
+<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 4
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 5
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 6
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 7
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 8
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 9
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">10
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">11
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">12
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">13
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">14
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">15
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">16
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">17
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">18
+</span></code></pre></td>
+<td style=vertical-align:top;padding:0;margin:0;border:0;width:100%>
+<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=color:#000>AnimationDrawable</span> <span style=color:#000>rocketAnimation</span><span style=color:#ce5c00;font-weight:700>;</span>
 
-<span style=color:#66d9ef>public</span> <span style=color:#66d9ef>void</span> <span style=color:#a6e22e>onCreate</span><span style=color:#f92672>(</span>Bundle savedInstanceState<span style=color:#f92672>)</span> <span style=color:#f92672>{</span>
-  <span style=color:#66d9ef>super</span><span style=color:#f92672>.</span><span style=color:#a6e22e>onCreate</span><span style=color:#f92672>(</span>savedInstanceState<span style=color:#f92672>);</span>
-  setContentView<span style=color:#f92672>(</span>R<span style=color:#f92672>.</span><span style=color:#a6e22e>layout</span><span style=color:#f92672>.</span><span style=color:#a6e22e>main</span><span style=color:#f92672>);</span>
+<span style=color:#204a87;font-weight:700>public</span> <span style=color:#204a87;font-weight:700>void</span> <span style=color:#000>onCreate</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>Bundle</span> <span style=color:#000>savedInstanceState</span><span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#ce5c00;font-weight:700>{</span>
+  <span style=color:#204a87;font-weight:700>super</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>onCreate</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>savedInstanceState</span><span style=color:#ce5c00;font-weight:700>);</span>
+  <span style=color:#000>setContentView</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>R</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>layout</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>main</span><span style=color:#ce5c00;font-weight:700>);</span>
 
-  ImageView rocketImage <span style=color:#f92672>=</span> <span style=color:#f92672>(</span>ImageView<span style=color:#f92672>)</span> findViewById<span style=color:#f92672>(</span>R<span style=color:#f92672>.</span><span style=color:#a6e22e>id</span><span style=color:#f92672>.</span><span style=color:#a6e22e>rocket_image</span><span style=color:#f92672>);</span>
-  rocketImage<span style=color:#f92672>.</span><span style=color:#a6e22e>setBackgroundResource</span><span style=color:#f92672>(</span>R<span style=color:#f92672>.</span><span style=color:#a6e22e>drawable</span><span style=color:#f92672>.</span><span style=color:#a6e22e>rocket_thrust</span><span style=color:#f92672>);</span>
-  rocketAnimation <span style=color:#f92672>=</span> <span style=color:#f92672>(</span>AnimationDrawable<span style=color:#f92672>)</span> rocketImage<span style=color:#f92672>.</span><span style=color:#a6e22e>getBackground</span><span style=color:#f92672>();</span>
-<span style=color:#f92672>}</span>
+  <span style=color:#000>ImageView</span> <span style=color:#000>rocketImage</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>ImageView</span><span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#000>findViewById</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>R</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>id</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>rocket_image</span><span style=color:#ce5c00;font-weight:700>);</span>
+  <span style=color:#000>rocketImage</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>setBackgroundResource</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>R</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>drawable</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>rocket_thrust</span><span style=color:#ce5c00;font-weight:700>);</span>
+  <span style=color:#000>rocketAnimation</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>AnimationDrawable</span><span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#000>rocketImage</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>getBackground</span><span style=color:#ce5c00;font-weight:700>();</span>
+<span style=color:#ce5c00;font-weight:700>}</span>
 
-<span style=color:#66d9ef>public</span> <span style=color:#66d9ef>boolean</span> <span style=color:#a6e22e>onTouchEvent</span><span style=color:#f92672>(</span>MotionEvent event<span style=color:#f92672>)</span> <span style=color:#f92672>{</span>
-  <span style=color:#66d9ef>if</span> <span style=color:#f92672>(</span>event<span style=color:#f92672>.</span><span style=color:#a6e22e>getAction</span><span style=color:#f92672>()</span> <span style=color:#f92672>==</span> MotionEvent<span style=color:#f92672>.</span><span style=color:#a6e22e>ACTION_DOWN</span><span style=color:#f92672>)</span> <span style=color:#f92672>{</span>
-    rocketAnimation<span style=color:#f92672>.</span><span style=color:#a6e22e>start</span><span style=color:#f92672>();</span>
-    <span style=color:#66d9ef>return</span> <span style=color:#66d9ef>true</span><span style=color:#f92672>;</span>
-  <span style=color:#f92672>}</span>
-  <span style=color:#66d9ef>return</span> <span style=color:#66d9ef>super</span><span style=color:#f92672>.</span><span style=color:#a6e22e>onTouchEvent</span><span style=color:#f92672>(</span>event<span style=color:#f92672>);</span>
-<span style=color:#f92672>}</span>
-</code></pre></div><p>需要注意的是，<code>start()</code> 方法不可以在 <code>Activity</code> 的 <code>onCreate()</code> 方法执行期间被调用，因为 <a href=https://developer.android.google.cn/reference/android/graphics/drawable/AnimationDrawable.html><code>AnimationDrawable</code></a> 还没有被完全附加到窗口上。如果你希望立即播放动画，你可以选择在 <code>Activity</code> 的 <a href=https://developer.android.google.cn/reference/android/app/Activity.html#onWindowFocusChanged(boolean)><code>onWindowFocusChanged()</code></a> 方法里调用这个它，这个方法会在 Android 将窗口设为焦点时被回调。</p>
+<span style=color:#204a87;font-weight:700>public</span> <span style=color:#204a87;font-weight:700>boolean</span> <span style=color:#000>onTouchEvent</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>MotionEvent</span> <span style=color:#000>event</span><span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#ce5c00;font-weight:700>{</span>
+  <span style=color:#204a87;font-weight:700>if</span> <span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>event</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>getAction</span><span style=color:#ce5c00;font-weight:700>()</span> <span style=color:#ce5c00;font-weight:700>==</span> <span style=color:#000>MotionEvent</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>ACTION_DOWN</span><span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#ce5c00;font-weight:700>{</span>
+    <span style=color:#000>rocketAnimation</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>start</span><span style=color:#ce5c00;font-weight:700>();</span>
+    <span style=color:#204a87;font-weight:700>return</span> <span style=color:#204a87;font-weight:700>true</span><span style=color:#ce5c00;font-weight:700>;</span>
+  <span style=color:#ce5c00;font-weight:700>}</span>
+  <span style=color:#204a87;font-weight:700>return</span> <span style=color:#204a87;font-weight:700>super</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>onTouchEvent</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>event</span><span style=color:#ce5c00;font-weight:700>);</span>
+<span style=color:#ce5c00;font-weight:700>}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>需要注意的是，<code>start()</code> 方法不可以在 <code>Activity</code> 的 <code>onCreate()</code> 方法执行期间被调用，因为 <a href=https://developer.android.google.cn/reference/android/graphics/drawable/AnimationDrawable.html><code>AnimationDrawable</code></a> 还没有被完全附加到窗口上。如果你希望立即播放动画，你可以选择在 <code>Activity</code> 的 <a href=https://developer.android.google.cn/reference/android/app/Activity.html#onWindowFocusChanged(boolean)><code>onWindowFocusChanged()</code></a> 方法里调用这个它，这个方法会在 Android 将窗口设为焦点时被回调。</p>
 </div>
 <div class="row middle-xs">
 <div class=col-xs-12>

@@ -93,141 +93,378 @@ $$</p>
 <h1 id=自然数的表示>自然数的表示</h1>
 <p>在考虑如何表示数之前，先思考一下数是什么，前面已经说了，数是一种理念，我们在去摹仿这个理念的时候，一般是做两件事，一是定义一些基本运算，将数进行组合获取新的数，比如四则运算；二是通过和上下文结合，用来表达某个意思，比如三个苹果，走了一步等。这样看来，只要能抽象出这两点，具体用什么来表示似乎就不重要了，其中一个方式就是邱奇数 <sup id=fnref:3><a href=#fn:3 class=footnote-ref role=doc-noteref>3</a></sup>。</p>
 <p>在这种表示法下，数字被表现为一个函数应用于一个值多少次。也就是说，所谓的「0」，就是一个函数应用一个值 0 次，即 <code>x</code>，「1」是应用 1 次，即 <code>(f x)</code>，「2」则是先应用 1 次，再对作用后的返回值再应用 1 次，即 <code>(f (f x))</code>，以此类推。首先，要先有一个初始，也就是所谓的「0」，用 Scheme 表示如下：</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-scheme data-lang=scheme>(<span style=color:#66d9ef>define </span>ZERO
-  (<span style=color:#66d9ef>lambda </span>(<span style=color:#a6e22e>f</span>)
-    (<span style=color:#66d9ef>lambda </span>(<span style=color:#a6e22e>x</span>) x)))
-</code></pre></div><p>注意，这里的 <code>(define ZERO ...)</code> 只是给了后面的表达式一个名字，而非像 C 语言一样声明一个变量，这个过程完全是引用透明的，也就是此后任何出现 <code>ZERO</code> 的地方都可以用这里定义的部分直接代换。下面是函数 <code>succ</code> 的定义，作用是求一个邱奇数的后继（successor），即所谓的给一个数加「1」。</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-scheme data-lang=scheme>(<span style=color:#66d9ef>define </span>succ
-  (<span style=color:#66d9ef>lambda </span>(<span style=color:#a6e22e>n</span>)
-    (<span style=color:#66d9ef>lambda </span>(<span style=color:#a6e22e>f</span>)
-      (<span style=color:#66d9ef>lambda </span>(<span style=color:#a6e22e>x</span>) (<span style=color:#a6e22e>f</span> ((<span style=color:#a6e22e>n</span> f) x))))))
-</code></pre></div><p>此时，我们已经可以用这个方式表示所有的自然数了，举例而言：</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-scheme data-lang=scheme><span style=color:#75715e>; (f x)</span>
-(<span style=color:#66d9ef>define </span>ONE (<span style=color:#a6e22e>succ</span> ZERO))
+<div class=highlight><div style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4>
+<table style=border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block><tr><td style=vertical-align:top;padding:0;margin:0;border:0>
+<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
+</span></code></pre></td>
+<td style=vertical-align:top;padding:0;margin:0;border:0;width:100%>
+<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-scheme data-lang=scheme><span style=color:#000;font-weight:700>(</span><span style=color:#204a87;font-weight:700>define </span><span style=color:#000>ZERO</span>
+  <span style=color:#000;font-weight:700>(</span><span style=color:#204a87;font-weight:700>lambda </span><span style=color:#000;font-weight:700>(</span><span style=color:#000>f</span><span style=color:#000;font-weight:700>)</span>
+    <span style=color:#000;font-weight:700>(</span><span style=color:#204a87;font-weight:700>lambda </span><span style=color:#000;font-weight:700>(</span><span style=color:#000>x</span><span style=color:#000;font-weight:700>)</span> <span style=color:#000>x</span><span style=color:#000;font-weight:700>)))</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>注意，这里的 <code>(define ZERO ...)</code> 只是给了后面的表达式一个名字，而非像 C 语言一样声明一个变量，这个过程完全是引用透明的，也就是此后任何出现 <code>ZERO</code> 的地方都可以用这里定义的部分直接代换。下面是函数 <code>succ</code> 的定义，作用是求一个邱奇数的后继（successor），即所谓的给一个数加「1」。</p>
+<div class=highlight><div style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4>
+<table style=border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block><tr><td style=vertical-align:top;padding:0;margin:0;border:0>
+<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">4
+</span></code></pre></td>
+<td style=vertical-align:top;padding:0;margin:0;border:0;width:100%>
+<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-scheme data-lang=scheme><span style=color:#000;font-weight:700>(</span><span style=color:#204a87;font-weight:700>define </span><span style=color:#000>succ</span>
+  <span style=color:#000;font-weight:700>(</span><span style=color:#204a87;font-weight:700>lambda </span><span style=color:#000;font-weight:700>(</span><span style=color:#000>n</span><span style=color:#000;font-weight:700>)</span>
+    <span style=color:#000;font-weight:700>(</span><span style=color:#204a87;font-weight:700>lambda </span><span style=color:#000;font-weight:700>(</span><span style=color:#000>f</span><span style=color:#000;font-weight:700>)</span>
+      <span style=color:#000;font-weight:700>(</span><span style=color:#204a87;font-weight:700>lambda </span><span style=color:#000;font-weight:700>(</span><span style=color:#000>x</span><span style=color:#000;font-weight:700>)</span> <span style=color:#000;font-weight:700>(</span><span style=color:#000>f</span> <span style=color:#000;font-weight:700>((</span><span style=color:#000>n</span> <span style=color:#000>f</span><span style=color:#000;font-weight:700>)</span> <span style=color:#000>x</span><span style=color:#000;font-weight:700>))))))</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>此时，我们已经可以用这个方式表示所有的自然数了，举例而言：</p>
+<div class=highlight><div style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4>
+<table style=border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block><tr><td style=vertical-align:top;padding:0;margin:0;border:0>
+<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">4
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">5
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">6
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">7
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">8
+</span></code></pre></td>
+<td style=vertical-align:top;padding:0;margin:0;border:0;width:100%>
+<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-scheme data-lang=scheme><span style=color:#8f5902;font-style:italic>; (f x)</span>
+<span style=color:#000;font-weight:700>(</span><span style=color:#204a87;font-weight:700>define </span><span style=color:#000>ONE</span> <span style=color:#000;font-weight:700>(</span><span style=color:#000>succ</span> <span style=color:#000>ZERO</span><span style=color:#000;font-weight:700>))</span>
 
-<span style=color:#75715e>; (f (f x))</span>
-(<span style=color:#66d9ef>define </span>TWO (<span style=color:#a6e22e>succ</span> (<span style=color:#a6e22e>succ</span> ZERO)))
+<span style=color:#8f5902;font-style:italic>; (f (f x))</span>
+<span style=color:#000;font-weight:700>(</span><span style=color:#204a87;font-weight:700>define </span><span style=color:#000>TWO</span> <span style=color:#000;font-weight:700>(</span><span style=color:#000>succ</span> <span style=color:#000;font-weight:700>(</span><span style=color:#000>succ</span> <span style=color:#000>ZERO</span><span style=color:#000;font-weight:700>)))</span>
 
-<span style=color:#75715e>; (f (f (f x)))</span>
-(<span style=color:#66d9ef>define </span>THREE (<span style=color:#a6e22e>succ</span> TWO))
-</code></pre></div><p>前面说了，数只有在给定的上下文中才会有其意义，否则只是一个概念而已，这里为了方便计算机打印，可以将其设置为对我们常用的阿拉伯数字的转换：</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-scheme data-lang=scheme>(<span style=color:#66d9ef>define </span>trans
-  (<span style=color:#66d9ef>lambda </span>(<span style=color:#a6e22e>n</span>)
-    ((<span style=color:#a6e22e>n</span> (<span style=color:#66d9ef>lambda </span>(<span style=color:#a6e22e>x</span>) (+ x <span style=color:#ae81ff>1</span>))) <span style=color:#ae81ff>0</span>)))
-</code></pre></div><p>其中传入给邱奇数 <code>n</code> 的函数是一个给阿拉伯数字加一的函数，之后再传入的被作用对象是阿拉伯数字 <code>0</code>，故结果就是该邱奇数的概念对应的阿拉伯数字。此时，在 REPL 中可以这样进行转换：</p>
+<span style=color:#8f5902;font-style:italic>; (f (f (f x)))</span>
+<span style=color:#000;font-weight:700>(</span><span style=color:#204a87;font-weight:700>define </span><span style=color:#000>THREE</span> <span style=color:#000;font-weight:700>(</span><span style=color:#000>succ</span> <span style=color:#000>TWO</span><span style=color:#000;font-weight:700>))</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>前面说了，数只有在给定的上下文中才会有其意义，否则只是一个概念而已，这里为了方便计算机打印，可以将其设置为对我们常用的阿拉伯数字的转换：</p>
+<div class=highlight><div style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4>
+<table style=border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block><tr><td style=vertical-align:top;padding:0;margin:0;border:0>
+<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
+</span></code></pre></td>
+<td style=vertical-align:top;padding:0;margin:0;border:0;width:100%>
+<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-scheme data-lang=scheme><span style=color:#000;font-weight:700>(</span><span style=color:#204a87;font-weight:700>define </span><span style=color:#000>trans</span>
+  <span style=color:#000;font-weight:700>(</span><span style=color:#204a87;font-weight:700>lambda </span><span style=color:#000;font-weight:700>(</span><span style=color:#000>n</span><span style=color:#000;font-weight:700>)</span>
+    <span style=color:#000;font-weight:700>((</span><span style=color:#000>n</span> <span style=color:#000;font-weight:700>(</span><span style=color:#204a87;font-weight:700>lambda </span><span style=color:#000;font-weight:700>(</span><span style=color:#000>x</span><span style=color:#000;font-weight:700>)</span> <span style=color:#000;font-weight:700>(</span><span style=color:#204a87>+ </span><span style=color:#000>x</span> <span style=color:#0000cf;font-weight:700>1</span><span style=color:#000;font-weight:700>)))</span> <span style=color:#0000cf;font-weight:700>0</span><span style=color:#000;font-weight:700>)))</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>其中传入给邱奇数 <code>n</code> 的函数是一个给阿拉伯数字加一的函数，之后再传入的被作用对象是阿拉伯数字 <code>0</code>，故结果就是该邱奇数的概念对应的阿拉伯数字。此时，在 REPL 中可以这样进行转换：</p>
 <pre><code>&gt;&gt;&gt; (trans ONE)
 1
 &gt;&gt;&gt; (trans (succ (succ ONE)))
 3
 </code></pre><p>除了这样依赖于上下文的意义，数字的作用还有一些预定义的运算。其中，加法的运算最为简单直接：</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-scheme data-lang=scheme>(<span style=color:#66d9ef>define </span>plus
-  (<span style=color:#66d9ef>lambda </span>(<span style=color:#a6e22e>m</span>)
-    (<span style=color:#66d9ef>lambda </span>(<span style=color:#a6e22e>n</span>)
-      (<span style=color:#66d9ef>lambda </span>(<span style=color:#a6e22e>f</span>)
-        (<span style=color:#66d9ef>lambda </span>(<span style=color:#a6e22e>x</span>) ((<span style=color:#a6e22e>m</span> f) ((<span style=color:#a6e22e>n</span> f) x)))))))
-</code></pre></div><p>也就是，对于两个邱奇数 <code>n</code>，<code>m</code> 而言，其求和之后的邱奇数是 <code>l</code>，当给 <code>l</code> 一个函数 <code>f</code> 和一个参数 <code>x</code> 之后，它会先将 <code>f</code> 和 <code>x</code> 传给 <code>n</code> 得出结果后再将 <code>f</code> 和结果传给 <code>m</code>，这样 <code>f</code> 就在 <code>x</code> 上作用了所谓「m + n」次了。</p>
+<div class=highlight><div style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4>
+<table style=border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block><tr><td style=vertical-align:top;padding:0;margin:0;border:0>
+<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">4
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">5
+</span></code></pre></td>
+<td style=vertical-align:top;padding:0;margin:0;border:0;width:100%>
+<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-scheme data-lang=scheme><span style=color:#000;font-weight:700>(</span><span style=color:#204a87;font-weight:700>define </span><span style=color:#000>plus</span>
+  <span style=color:#000;font-weight:700>(</span><span style=color:#204a87;font-weight:700>lambda </span><span style=color:#000;font-weight:700>(</span><span style=color:#000>m</span><span style=color:#000;font-weight:700>)</span>
+    <span style=color:#000;font-weight:700>(</span><span style=color:#204a87;font-weight:700>lambda </span><span style=color:#000;font-weight:700>(</span><span style=color:#000>n</span><span style=color:#000;font-weight:700>)</span>
+      <span style=color:#000;font-weight:700>(</span><span style=color:#204a87;font-weight:700>lambda </span><span style=color:#000;font-weight:700>(</span><span style=color:#000>f</span><span style=color:#000;font-weight:700>)</span>
+        <span style=color:#000;font-weight:700>(</span><span style=color:#204a87;font-weight:700>lambda </span><span style=color:#000;font-weight:700>(</span><span style=color:#000>x</span><span style=color:#000;font-weight:700>)</span> <span style=color:#000;font-weight:700>((</span><span style=color:#000>m</span> <span style=color:#000>f</span><span style=color:#000;font-weight:700>)</span> <span style=color:#000;font-weight:700>((</span><span style=color:#000>n</span> <span style=color:#000>f</span><span style=color:#000;font-weight:700>)</span> <span style=color:#000>x</span><span style=color:#000;font-weight:700>)))))))</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>也就是，对于两个邱奇数 <code>n</code>，<code>m</code> 而言，其求和之后的邱奇数是 <code>l</code>，当给 <code>l</code> 一个函数 <code>f</code> 和一个参数 <code>x</code> 之后，它会先将 <code>f</code> 和 <code>x</code> 传给 <code>n</code> 得出结果后再将 <code>f</code> 和结果传给 <code>m</code>，这样 <code>f</code> 就在 <code>x</code> 上作用了所谓「m + n」次了。</p>
 <pre><code>&gt;&gt;&gt; (trans ((plus ONE) TWO))
 3
 </code></pre><p>类似地，乘法的定义也相当直观：</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-scheme data-lang=scheme>(<span style=color:#66d9ef>define </span>mult
-  (<span style=color:#66d9ef>lambda </span>(<span style=color:#a6e22e>m</span>)
-    (<span style=color:#66d9ef>lambda </span>(<span style=color:#a6e22e>n</span>)
-      (<span style=color:#66d9ef>lambda </span>(<span style=color:#a6e22e>f</span>) (<span style=color:#a6e22e>m</span> (<span style=color:#a6e22e>n</span> f))))))
-</code></pre></div><p>也就是将 <code>f</code> 作用 <code>n</code> 次这件事重复作用 <code>m</code> 次，这也正是乘法的意义：</p>
+<div class=highlight><div style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4>
+<table style=border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block><tr><td style=vertical-align:top;padding:0;margin:0;border:0>
+<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">4
+</span></code></pre></td>
+<td style=vertical-align:top;padding:0;margin:0;border:0;width:100%>
+<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-scheme data-lang=scheme><span style=color:#000;font-weight:700>(</span><span style=color:#204a87;font-weight:700>define </span><span style=color:#000>mult</span>
+  <span style=color:#000;font-weight:700>(</span><span style=color:#204a87;font-weight:700>lambda </span><span style=color:#000;font-weight:700>(</span><span style=color:#000>m</span><span style=color:#000;font-weight:700>)</span>
+    <span style=color:#000;font-weight:700>(</span><span style=color:#204a87;font-weight:700>lambda </span><span style=color:#000;font-weight:700>(</span><span style=color:#000>n</span><span style=color:#000;font-weight:700>)</span>
+      <span style=color:#000;font-weight:700>(</span><span style=color:#204a87;font-weight:700>lambda </span><span style=color:#000;font-weight:700>(</span><span style=color:#000>f</span><span style=color:#000;font-weight:700>)</span> <span style=color:#000;font-weight:700>(</span><span style=color:#000>m</span> <span style=color:#000;font-weight:700>(</span><span style=color:#000>n</span> <span style=color:#000>f</span><span style=color:#000;font-weight:700>))))))</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>也就是将 <code>f</code> 作用 <code>n</code> 次这件事重复作用 <code>m</code> 次，这也正是乘法的意义：</p>
 <pre><code>&gt;&gt;&gt; (trans ((mult TWO) THREE))
 6
 </code></pre><p>如果想得到一个邱奇数的前驱（predecessor）则比之前的计算要困难多了，可以表示如下：</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-scheme data-lang=scheme>(<span style=color:#66d9ef>define </span>pred
-  (<span style=color:#66d9ef>lambda </span>(<span style=color:#a6e22e>n</span>)
-    (<span style=color:#66d9ef>lambda </span>(<span style=color:#a6e22e>f</span>)
-      (<span style=color:#66d9ef>lambda </span>(<span style=color:#a6e22e>x</span>)
-        (((<span style=color:#a6e22e>n</span> (<span style=color:#66d9ef>lambda </span>(<span style=color:#a6e22e>g</span>)
-               (<span style=color:#66d9ef>lambda </span>(<span style=color:#a6e22e>h</span>) (<span style=color:#a6e22e>h</span> (<span style=color:#a6e22e>g</span> f))))) (<span style=color:#66d9ef>lambda </span>(<span style=color:#a6e22e>u</span>) x)) (<span style=color:#66d9ef>lambda </span>(<span style=color:#a6e22e>u</span>) u))))))
-</code></pre></div><p>则有：</p>
+<div class=highlight><div style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4>
+<table style=border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block><tr><td style=vertical-align:top;padding:0;margin:0;border:0>
+<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">4
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">5
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">6
+</span></code></pre></td>
+<td style=vertical-align:top;padding:0;margin:0;border:0;width:100%>
+<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-scheme data-lang=scheme><span style=color:#000;font-weight:700>(</span><span style=color:#204a87;font-weight:700>define </span><span style=color:#000>pred</span>
+  <span style=color:#000;font-weight:700>(</span><span style=color:#204a87;font-weight:700>lambda </span><span style=color:#000;font-weight:700>(</span><span style=color:#000>n</span><span style=color:#000;font-weight:700>)</span>
+    <span style=color:#000;font-weight:700>(</span><span style=color:#204a87;font-weight:700>lambda </span><span style=color:#000;font-weight:700>(</span><span style=color:#000>f</span><span style=color:#000;font-weight:700>)</span>
+      <span style=color:#000;font-weight:700>(</span><span style=color:#204a87;font-weight:700>lambda </span><span style=color:#000;font-weight:700>(</span><span style=color:#000>x</span><span style=color:#000;font-weight:700>)</span>
+        <span style=color:#000;font-weight:700>(((</span><span style=color:#000>n</span> <span style=color:#000;font-weight:700>(</span><span style=color:#204a87;font-weight:700>lambda </span><span style=color:#000;font-weight:700>(</span><span style=color:#000>g</span><span style=color:#000;font-weight:700>)</span>
+               <span style=color:#000;font-weight:700>(</span><span style=color:#204a87;font-weight:700>lambda </span><span style=color:#000;font-weight:700>(</span><span style=color:#000>h</span><span style=color:#000;font-weight:700>)</span> <span style=color:#000;font-weight:700>(</span><span style=color:#000>h</span> <span style=color:#000;font-weight:700>(</span><span style=color:#000>g</span> <span style=color:#000>f</span><span style=color:#000;font-weight:700>)))))</span> <span style=color:#000;font-weight:700>(</span><span style=color:#204a87;font-weight:700>lambda </span><span style=color:#000;font-weight:700>(</span><span style=color:#000>u</span><span style=color:#000;font-weight:700>)</span> <span style=color:#000>x</span><span style=color:#000;font-weight:700>))</span> <span style=color:#000;font-weight:700>(</span><span style=color:#204a87;font-weight:700>lambda </span><span style=color:#000;font-weight:700>(</span><span style=color:#000>u</span><span style=color:#000;font-weight:700>)</span> <span style=color:#000>u</span><span style=color:#000;font-weight:700>))))))</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>则有：</p>
 <pre><code>&gt;&gt;&gt; (trans (pred THREE))
 2
 </code></pre><p>当然，这个 <code>pred</code> 的表示非常令人困惑，但可以使用代换模型直接验证，考虑将将该函数应用于 <code>ONE</code>，再将结果应用于 <code>f</code> 和 <code>x</code>。那么，首先肯定是不能将 <code>ONE</code> 直接应用于 <code>f</code> 了，这里将 <code>ONE</code> 应用于另一个函数，这个函数是：</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-scheme data-lang=scheme>(<span style=color:#66d9ef>lambda </span>(<span style=color:#a6e22e>g</span>)
-  (<span style=color:#66d9ef>lambda </span>(<span style=color:#a6e22e>h</span>) (<span style=color:#a6e22e>h</span> (<span style=color:#a6e22e>g</span> f))))
-</code></pre></div><p>其中的 <code>f</code> 是传入的 <code>f</code>，此时 <code>ONE</code> 会返回另一个函数：</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-scheme data-lang=scheme>(<span style=color:#66d9ef>lambda </span>(<span style=color:#a6e22e>y</span>)
-  ((<span style=color:#66d9ef>lambda </span>(<span style=color:#a6e22e>g</span>)
-     (<span style=color:#66d9ef>lambda </span>(<span style=color:#a6e22e>h</span>) (<span style=color:#a6e22e>h</span> (<span style=color:#a6e22e>g</span> f)))) y))
-</code></pre></div><p>即：</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-scheme data-lang=scheme>(<span style=color:#66d9ef>lambda </span>(<span style=color:#a6e22e>y</span>)
-  (<span style=color:#66d9ef>lambda </span>(<span style=color:#a6e22e>h</span>) (<span style=color:#a6e22e>h</span> (<span style=color:#a6e22e>y</span> f))))
-</code></pre></div><p>这里为了避免和传入的 <code>x</code> 冲突，将 <code>x</code> 替换为 <code>y</code>。然后将这个结果应用于另一个函数：</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-scheme data-lang=scheme>(<span style=color:#66d9ef>lambda </span>(<span style=color:#a6e22e>u</span>) x)
-</code></pre></div><p>其中的 <code>x</code> 是传入的 <code>x</code>，结果为：</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-scheme data-lang=scheme>(<span style=color:#66d9ef>lambda </span>(<span style=color:#a6e22e>h</span>) ((<span style=color:#66d9ef>lambda </span>(<span style=color:#a6e22e>u</span>) x) f))
-</code></pre></div><p>即：</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-scheme data-lang=scheme>(<span style=color:#66d9ef>lambda </span>(<span style=color:#a6e22e>h</span>) (<span style=color:#a6e22e>h</span> x))
-</code></pre></div><p>这个结果又被应用到了另一个函数上：</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-scheme data-lang=scheme>((<span style=color:#66d9ef>lambda </span>(<span style=color:#a6e22e>h</span>) (<span style=color:#a6e22e>h</span> x)) (<span style=color:#66d9ef>lambda </span>(<span style=color:#a6e22e>u</span>) u))
-</code></pre></div><p>即：</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-scheme data-lang=scheme>x
-</code></pre></div><p>即 <code>(pred ONE)</code> 的定义如下：</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-scheme data-lang=scheme>(<span style=color:#66d9ef>lambda </span>(<span style=color:#a6e22e>f</span>)
-  (<span style=color:#66d9ef>lambda </span>(<span style=color:#a6e22e>x</span>) x))
-</code></pre></div><p>也就是说 <code>(pred ONE)</code> 就是 <code>ZERO</code>。</p>
+<div class=highlight><div style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4>
+<table style=border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block><tr><td style=vertical-align:top;padding:0;margin:0;border:0>
+<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span></code></pre></td>
+<td style=vertical-align:top;padding:0;margin:0;border:0;width:100%>
+<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-scheme data-lang=scheme><span style=color:#000;font-weight:700>(</span><span style=color:#204a87;font-weight:700>lambda </span><span style=color:#000;font-weight:700>(</span><span style=color:#000>g</span><span style=color:#000;font-weight:700>)</span>
+  <span style=color:#000;font-weight:700>(</span><span style=color:#204a87;font-weight:700>lambda </span><span style=color:#000;font-weight:700>(</span><span style=color:#000>h</span><span style=color:#000;font-weight:700>)</span> <span style=color:#000;font-weight:700>(</span><span style=color:#000>h</span> <span style=color:#000;font-weight:700>(</span><span style=color:#000>g</span> <span style=color:#000>f</span><span style=color:#000;font-weight:700>))))</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>其中的 <code>f</code> 是传入的 <code>f</code>，此时 <code>ONE</code> 会返回另一个函数：</p>
+<div class=highlight><div style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4>
+<table style=border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block><tr><td style=vertical-align:top;padding:0;margin:0;border:0>
+<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
+</span></code></pre></td>
+<td style=vertical-align:top;padding:0;margin:0;border:0;width:100%>
+<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-scheme data-lang=scheme><span style=color:#000;font-weight:700>(</span><span style=color:#204a87;font-weight:700>lambda </span><span style=color:#000;font-weight:700>(</span><span style=color:#000>y</span><span style=color:#000;font-weight:700>)</span>
+  <span style=color:#000;font-weight:700>((</span><span style=color:#204a87;font-weight:700>lambda </span><span style=color:#000;font-weight:700>(</span><span style=color:#000>g</span><span style=color:#000;font-weight:700>)</span>
+     <span style=color:#000;font-weight:700>(</span><span style=color:#204a87;font-weight:700>lambda </span><span style=color:#000;font-weight:700>(</span><span style=color:#000>h</span><span style=color:#000;font-weight:700>)</span> <span style=color:#000;font-weight:700>(</span><span style=color:#000>h</span> <span style=color:#000;font-weight:700>(</span><span style=color:#000>g</span> <span style=color:#000>f</span><span style=color:#000;font-weight:700>))))</span> <span style=color:#000>y</span><span style=color:#000;font-weight:700>))</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>即：</p>
+<div class=highlight><div style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4>
+<table style=border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block><tr><td style=vertical-align:top;padding:0;margin:0;border:0>
+<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span></code></pre></td>
+<td style=vertical-align:top;padding:0;margin:0;border:0;width:100%>
+<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-scheme data-lang=scheme><span style=color:#000;font-weight:700>(</span><span style=color:#204a87;font-weight:700>lambda </span><span style=color:#000;font-weight:700>(</span><span style=color:#000>y</span><span style=color:#000;font-weight:700>)</span>
+  <span style=color:#000;font-weight:700>(</span><span style=color:#204a87;font-weight:700>lambda </span><span style=color:#000;font-weight:700>(</span><span style=color:#000>h</span><span style=color:#000;font-weight:700>)</span> <span style=color:#000;font-weight:700>(</span><span style=color:#000>h</span> <span style=color:#000;font-weight:700>(</span><span style=color:#000>y</span> <span style=color:#000>f</span><span style=color:#000;font-weight:700>))))</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>这里为了避免和传入的 <code>x</code> 冲突，将 <code>x</code> 替换为 <code>y</code>。然后将这个结果应用于另一个函数：</p>
+<div class=highlight><div style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4>
+<table style=border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block><tr><td style=vertical-align:top;padding:0;margin:0;border:0>
+<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span></code></pre></td>
+<td style=vertical-align:top;padding:0;margin:0;border:0;width:100%>
+<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-scheme data-lang=scheme><span style=color:#000;font-weight:700>(</span><span style=color:#204a87;font-weight:700>lambda </span><span style=color:#000;font-weight:700>(</span><span style=color:#000>u</span><span style=color:#000;font-weight:700>)</span> <span style=color:#000>x</span><span style=color:#000;font-weight:700>)</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>其中的 <code>x</code> 是传入的 <code>x</code>，结果为：</p>
+<div class=highlight><div style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4>
+<table style=border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block><tr><td style=vertical-align:top;padding:0;margin:0;border:0>
+<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span></code></pre></td>
+<td style=vertical-align:top;padding:0;margin:0;border:0;width:100%>
+<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-scheme data-lang=scheme><span style=color:#000;font-weight:700>(</span><span style=color:#204a87;font-weight:700>lambda </span><span style=color:#000;font-weight:700>(</span><span style=color:#000>h</span><span style=color:#000;font-weight:700>)</span> <span style=color:#000;font-weight:700>((</span><span style=color:#204a87;font-weight:700>lambda </span><span style=color:#000;font-weight:700>(</span><span style=color:#000>u</span><span style=color:#000;font-weight:700>)</span> <span style=color:#000>x</span><span style=color:#000;font-weight:700>)</span> <span style=color:#000>f</span><span style=color:#000;font-weight:700>))</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>即：</p>
+<div class=highlight><div style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4>
+<table style=border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block><tr><td style=vertical-align:top;padding:0;margin:0;border:0>
+<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span></code></pre></td>
+<td style=vertical-align:top;padding:0;margin:0;border:0;width:100%>
+<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-scheme data-lang=scheme><span style=color:#000;font-weight:700>(</span><span style=color:#204a87;font-weight:700>lambda </span><span style=color:#000;font-weight:700>(</span><span style=color:#000>h</span><span style=color:#000;font-weight:700>)</span> <span style=color:#000;font-weight:700>(</span><span style=color:#000>h</span> <span style=color:#000>x</span><span style=color:#000;font-weight:700>))</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>这个结果又被应用到了另一个函数上：</p>
+<div class=highlight><div style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4>
+<table style=border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block><tr><td style=vertical-align:top;padding:0;margin:0;border:0>
+<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span></code></pre></td>
+<td style=vertical-align:top;padding:0;margin:0;border:0;width:100%>
+<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-scheme data-lang=scheme><span style=color:#000;font-weight:700>((</span><span style=color:#204a87;font-weight:700>lambda </span><span style=color:#000;font-weight:700>(</span><span style=color:#000>h</span><span style=color:#000;font-weight:700>)</span> <span style=color:#000;font-weight:700>(</span><span style=color:#000>h</span> <span style=color:#000>x</span><span style=color:#000;font-weight:700>))</span> <span style=color:#000;font-weight:700>(</span><span style=color:#204a87;font-weight:700>lambda </span><span style=color:#000;font-weight:700>(</span><span style=color:#000>u</span><span style=color:#000;font-weight:700>)</span> <span style=color:#000>u</span><span style=color:#000;font-weight:700>))</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>即：</p>
+<div class=highlight><div style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4>
+<table style=border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block><tr><td style=vertical-align:top;padding:0;margin:0;border:0>
+<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span></code></pre></td>
+<td style=vertical-align:top;padding:0;margin:0;border:0;width:100%>
+<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-scheme data-lang=scheme><span style=color:#000>x</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>即 <code>(pred ONE)</code> 的定义如下：</p>
+<div class=highlight><div style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4>
+<table style=border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block><tr><td style=vertical-align:top;padding:0;margin:0;border:0>
+<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span></code></pre></td>
+<td style=vertical-align:top;padding:0;margin:0;border:0;width:100%>
+<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-scheme data-lang=scheme><span style=color:#000;font-weight:700>(</span><span style=color:#204a87;font-weight:700>lambda </span><span style=color:#000;font-weight:700>(</span><span style=color:#000>f</span><span style=color:#000;font-weight:700>)</span>
+  <span style=color:#000;font-weight:700>(</span><span style=color:#204a87;font-weight:700>lambda </span><span style=color:#000;font-weight:700>(</span><span style=color:#000>x</span><span style=color:#000;font-weight:700>)</span> <span style=color:#000>x</span><span style=color:#000;font-weight:700>))</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>也就是说 <code>(pred ONE)</code> 就是 <code>ZERO</code>。</p>
 <p>一但有了这些对自然数的运算，负数、浮点数都是可以定义的，毕竟我们使用的计算机也是通过一些约定的记法来表示负数和浮点数的。</p>
 <h1 id=逻辑的表示>逻辑的表示</h1>
 <p>上一节说明了如何用函数来表示数的概念，这一节将用函数来表示逻辑与断言。同样地，首先要思考的是，我们一般使用的 <code>True</code> 和 <code>False</code> 到底是用来做什么的。事实上，逻辑不是为了判断对错，而是对条件分支的选择，它说明了有两种情况，在一种情况下选择一种分支，在另一种情况下选择另一分支，另外还需要在其上进行逻辑运算的算子（与或非）。注意到 C 语言其实是没有布尔值这个类型的，但是依然不影响 <code>if</code> 的使用，因为 C 里面可以用其他类型的值来进行逻辑运算，在 <code>if</code> 里也可以用这些结果来进行分支的选择。</p>
 <p>所以，我们可以这样来定义布尔值，下面这个定义法被称为邱奇布尔值：</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-scheme data-lang=scheme>(<span style=color:#66d9ef>define </span>TRUE
-  (<span style=color:#66d9ef>lambda </span>(<span style=color:#a6e22e>x</span>) (<span style=color:#66d9ef>lambda </span>(<span style=color:#a6e22e>y</span>) x)))
+<div class=highlight><div style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4>
+<table style=border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block><tr><td style=vertical-align:top;padding:0;margin:0;border:0>
+<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">4
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">5
+</span></code></pre></td>
+<td style=vertical-align:top;padding:0;margin:0;border:0;width:100%>
+<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-scheme data-lang=scheme><span style=color:#000;font-weight:700>(</span><span style=color:#204a87;font-weight:700>define </span><span style=color:#000>TRUE</span>
+  <span style=color:#000;font-weight:700>(</span><span style=color:#204a87;font-weight:700>lambda </span><span style=color:#000;font-weight:700>(</span><span style=color:#000>x</span><span style=color:#000;font-weight:700>)</span> <span style=color:#000;font-weight:700>(</span><span style=color:#204a87;font-weight:700>lambda </span><span style=color:#000;font-weight:700>(</span><span style=color:#000>y</span><span style=color:#000;font-weight:700>)</span> <span style=color:#000>x</span><span style=color:#000;font-weight:700>)))</span>
 
-(<span style=color:#66d9ef>define </span>FALSE
-  (<span style=color:#66d9ef>lambda </span>(<span style=color:#a6e22e>x</span>) (<span style=color:#66d9ef>lambda </span>(<span style=color:#a6e22e>y</span>) y)))
-</code></pre></div><p>也就是说，给定两个分支，<code>TURE</code> 会选择第一个，而 <code>FALSE</code> 会选择第二个。至于逻辑运算可以基于这个表示方式进行定义，比如与运算定义如下：</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-scheme data-lang=scheme>(<span style=color:#66d9ef>define </span>and
-  (<span style=color:#66d9ef>lambda </span>(<span style=color:#a6e22e>p</span>)
-    (<span style=color:#66d9ef>lambda </span>(<span style=color:#a6e22e>q</span>) ((<span style=color:#a6e22e>p</span> q) (<span style=color:#66d9ef>lambda </span>(<span style=color:#a6e22e>x</span>) (<span style=color:#66d9ef>lambda </span>(<span style=color:#a6e22e>y</span>) x)))))
-</code></pre></div><p>即：</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-scheme data-lang=scheme>(<span style=color:#66d9ef>define </span>and
-  (<span style=color:#66d9ef>lambda </span>(<span style=color:#a6e22e>p</span>)
-    (<span style=color:#66d9ef>lambda </span>(<span style=color:#a6e22e>q</span>) ((<span style=color:#a6e22e>p</span> q) FALSE)))
-</code></pre></div><p>也就是，如果 <code>p</code> 为真，将会由 <code>q</code> 来选择分支，如果 <code>p</code> 为假，则由 <code>FALSE</code> 来选择条件分支。至于或和非也类似定义：</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-scheme data-lang=scheme>(<span style=color:#66d9ef>define </span>or
-  (<span style=color:#66d9ef>lambda </span>(<span style=color:#a6e22e>p</span>)
-    (<span style=color:#66d9ef>lambda </span>(<span style=color:#a6e22e>q</span>) ((<span style=color:#a6e22e>p</span> TRUE) q))))
+<span style=color:#000;font-weight:700>(</span><span style=color:#204a87;font-weight:700>define </span><span style=color:#000>FALSE</span>
+  <span style=color:#000;font-weight:700>(</span><span style=color:#204a87;font-weight:700>lambda </span><span style=color:#000;font-weight:700>(</span><span style=color:#000>x</span><span style=color:#000;font-weight:700>)</span> <span style=color:#000;font-weight:700>(</span><span style=color:#204a87;font-weight:700>lambda </span><span style=color:#000;font-weight:700>(</span><span style=color:#000>y</span><span style=color:#000;font-weight:700>)</span> <span style=color:#000>y</span><span style=color:#000;font-weight:700>)))</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>也就是说，给定两个分支，<code>TURE</code> 会选择第一个，而 <code>FALSE</code> 会选择第二个。至于逻辑运算可以基于这个表示方式进行定义，比如与运算定义如下：</p>
+<div class=highlight><div style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4>
+<table style=border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block><tr><td style=vertical-align:top;padding:0;margin:0;border:0>
+<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
+</span></code></pre></td>
+<td style=vertical-align:top;padding:0;margin:0;border:0;width:100%>
+<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-scheme data-lang=scheme><span style=color:#000;font-weight:700>(</span><span style=color:#204a87;font-weight:700>define </span><span style=color:#000>and</span>
+  <span style=color:#000;font-weight:700>(</span><span style=color:#204a87;font-weight:700>lambda </span><span style=color:#000;font-weight:700>(</span><span style=color:#000>p</span><span style=color:#000;font-weight:700>)</span>
+    <span style=color:#000;font-weight:700>(</span><span style=color:#204a87;font-weight:700>lambda </span><span style=color:#000;font-weight:700>(</span><span style=color:#000>q</span><span style=color:#000;font-weight:700>)</span> <span style=color:#000;font-weight:700>((</span><span style=color:#000>p</span> <span style=color:#000>q</span><span style=color:#000;font-weight:700>)</span> <span style=color:#000;font-weight:700>(</span><span style=color:#204a87;font-weight:700>lambda </span><span style=color:#000;font-weight:700>(</span><span style=color:#000>x</span><span style=color:#000;font-weight:700>)</span> <span style=color:#000;font-weight:700>(</span><span style=color:#204a87;font-weight:700>lambda </span><span style=color:#000;font-weight:700>(</span><span style=color:#000>y</span><span style=color:#000;font-weight:700>)</span> <span style=color:#000>x</span><span style=color:#000;font-weight:700>)))))</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>即：</p>
+<div class=highlight><div style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4>
+<table style=border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block><tr><td style=vertical-align:top;padding:0;margin:0;border:0>
+<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
+</span></code></pre></td>
+<td style=vertical-align:top;padding:0;margin:0;border:0;width:100%>
+<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-scheme data-lang=scheme><span style=color:#000;font-weight:700>(</span><span style=color:#204a87;font-weight:700>define </span><span style=color:#000>and</span>
+  <span style=color:#000;font-weight:700>(</span><span style=color:#204a87;font-weight:700>lambda </span><span style=color:#000;font-weight:700>(</span><span style=color:#000>p</span><span style=color:#000;font-weight:700>)</span>
+    <span style=color:#000;font-weight:700>(</span><span style=color:#204a87;font-weight:700>lambda </span><span style=color:#000;font-weight:700>(</span><span style=color:#000>q</span><span style=color:#000;font-weight:700>)</span> <span style=color:#000;font-weight:700>((</span><span style=color:#000>p</span> <span style=color:#000>q</span><span style=color:#000;font-weight:700>)</span> <span style=color:#000>FALSE</span><span style=color:#000;font-weight:700>)))</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>也就是，如果 <code>p</code> 为真，将会由 <code>q</code> 来选择分支，如果 <code>p</code> 为假，则由 <code>FALSE</code> 来选择条件分支。至于或和非也类似定义：</p>
+<div class=highlight><div style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4>
+<table style=border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block><tr><td style=vertical-align:top;padding:0;margin:0;border:0>
+<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">4
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">5
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">6
+</span></code></pre></td>
+<td style=vertical-align:top;padding:0;margin:0;border:0;width:100%>
+<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-scheme data-lang=scheme><span style=color:#000;font-weight:700>(</span><span style=color:#204a87;font-weight:700>define </span><span style=color:#000>or</span>
+  <span style=color:#000;font-weight:700>(</span><span style=color:#204a87;font-weight:700>lambda </span><span style=color:#000;font-weight:700>(</span><span style=color:#000>p</span><span style=color:#000;font-weight:700>)</span>
+    <span style=color:#000;font-weight:700>(</span><span style=color:#204a87;font-weight:700>lambda </span><span style=color:#000;font-weight:700>(</span><span style=color:#000>q</span><span style=color:#000;font-weight:700>)</span> <span style=color:#000;font-weight:700>((</span><span style=color:#000>p</span> <span style=color:#000>TRUE</span><span style=color:#000;font-weight:700>)</span> <span style=color:#000>q</span><span style=color:#000;font-weight:700>))))</span>
 
-(<span style=color:#66d9ef>define </span>not
-  (<span style=color:#66d9ef>lambda </span>(<span style=color:#a6e22e>p</span>) ((<span style=color:#a6e22e>p</span> FALSE) TRUE)))
-</code></pre></div><p>当然也可以转成一个可以被打印的形式：</p>
+<span style=color:#000;font-weight:700>(</span><span style=color:#204a87;font-weight:700>define </span><span style=color:#000>not</span>
+  <span style=color:#000;font-weight:700>(</span><span style=color:#204a87;font-weight:700>lambda </span><span style=color:#000;font-weight:700>(</span><span style=color:#000>p</span><span style=color:#000;font-weight:700>)</span> <span style=color:#000;font-weight:700>((</span><span style=color:#000>p</span> <span style=color:#000>FALSE</span><span style=color:#000;font-weight:700>)</span> <span style=color:#000>TRUE</span><span style=color:#000;font-weight:700>)))</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>当然也可以转成一个可以被打印的形式：</p>
 <pre><code>&gt;&gt;&gt; ((((and (not FALSE)) TRUE) 'true) 'false)
 true
 </code></pre><h1 id=序对的表示>序对的表示</h1>
 <p>一个序对（pair）就是一个二元组（2-tuple），这是一个非常简单而且非常强大的结构构件，如果在 C 中，表示形式大概是这样的：</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c data-lang=c><span style=color:#66d9ef>struct</span> Pair {
-  <span style=color:#66d9ef>void</span><span style=color:#f92672>*</span> first;
-  <span style=color:#66d9ef>void</span><span style=color:#f92672>*</span> second;
-}
-</code></pre></div><p>这个表示方法是一个很典型的方式，它可以很显然地看出数据是如何存放的，但事实上，为了获得一个序对，我们根本不用关心数据是如何存放的，我们关心的是如何构建一个序对，然后如何将组成序对的元素取出来，换言之，我们希望有 <code>(first ((pair x) y))</code> 就是 <code>x</code>，<code>(second ((pair x) y))</code> 就是 <code>y</code>。里面具体是怎样的，并不值得关心，也就是我们只是需要一个 constructor 和两个 selector 而已。邱奇序对编码（Church encoding for pairs）的表示如下：</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-scheme data-lang=scheme>(<span style=color:#66d9ef>define </span>pair
-  (<span style=color:#66d9ef>lambda </span>(<span style=color:#a6e22e>x</span>)
-    (<span style=color:#66d9ef>lambda </span>(<span style=color:#a6e22e>y</span>)
-      (<span style=color:#66d9ef>lambda </span>(<span style=color:#a6e22e>f</span>) ((<span style=color:#a6e22e>f</span> x) y)))))
+<div class=highlight><div style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4>
+<table style=border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block><tr><td style=vertical-align:top;padding:0;margin:0;border:0>
+<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">4
+</span></code></pre></td>
+<td style=vertical-align:top;padding:0;margin:0;border:0;width:100%>
+<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c data-lang=c><span style=color:#204a87;font-weight:700>struct</span> <span style=color:#000>Pair</span> <span style=color:#000;font-weight:700>{</span>
+  <span style=color:#204a87;font-weight:700>void</span><span style=color:#ce5c00;font-weight:700>*</span> <span style=color:#000>first</span><span style=color:#000;font-weight:700>;</span>
+  <span style=color:#204a87;font-weight:700>void</span><span style=color:#ce5c00;font-weight:700>*</span> <span style=color:#000>second</span><span style=color:#000;font-weight:700>;</span>
+<span style=color:#000;font-weight:700>}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>这个表示方法是一个很典型的方式，它可以很显然地看出数据是如何存放的，但事实上，为了获得一个序对，我们根本不用关心数据是如何存放的，我们关心的是如何构建一个序对，然后如何将组成序对的元素取出来，换言之，我们希望有 <code>(first ((pair x) y))</code> 就是 <code>x</code>，<code>(second ((pair x) y))</code> 就是 <code>y</code>。里面具体是怎样的，并不值得关心，也就是我们只是需要一个 constructor 和两个 selector 而已。邱奇序对编码（Church encoding for pairs）的表示如下：</p>
+<div class=highlight><div style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4>
+<table style=border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block><tr><td style=vertical-align:top;padding:0;margin:0;border:0>
+<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 4
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 5
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 6
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 7
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 8
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 9
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">10
+</span></code></pre></td>
+<td style=vertical-align:top;padding:0;margin:0;border:0;width:100%>
+<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-scheme data-lang=scheme><span style=color:#000;font-weight:700>(</span><span style=color:#204a87;font-weight:700>define </span><span style=color:#000>pair</span>
+  <span style=color:#000;font-weight:700>(</span><span style=color:#204a87;font-weight:700>lambda </span><span style=color:#000;font-weight:700>(</span><span style=color:#000>x</span><span style=color:#000;font-weight:700>)</span>
+    <span style=color:#000;font-weight:700>(</span><span style=color:#204a87;font-weight:700>lambda </span><span style=color:#000;font-weight:700>(</span><span style=color:#000>y</span><span style=color:#000;font-weight:700>)</span>
+      <span style=color:#000;font-weight:700>(</span><span style=color:#204a87;font-weight:700>lambda </span><span style=color:#000;font-weight:700>(</span><span style=color:#000>f</span><span style=color:#000;font-weight:700>)</span> <span style=color:#000;font-weight:700>((</span><span style=color:#000>f</span> <span style=color:#000>x</span><span style=color:#000;font-weight:700>)</span> <span style=color:#000>y</span><span style=color:#000;font-weight:700>)))))</span>
 
-(<span style=color:#66d9ef>define </span>first
-  (<span style=color:#66d9ef>lambda </span>(<span style=color:#a6e22e>p</span>) (<span style=color:#a6e22e>p</span> (<span style=color:#66d9ef>lambda </span>(<span style=color:#a6e22e>x</span>) (<span style=color:#66d9ef>lambda </span>(<span style=color:#a6e22e>y</span>) x)))))
+<span style=color:#000;font-weight:700>(</span><span style=color:#204a87;font-weight:700>define </span><span style=color:#000>first</span>
+  <span style=color:#000;font-weight:700>(</span><span style=color:#204a87;font-weight:700>lambda </span><span style=color:#000;font-weight:700>(</span><span style=color:#000>p</span><span style=color:#000;font-weight:700>)</span> <span style=color:#000;font-weight:700>(</span><span style=color:#000>p</span> <span style=color:#000;font-weight:700>(</span><span style=color:#204a87;font-weight:700>lambda </span><span style=color:#000;font-weight:700>(</span><span style=color:#000>x</span><span style=color:#000;font-weight:700>)</span> <span style=color:#000;font-weight:700>(</span><span style=color:#204a87;font-weight:700>lambda </span><span style=color:#000;font-weight:700>(</span><span style=color:#000>y</span><span style=color:#000;font-weight:700>)</span> <span style=color:#000>x</span><span style=color:#000;font-weight:700>)))))</span>
 
-(<span style=color:#66d9ef>define </span>second
-  (<span style=color:#66d9ef>lambda </span>(<span style=color:#a6e22e>p</span>) (<span style=color:#a6e22e>p</span> (<span style=color:#66d9ef>lambda </span>(<span style=color:#a6e22e>x</span>) (<span style=color:#66d9ef>lambda </span>(<span style=color:#a6e22e>y</span>) y)))))
-</code></pre></div><p>使用之前定义的 <code>TRUE</code> 和 <code>FALSE</code>：</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-scheme data-lang=scheme>(<span style=color:#66d9ef>define </span>first (<span style=color:#66d9ef>lambda </span>(<span style=color:#a6e22e>p</span>) (<span style=color:#a6e22e>p</span> TRUE)))
+<span style=color:#000;font-weight:700>(</span><span style=color:#204a87;font-weight:700>define </span><span style=color:#000>second</span>
+  <span style=color:#000;font-weight:700>(</span><span style=color:#204a87;font-weight:700>lambda </span><span style=color:#000;font-weight:700>(</span><span style=color:#000>p</span><span style=color:#000;font-weight:700>)</span> <span style=color:#000;font-weight:700>(</span><span style=color:#000>p</span> <span style=color:#000;font-weight:700>(</span><span style=color:#204a87;font-weight:700>lambda </span><span style=color:#000;font-weight:700>(</span><span style=color:#000>x</span><span style=color:#000;font-weight:700>)</span> <span style=color:#000;font-weight:700>(</span><span style=color:#204a87;font-weight:700>lambda </span><span style=color:#000;font-weight:700>(</span><span style=color:#000>y</span><span style=color:#000;font-weight:700>)</span> <span style=color:#000>y</span><span style=color:#000;font-weight:700>)))))</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>使用之前定义的 <code>TRUE</code> 和 <code>FALSE</code>：</p>
+<div class=highlight><div style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4>
+<table style=border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block><tr><td style=vertical-align:top;padding:0;margin:0;border:0>
+<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
+</span></code></pre></td>
+<td style=vertical-align:top;padding:0;margin:0;border:0;width:100%>
+<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-scheme data-lang=scheme><span style=color:#000;font-weight:700>(</span><span style=color:#204a87;font-weight:700>define </span><span style=color:#000>first</span> <span style=color:#000;font-weight:700>(</span><span style=color:#204a87;font-weight:700>lambda </span><span style=color:#000;font-weight:700>(</span><span style=color:#000>p</span><span style=color:#000;font-weight:700>)</span> <span style=color:#000;font-weight:700>(</span><span style=color:#000>p</span> <span style=color:#000>TRUE</span><span style=color:#000;font-weight:700>)))</span>
 
-(<span style=color:#66d9ef>define </span>second (<span style=color:#66d9ef>lambda </span>(<span style=color:#a6e22e>p</span>) (<span style=color:#a6e22e>P</span> FALSE)))
-</code></pre></div><p>这个表示方式非常令人惊讶，因为数据看起来像是存在于一片虚无之中，语言在执行的时候构建了 closure，但是看起来似乎就像把函数传来传去，数据就这样在其中隐匿、出现。<code>pair</code> 函数接收了两个元素之后就返回了另一个函数，这个函数接收一个选择函数，然后 <code>pair</code> 就将两个元素交由选择函数进行选择，而 <code>first</code> 和 <code>second</code> 则将对应的选择函数交给这个函数，获取到对应的数据。</p>
+<span style=color:#000;font-weight:700>(</span><span style=color:#204a87;font-weight:700>define </span><span style=color:#000>second</span> <span style=color:#000;font-weight:700>(</span><span style=color:#204a87;font-weight:700>lambda </span><span style=color:#000;font-weight:700>(</span><span style=color:#000>p</span><span style=color:#000;font-weight:700>)</span> <span style=color:#000;font-weight:700>(</span><span style=color:#000>P</span> <span style=color:#000>FALSE</span><span style=color:#000;font-weight:700>)))</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>这个表示方式非常令人惊讶，因为数据看起来像是存在于一片虚无之中，语言在执行的时候构建了 closure，但是看起来似乎就像把函数传来传去，数据就这样在其中隐匿、出现。<code>pair</code> 函数接收了两个元素之后就返回了另一个函数，这个函数接收一个选择函数，然后 <code>pair</code> 就将两个元素交由选择函数进行选择，而 <code>first</code> 和 <code>second</code> 则将对应的选择函数交给这个函数，获取到对应的数据。</p>
 <p>有了这样一个东西，我们只要再有一个能够表示 list 末尾的东西就可以构建一个 list 了。将这个东西命名为 <code>NIL</code>，将判断一个元素是否为 <code>NIL</code> 的函数命名为 <code>nil?</code>。<code>NIL</code> 具体是个什么东西不重要，最重要的是，将 <code>nil?</code> 应用于一个序对将返回 <code>FALSE</code> 而将 <code>nil?</code> 应用于 <code>NIL</code> 将返回 <code>TRUE</code>，可以表示如下：</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-scheme data-lang=scheme>(<span style=color:#66d9ef>define </span>NIL (<span style=color:#66d9ef>lambda </span>(<span style=color:#a6e22e>x</span>) TRUE))
+<div class=highlight><div style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4>
+<table style=border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block><tr><td style=vertical-align:top;padding:0;margin:0;border:0>
+<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">4
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">5
+</span></code></pre></td>
+<td style=vertical-align:top;padding:0;margin:0;border:0;width:100%>
+<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-scheme data-lang=scheme><span style=color:#000;font-weight:700>(</span><span style=color:#204a87;font-weight:700>define </span><span style=color:#000>NIL</span> <span style=color:#000;font-weight:700>(</span><span style=color:#204a87;font-weight:700>lambda </span><span style=color:#000;font-weight:700>(</span><span style=color:#000>x</span><span style=color:#000;font-weight:700>)</span> <span style=color:#000>TRUE</span><span style=color:#000;font-weight:700>))</span>
 
-(<span style=color:#66d9ef>define </span>nil?
-  (<span style=color:#66d9ef>lambda </span>(<span style=color:#a6e22e>p</span>) (<span style=color:#a6e22e>p</span> (<span style=color:#66d9ef>lambda </span>(<span style=color:#a6e22e>x</span>)
-                   (<span style=color:#66d9ef>lambda </span>(<span style=color:#a6e22e>y</span>) FALSE))))))
-</code></pre></div><p><code>nil?</code> 接受一个序对或是一个 <code>NIL</code>，并传递给他一个接受两个参数再返回 <code>FALSE</code> 的函数，如果是一个序对，那么结果必然是 <code>FALSE</code>，而如果是 <code>NIL</code>，那么这个函数则不会被调用，而是 <code>NIL</code> 直接返回了 <code>TRUE</code>。这样就表示了 <code>NIL</code>。那么构建有两个元素的 list 的方法可以表示为：</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-scheme data-lang=scheme>(<span style=color:#66d9ef>lambda </span>(<span style=color:#a6e22e>x</span>) (<span style=color:#66d9ef>lambda </span>(<span style=color:#a6e22e>y</span>) ((<span style=color:#a6e22e>pair</span> x) ((<span style=color:#a6e22e>pair</span> y) NIL))))
-</code></pre></div><p>这样一个 list 的构建方式就是链表，通过 pair，可以构建更为复杂的数据结构。</p>
+<span style=color:#000;font-weight:700>(</span><span style=color:#204a87;font-weight:700>define </span><span style=color:#000>nil?</span>
+  <span style=color:#000;font-weight:700>(</span><span style=color:#204a87;font-weight:700>lambda </span><span style=color:#000;font-weight:700>(</span><span style=color:#000>p</span><span style=color:#000;font-weight:700>)</span> <span style=color:#000;font-weight:700>(</span><span style=color:#000>p</span> <span style=color:#000;font-weight:700>(</span><span style=color:#204a87;font-weight:700>lambda </span><span style=color:#000;font-weight:700>(</span><span style=color:#000>x</span><span style=color:#000;font-weight:700>)</span>
+                   <span style=color:#000;font-weight:700>(</span><span style=color:#204a87;font-weight:700>lambda </span><span style=color:#000;font-weight:700>(</span><span style=color:#000>y</span><span style=color:#000;font-weight:700>)</span> <span style=color:#000>FALSE</span><span style=color:#000;font-weight:700>))))))</span>
+</code></pre></td></tr></table>
+</div>
+</div><p><code>nil?</code> 接受一个序对或是一个 <code>NIL</code>，并传递给他一个接受两个参数再返回 <code>FALSE</code> 的函数，如果是一个序对，那么结果必然是 <code>FALSE</code>，而如果是 <code>NIL</code>，那么这个函数则不会被调用，而是 <code>NIL</code> 直接返回了 <code>TRUE</code>。这样就表示了 <code>NIL</code>。那么构建有两个元素的 list 的方法可以表示为：</p>
+<div class=highlight><div style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4>
+<table style=border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block><tr><td style=vertical-align:top;padding:0;margin:0;border:0>
+<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span></code></pre></td>
+<td style=vertical-align:top;padding:0;margin:0;border:0;width:100%>
+<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-scheme data-lang=scheme><span style=color:#000;font-weight:700>(</span><span style=color:#204a87;font-weight:700>lambda </span><span style=color:#000;font-weight:700>(</span><span style=color:#000>x</span><span style=color:#000;font-weight:700>)</span> <span style=color:#000;font-weight:700>(</span><span style=color:#204a87;font-weight:700>lambda </span><span style=color:#000;font-weight:700>(</span><span style=color:#000>y</span><span style=color:#000;font-weight:700>)</span> <span style=color:#000;font-weight:700>((</span><span style=color:#000>pair</span> <span style=color:#000>x</span><span style=color:#000;font-weight:700>)</span> <span style=color:#000;font-weight:700>((</span><span style=color:#000>pair</span> <span style=color:#000>y</span><span style=color:#000;font-weight:700>)</span> <span style=color:#000>NIL</span><span style=color:#000;font-weight:700>))))</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>这样一个 list 的构建方式就是链表，通过 pair，可以构建更为复杂的数据结构。</p>
 <h1 id=进一步思考>进一步思考</h1>
 <p>在这种计算模型下除法如何实现？递归如何实现？这些都是更为进阶的话题，在 Wikipedia 上有更详细的说明 <sup id=fnref:4><a href=#fn:4 class=footnote-ref role=doc-noteref>4</a></sup> <sup id=fnref:5><a href=#fn:5 class=footnote-ref role=doc-noteref>5</a></sup>。</p>
 <p>计算是一个非常本质的东西，跳出固有的思维来看，能产生更多的思考。</p>

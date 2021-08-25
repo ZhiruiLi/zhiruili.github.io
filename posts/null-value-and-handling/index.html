@@ -82,103 +82,284 @@
 <p>以上说的这几个语言用各自的方式表示了 null，但都没有解决所谓的「十亿美金错误」，所谓「十亿美金错误」的本质在于语言的粗糙设计导致类型声明不诚实。因为你并不知道一个东西到底是一个具体的对象还是一个 null 值。一个函数说它会返回一个 <code>String</code> 类型的对象，这是真的吗？不一定，它可能返回一个 <code>null</code>，这就导致每一次使用的时候都要小心翼翼地对其进行判断，否则很有可能就会在运行的时候发生错误，这是一个非常糟糕的事情。</p>
 <h1 id=使用可空类型>使用可空类型</h1>
 <p>Kotlin（还有 Swift 等语言）给出的解决方案 <sup id=fnref:5><a href=#fn:5 class=footnote-ref role=doc-noteref>5</a></sup> 是使用 Nullable type，在一个类型没有明确声明为「可空」的时候，不允许赋 null 值，仅当一个对象的类型声明后面加上一个 <code>?</code> 的时候，这个对象才是可为空的。这样，编译器就可以对此进行赋值时候的基本的判断：</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-kotlin data-lang=kotlin><span style=color:#66d9ef>var</span> a: String = <span style=color:#e6db74>&#34;abc&#34;</span>
-a = <span style=color:#66d9ef>null</span> <span style=color:#75715e>// error
-</span><span style=color:#75715e></span>
-<span style=color:#66d9ef>var</span> b: String? = <span style=color:#e6db74>&#34;abc&#34;</span>
-b = <span style=color:#66d9ef>null</span>
-</code></pre></div><p>进一步，编译器还能在调用可空对象方法的时候报错，以防止对象为 <code>null</code> 的情况，例如：</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-kotlin data-lang=kotlin><span style=color:#66d9ef>val</span> l1 = a.length
-<span style=color:#66d9ef>val</span> l2 = b.length <span style=color:#75715e>// error: variable &#39;b&#39; can be null
-</span></code></pre></div><p>另外，Kotlin 还能根据上下文来改变对对象是否可空的判定：</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-kotlin data-lang=kotlin><span style=color:#66d9ef>val</span> l = <span style=color:#66d9ef>if</span> (b <span style=color:#f92672>!=</span> <span style=color:#66d9ef>null</span>) b.length <span style=color:#66d9ef>else</span> -<span style=color:#ae81ff>1</span>
-</code></pre></div><p>这是一个类型的收窄，在 <code>if</code> 表达式对 <code>b</code> 进行判断之前，<code>b</code> 是可空的 <code>String</code>，但在判断之后，编译器可以根据这个判断确定在这里 <code>b</code> 不可能为 <code>null</code>，于是，这里就允许调用其中的方法。注意这里并没有进行强制类型转换，之前不能调用对象的方法而现在可以的原因是编译器认为此时该对象的值不可能为 <code>null</code>。这个方式可以解决问题吗？显然可以，它使得用户在看到一个类型为 <code>A</code> 的对象时，可以放心地调用 <code>A</code> 中声明的方法，并强制了用户对一个可能为 <code>null</code> 的对象是否为 <code>null</code> 的判断。但这有点奇怪，编译器到底应不应该管控制流的事情呢？这是值得讨论的。但编译器通过一个表达式来进行对可空类型的特殊处理，总觉得是一个比较怪异的事情，怪异的点在于这仅仅支持最简单的情形，稍微复杂一点就不行了，让人觉得失去了统一性，例如在 Kotlin 中，这样的代码是非法的：</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-kotlin data-lang=kotlin><span style=color:#66d9ef>val</span> String<span style=color:#f92672>?.</span>isNull: Boolean
-    <span style=color:#66d9ef>get</span>() = <span style=color:#66d9ef>this</span> <span style=color:#f92672>==</span> <span style=color:#66d9ef>null</span>
-<span style=color:#75715e>// ...
-</span><span style=color:#75715e></span><span style=color:#66d9ef>val</span> l2 = <span style=color:#66d9ef>if</span> (!b.isNull) b.length <span style=color:#66d9ef>else</span> -<span style=color:#ae81ff>1</span>  <span style=color:#75715e>// error: &#39;b&#39; can be null
-</span></code></pre></div><p>尽管我们知道，在 <code>isNull</code> 为假的分支里，<code>b</code> 不可能为 <code>null</code>，但编译器并不能正确地判定。为什么会这样呢？因为对任意函数的完全确定性的分析是不可判定的，这本质上是个「停机问题」<sup id=fnref:6><a href=#fn:6 class=footnote-ref role=doc-noteref>6</a></sup>，我们可以用如下方法证明，假设存在一个函数 <code>checkIsNull</code> 能检测一个字符串是否为 <code>null</code> 则我们总能写出如下的函数 <code>evil</code>：</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-kotlin data-lang=kotlin><span style=color:#75715e>// fun checkIsNull(mayNull: String?): Bool { ... }
-</span><span style=color:#75715e></span><span style=color:#66d9ef>fun</span> <span style=color:#a6e22e>evil</span>(): String? {
-  <span style=color:#66d9ef>if</span> (checkIsNull(evil())) {
-    <span style=color:#e6db74>&#34;not null!&#34;</span>
-  } <span style=color:#66d9ef>else</span> {
-    <span style=color:#66d9ef>null</span>
-  }
-}
-</code></pre></div><p>若 <code>checkIsNull</code> 对 <code>evil()</code> 的判定返回 <code>true</code> 则 <code>evil()</code> 事实返回的是字符串 <code>"not null!"</code>，矛盾；另一方面，若 <code>checkIsNull</code> 对 <code>evil()</code> 的判定返回 <code>false</code> 则 <code>evil()</code> 事实返回的是 <code>null</code>，依然矛盾。所以说，复杂情况的完全确定性的分析本来就没有办法做，如果做了一部分复杂情形而不做另一部分复杂情形，反而更加怪异，所以只做最简单情况的分析是更好的选择。另外，在 Kotlin 中，这种技术还被更广泛地应用在一般的类型处理上，比如你可以对对象进行类型判定，并在不同的分支里将该对象作为不同类型的对象使用，不需要额外的显式类型转换，这被称为 Smart Cast <sup id=fnref:7><a href=#fn:7 class=footnote-ref role=doc-noteref>7</a></sup>，这里就不展开说了。</p>
+<div class=highlight><div style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4>
+<table style=border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block><tr><td style=vertical-align:top;padding:0;margin:0;border:0>
+<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">4
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">5
+</span></code></pre></td>
+<td style=vertical-align:top;padding:0;margin:0;border:0;width:100%>
+<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-kotlin data-lang=kotlin><span style=color:#204a87;font-weight:700>var</span> <span style=color:#000>a</span><span style=color:#000;font-weight:700>:</span> <span style=color:#000>String</span> <span style=color:#000;font-weight:700>=</span> <span style=color:#4e9a06>&#34;abc&#34;</span>
+<span style=color:#000>a</span> <span style=color:#000;font-weight:700>=</span> <span style=color:#204a87;font-weight:700>null</span> <span style=color:#8f5902;font-style:italic>// error
+</span><span style=color:#8f5902;font-style:italic></span>
+<span style=color:#204a87;font-weight:700>var</span> <span style=color:#000>b</span><span style=color:#000;font-weight:700>:</span> <span style=color:#000>String</span><span style=color:#000;font-weight:700>?</span> <span style=color:#000;font-weight:700>=</span> <span style=color:#4e9a06>&#34;abc&#34;</span>
+<span style=color:#000>b</span> <span style=color:#000;font-weight:700>=</span> <span style=color:#204a87;font-weight:700>null</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>进一步，编译器还能在调用可空对象方法的时候报错，以防止对象为 <code>null</code> 的情况，例如：</p>
+<div class=highlight><div style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4>
+<table style=border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block><tr><td style=vertical-align:top;padding:0;margin:0;border:0>
+<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span></code></pre></td>
+<td style=vertical-align:top;padding:0;margin:0;border:0;width:100%>
+<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-kotlin data-lang=kotlin><span style=color:#204a87;font-weight:700>val</span> <span style=color:#000>l1</span> <span style=color:#000;font-weight:700>=</span> <span style=color:#000>a</span><span style=color:#000;font-weight:700>.</span><span style=color:#000>length</span>
+<span style=color:#204a87;font-weight:700>val</span> <span style=color:#000>l2</span> <span style=color:#000;font-weight:700>=</span> <span style=color:#000>b</span><span style=color:#000;font-weight:700>.</span><span style=color:#000>length</span> <span style=color:#8f5902;font-style:italic>// error: variable &#39;b&#39; can be null
+</span></code></pre></td></tr></table>
+</div>
+</div><p>另外，Kotlin 还能根据上下文来改变对对象是否可空的判定：</p>
+<div class=highlight><div style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4>
+<table style=border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block><tr><td style=vertical-align:top;padding:0;margin:0;border:0>
+<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span></code></pre></td>
+<td style=vertical-align:top;padding:0;margin:0;border:0;width:100%>
+<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-kotlin data-lang=kotlin><span style=color:#204a87;font-weight:700>val</span> <span style=color:#000>l</span> <span style=color:#000;font-weight:700>=</span> <span style=color:#204a87;font-weight:700>if</span> <span style=color:#000;font-weight:700>(</span><span style=color:#000>b</span> <span style=color:#ce5c00;font-weight:700>!=</span> <span style=color:#204a87;font-weight:700>null</span><span style=color:#000;font-weight:700>)</span> <span style=color:#000>b</span><span style=color:#000;font-weight:700>.</span><span style=color:#000>length</span> <span style=color:#204a87;font-weight:700>else</span> <span style=color:#000;font-weight:700>-</span><span style=color:#0000cf;font-weight:700>1</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>这是一个类型的收窄，在 <code>if</code> 表达式对 <code>b</code> 进行判断之前，<code>b</code> 是可空的 <code>String</code>，但在判断之后，编译器可以根据这个判断确定在这里 <code>b</code> 不可能为 <code>null</code>，于是，这里就允许调用其中的方法。注意这里并没有进行强制类型转换，之前不能调用对象的方法而现在可以的原因是编译器认为此时该对象的值不可能为 <code>null</code>。这个方式可以解决问题吗？显然可以，它使得用户在看到一个类型为 <code>A</code> 的对象时，可以放心地调用 <code>A</code> 中声明的方法，并强制了用户对一个可能为 <code>null</code> 的对象是否为 <code>null</code> 的判断。但这有点奇怪，编译器到底应不应该管控制流的事情呢？这是值得讨论的。但编译器通过一个表达式来进行对可空类型的特殊处理，总觉得是一个比较怪异的事情，怪异的点在于这仅仅支持最简单的情形，稍微复杂一点就不行了，让人觉得失去了统一性，例如在 Kotlin 中，这样的代码是非法的：</p>
+<div class=highlight><div style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4>
+<table style=border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block><tr><td style=vertical-align:top;padding:0;margin:0;border:0>
+<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">4
+</span></code></pre></td>
+<td style=vertical-align:top;padding:0;margin:0;border:0;width:100%>
+<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-kotlin data-lang=kotlin><span style=color:#204a87;font-weight:700>val</span> <span style=color:#000>String</span><span style=color:#ce5c00;font-weight:700>?.</span><span style=color:#000>isNull</span><span style=color:#000;font-weight:700>:</span> <span style=color:#000>Boolean</span>
+    <span style=color:#204a87;font-weight:700>get</span><span style=color:#000;font-weight:700>()</span> <span style=color:#000;font-weight:700>=</span> <span style=color:#204a87;font-weight:700>this</span> <span style=color:#ce5c00;font-weight:700>==</span> <span style=color:#204a87;font-weight:700>null</span>
+<span style=color:#8f5902;font-style:italic>// ...
+</span><span style=color:#8f5902;font-style:italic></span><span style=color:#204a87;font-weight:700>val</span> <span style=color:#000>l2</span> <span style=color:#000;font-weight:700>=</span> <span style=color:#204a87;font-weight:700>if</span> <span style=color:#000;font-weight:700>(!</span><span style=color:#000>b</span><span style=color:#000;font-weight:700>.</span><span style=color:#000>isNull</span><span style=color:#000;font-weight:700>)</span> <span style=color:#000>b</span><span style=color:#000;font-weight:700>.</span><span style=color:#000>length</span> <span style=color:#204a87;font-weight:700>else</span> <span style=color:#000;font-weight:700>-</span><span style=color:#0000cf;font-weight:700>1</span>  <span style=color:#8f5902;font-style:italic>// error: &#39;b&#39; can be null
+</span></code></pre></td></tr></table>
+</div>
+</div><p>尽管我们知道，在 <code>isNull</code> 为假的分支里，<code>b</code> 不可能为 <code>null</code>，但编译器并不能正确地判定。为什么会这样呢？因为对任意函数的完全确定性的分析是不可判定的，这本质上是个「停机问题」<sup id=fnref:6><a href=#fn:6 class=footnote-ref role=doc-noteref>6</a></sup>，我们可以用如下方法证明，假设存在一个函数 <code>checkIsNull</code> 能检测一个字符串是否为 <code>null</code> 则我们总能写出如下的函数 <code>evil</code>：</p>
+<div class=highlight><div style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4>
+<table style=border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block><tr><td style=vertical-align:top;padding:0;margin:0;border:0>
+<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">4
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">5
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">6
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">7
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">8
+</span></code></pre></td>
+<td style=vertical-align:top;padding:0;margin:0;border:0;width:100%>
+<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-kotlin data-lang=kotlin><span style=color:#8f5902;font-style:italic>// fun checkIsNull(mayNull: String?): Bool { ... }
+</span><span style=color:#8f5902;font-style:italic></span><span style=color:#204a87;font-weight:700>fun</span> <span style=color:#000>evil</span><span style=color:#000;font-weight:700>():</span> <span style=color:#000>String</span><span style=color:#000;font-weight:700>?</span> <span style=color:#000;font-weight:700>{</span>
+  <span style=color:#204a87;font-weight:700>if</span> <span style=color:#000;font-weight:700>(</span><span style=color:#000>checkIsNull</span><span style=color:#000;font-weight:700>(</span><span style=color:#000>evil</span><span style=color:#000;font-weight:700>()))</span> <span style=color:#000;font-weight:700>{</span>
+    <span style=color:#4e9a06>&#34;not null!&#34;</span>
+  <span style=color:#000;font-weight:700>}</span> <span style=color:#204a87;font-weight:700>else</span> <span style=color:#000;font-weight:700>{</span>
+    <span style=color:#204a87;font-weight:700>null</span>
+  <span style=color:#000;font-weight:700>}</span>
+<span style=color:#000;font-weight:700>}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>若 <code>checkIsNull</code> 对 <code>evil()</code> 的判定返回 <code>true</code> 则 <code>evil()</code> 事实返回的是字符串 <code>"not null!"</code>，矛盾；另一方面，若 <code>checkIsNull</code> 对 <code>evil()</code> 的判定返回 <code>false</code> 则 <code>evil()</code> 事实返回的是 <code>null</code>，依然矛盾。所以说，复杂情况的完全确定性的分析本来就没有办法做，如果做了一部分复杂情形而不做另一部分复杂情形，反而更加怪异，所以只做最简单情况的分析是更好的选择。另外，在 Kotlin 中，这种技术还被更广泛地应用在一般的类型处理上，比如你可以对对象进行类型判定，并在不同的分支里将该对象作为不同类型的对象使用，不需要额外的显式类型转换，这被称为 Smart Cast <sup id=fnref:7><a href=#fn:7 class=footnote-ref role=doc-noteref>7</a></sup>，这里就不展开说了。</p>
 <p>为了更方便地使用可空类型，Kotlin 还提供了其他方便的语法，例如安全的链式调用：</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-kotlin data-lang=kotlin>bob<span style=color:#f92672>?.</span>department<span style=color:#f92672>?.</span>head<span style=color:#f92672>?.</span>name
-</code></pre></div><p>如果其中任意一步返回了 <code>null</code> 则整个表达式的结果将是 <code>null</code>。这样写起来相当直观也很方便，不用担心中途对一个 <code>null</code> 进行方法调用而抛出异常，也不需要写太多的代码来进行类型的收窄或者类型的转换。</p>
+<div class=highlight><div style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4>
+<table style=border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block><tr><td style=vertical-align:top;padding:0;margin:0;border:0>
+<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span></code></pre></td>
+<td style=vertical-align:top;padding:0;margin:0;border:0;width:100%>
+<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-kotlin data-lang=kotlin><span style=color:#000>bob</span><span style=color:#ce5c00;font-weight:700>?.</span><span style=color:#000>department</span><span style=color:#ce5c00;font-weight:700>?.</span><span style=color:#000>head</span><span style=color:#ce5c00;font-weight:700>?.</span><span style=color:#000>name</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>如果其中任意一步返回了 <code>null</code> 则整个表达式的结果将是 <code>null</code>。这样写起来相当直观也很方便，不用担心中途对一个 <code>null</code> 进行方法调用而抛出异常，也不需要写太多的代码来进行类型的收窄或者类型的转换。</p>
 <p>Kotlin 还提供一个能将可空类型安全转为一般类型的方式，使用 <code>?:</code> 操作符并提供一个缺省值：</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-kotlin data-lang=kotlin><span style=color:#66d9ef>val</span> l = b<span style=color:#f92672>?.</span>length <span style=color:#f92672>?:</span> -<span style=color:#ae81ff>1</span>
-</code></pre></div><p>上面这段代码和之前写的</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-kotlin data-lang=kotlin><span style=color:#66d9ef>val</span> l = <span style=color:#66d9ef>if</span> (b <span style=color:#f92672>!=</span> <span style=color:#66d9ef>null</span>) b.length <span style=color:#66d9ef>else</span> -<span style=color:#ae81ff>1</span>
-</code></pre></div><p>等效，使用这个操作符就可以在不对控制流进行分析的情况下，将可空类型的对象转为一般类型的对象。从概念上来看，感觉这个处理方式要更优一些。</p>
+<div class=highlight><div style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4>
+<table style=border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block><tr><td style=vertical-align:top;padding:0;margin:0;border:0>
+<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span></code></pre></td>
+<td style=vertical-align:top;padding:0;margin:0;border:0;width:100%>
+<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-kotlin data-lang=kotlin><span style=color:#204a87;font-weight:700>val</span> <span style=color:#000>l</span> <span style=color:#000;font-weight:700>=</span> <span style=color:#000>b</span><span style=color:#ce5c00;font-weight:700>?.</span><span style=color:#000>length</span> <span style=color:#ce5c00;font-weight:700>?:</span> <span style=color:#000;font-weight:700>-</span><span style=color:#0000cf;font-weight:700>1</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>上面这段代码和之前写的</p>
+<div class=highlight><div style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4>
+<table style=border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block><tr><td style=vertical-align:top;padding:0;margin:0;border:0>
+<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span></code></pre></td>
+<td style=vertical-align:top;padding:0;margin:0;border:0;width:100%>
+<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-kotlin data-lang=kotlin><span style=color:#204a87;font-weight:700>val</span> <span style=color:#000>l</span> <span style=color:#000;font-weight:700>=</span> <span style=color:#204a87;font-weight:700>if</span> <span style=color:#000;font-weight:700>(</span><span style=color:#000>b</span> <span style=color:#ce5c00;font-weight:700>!=</span> <span style=color:#204a87;font-weight:700>null</span><span style=color:#000;font-weight:700>)</span> <span style=color:#000>b</span><span style=color:#000;font-weight:700>.</span><span style=color:#000>length</span> <span style=color:#204a87;font-weight:700>else</span> <span style=color:#000;font-weight:700>-</span><span style=color:#0000cf;font-weight:700>1</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>等效，使用这个操作符就可以在不对控制流进行分析的情况下，将可空类型的对象转为一般类型的对象。从概念上来看，感觉这个处理方式要更优一些。</p>
 <h1 id=利用参数化类型表示>利用参数化类型表示</h1>
 <p>事实上，null 表达的只不过是一个可选的值或状态，可能有值，可能没有，这就有了另一种处理 null 的方式，它来源于 ML 系的语言（例如：SML，OCaml，Haskell 等），Scala 也借鉴了这种处理方式。它们使用参数化的类型来表示 null 这个概念。例如在 Scala 中，有一个 <code>Option[T]</code> <sup id=fnref:8><a href=#fn:8 class=footnote-ref role=doc-noteref>8</a></sup> 类型，对于一个可能为空的对象，不将其类型设置为 <code>T</code> 而是设置为 <code>Option[T]</code>。</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-scala data-lang=scala><span style=color:#66d9ef>val</span> str<span style=color:#66d9ef>:</span> <span style=color:#66d9ef>String</span> <span style=color:#f92672>=</span> <span style=color:#e6db74>&#34;abc&#34;</span>
-<span style=color:#66d9ef>val</span> optionStr1<span style=color:#66d9ef>:</span> <span style=color:#66d9ef>Option</span><span style=color:#f92672>[</span><span style=color:#66d9ef>String</span><span style=color:#f92672>]</span> <span style=color:#66d9ef>=</span> <span style=color:#a6e22e>None</span>
-<span style=color:#66d9ef>val</span> optionStr2<span style=color:#66d9ef>:</span> <span style=color:#66d9ef>Option</span><span style=color:#f92672>[</span><span style=color:#66d9ef>String</span><span style=color:#f92672>]</span> <span style=color:#66d9ef>=</span> <span style=color:#a6e22e>Some</span><span style=color:#f92672>(</span><span style=color:#e6db74>&#34;abc&#34;</span><span style=color:#f92672>)</span>
-</code></pre></div><p>这就解决了问题。而最为重要的事是，这种做法不需要为这个 null 的表示而专门添加语法特性，所有的操作都可以直接通过查阅 API 文档获知。如果喜欢，还可以自己写自己的 <code>MyOption[T]</code>，又或是通过隐式转换来给 <code>Option[T]</code> 添加需要的操作，这样的设计使得语言更加纯粹。</p>
+<div class=highlight><div style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4>
+<table style=border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block><tr><td style=vertical-align:top;padding:0;margin:0;border:0>
+<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
+</span></code></pre></td>
+<td style=vertical-align:top;padding:0;margin:0;border:0;width:100%>
+<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-scala data-lang=scala><span style=color:#204a87;font-weight:700>val</span> <span style=color:#000>str</span><span style=color:#204a87;font-weight:700>:</span> <span style=color:#204a87;font-weight:700>String</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#4e9a06>&#34;abc&#34;</span>
+<span style=color:#204a87;font-weight:700>val</span> <span style=color:#000>optionStr1</span><span style=color:#204a87;font-weight:700>:</span> <span style=color:#204a87;font-weight:700>Option</span><span style=color:#ce5c00;font-weight:700>[</span><span style=color:#204a87;font-weight:700>String</span><span style=color:#ce5c00;font-weight:700>]</span> <span style=color:#204a87;font-weight:700>=</span> <span style=color:#000>None</span>
+<span style=color:#204a87;font-weight:700>val</span> <span style=color:#000>optionStr2</span><span style=color:#204a87;font-weight:700>:</span> <span style=color:#204a87;font-weight:700>Option</span><span style=color:#ce5c00;font-weight:700>[</span><span style=color:#204a87;font-weight:700>String</span><span style=color:#ce5c00;font-weight:700>]</span> <span style=color:#204a87;font-weight:700>=</span> <span style=color:#000>Some</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#4e9a06>&#34;abc&#34;</span><span style=color:#ce5c00;font-weight:700>)</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>这就解决了问题。而最为重要的事是，这种做法不需要为这个 null 的表示而专门添加语法特性，所有的操作都可以直接通过查阅 API 文档获知。如果喜欢，还可以自己写自己的 <code>MyOption[T]</code>，又或是通过隐式转换来给 <code>Option[T]</code> 添加需要的操作，这样的设计使得语言更加纯粹。</p>
 <p>Scala 给 <code>Option[T]</code> 提供了非常丰富的操作，比如可以对 <code>Option[T]</code> 所包裹的 <code>T</code> 类型对象进行 <code>map</code>，<code>filter</code>，<code>getOrElse</code> 等，例如：</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-scala data-lang=scala><span style=color:#66d9ef>val</span> name<span style=color:#66d9ef>:</span> <span style=color:#66d9ef>Option</span><span style=color:#f92672>[</span><span style=color:#66d9ef>String</span><span style=color:#f92672>]</span> <span style=color:#66d9ef>=</span> request getParameter <span style=color:#e6db74>&#34;name&#34;</span>
-<span style=color:#66d9ef>val</span> upper <span style=color:#66d9ef>=</span> name map <span style=color:#f92672>{</span> <span style=color:#66d9ef>_</span><span style=color:#f92672>.</span>trim <span style=color:#f92672>}</span> filter <span style=color:#f92672>{</span> <span style=color:#66d9ef>_</span><span style=color:#f92672>.</span>length <span style=color:#f92672>!=</span> <span style=color:#ae81ff>0</span> <span style=color:#f92672>}</span> map <span style=color:#f92672>{</span> <span style=color:#66d9ef>_</span><span style=color:#f92672>.</span>toUpperCase <span style=color:#f92672>}</span>
-println<span style=color:#f92672>(</span>upper getOrElse <span style=color:#e6db74>&#34;&#34;</span><span style=color:#f92672>)</span>
-</code></pre></div><p>其中，<code>getOrElse</code> 的作用和 Kotlin 里的 <code>?:</code> 操作符的作用一样，Scala 的处理显然更好，因为根本没必要为一个可以通过方法调用解决的事情专门做一个新的语言特性。</p>
+<div class=highlight><div style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4>
+<table style=border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block><tr><td style=vertical-align:top;padding:0;margin:0;border:0>
+<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
+</span></code></pre></td>
+<td style=vertical-align:top;padding:0;margin:0;border:0;width:100%>
+<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-scala data-lang=scala><span style=color:#204a87;font-weight:700>val</span> <span style=color:#000>name</span><span style=color:#204a87;font-weight:700>:</span> <span style=color:#204a87;font-weight:700>Option</span><span style=color:#ce5c00;font-weight:700>[</span><span style=color:#204a87;font-weight:700>String</span><span style=color:#ce5c00;font-weight:700>]</span> <span style=color:#204a87;font-weight:700>=</span> <span style=color:#000>request</span> <span style=color:#000>getParameter</span> <span style=color:#4e9a06>&#34;name&#34;</span>
+<span style=color:#204a87;font-weight:700>val</span> <span style=color:#000>upper</span> <span style=color:#204a87;font-weight:700>=</span> <span style=color:#000>name</span> <span style=color:#000>map</span> <span style=color:#ce5c00;font-weight:700>{</span> <span style=color:#204a87;font-weight:700>_</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#000>trim</span> <span style=color:#ce5c00;font-weight:700>}</span> <span style=color:#000>filter</span> <span style=color:#ce5c00;font-weight:700>{</span> <span style=color:#204a87;font-weight:700>_</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#000>length</span> <span style=color:#ce5c00;font-weight:700>!=</span> <span style=color:#0000cf;font-weight:700>0</span> <span style=color:#ce5c00;font-weight:700>}</span> <span style=color:#000>map</span> <span style=color:#ce5c00;font-weight:700>{</span> <span style=color:#204a87;font-weight:700>_</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#000>toUpperCase</span> <span style=color:#ce5c00;font-weight:700>}</span>
+<span style=color:#000>println</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>upper</span> <span style=color:#000>getOrElse</span> <span style=color:#4e9a06>&#34;&#34;</span><span style=color:#ce5c00;font-weight:700>)</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>其中，<code>getOrElse</code> 的作用和 Kotlin 里的 <code>?:</code> 操作符的作用一样，Scala 的处理显然更好，因为根本没必要为一个可以通过方法调用解决的事情专门做一个新的语言特性。</p>
 <p>如果对某个方法的调用也可能产生新的 <code>Option[R]</code> 又该怎么办？如果直接使用 <code>map</code> 则会导致嵌套的 <code>Option</code>，解决方案就是加一个 <code>flatMap</code> 方法：</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-scala data-lang=scala><span style=color:#75715e>// optA: Option[A]
-</span><span style=color:#75715e></span>optA<span style=color:#f92672>.</span>flatMap<span style=color:#f92672>(</span><span style=color:#66d9ef>_</span><span style=color:#f92672>.</span>getOptionB<span style=color:#f92672>)</span>
-</code></pre></div><p>如果 <code>optA</code> 包裹的 <code>A</code> 类型对象返回了 <code>Some(b)</code> 则结果为 <code>Some(b)</code>，如果 <code>optA</code> 或调用 <code>getOptionB</code> 返回的值有一个为 <code>None</code>，则整个的结果为 <code>None</code>。使用 <code>flatMap</code> 会有一个问题，就是当需要同时用到几个 <code>Option</code> 包裹的值的时候会出现嵌套的 <code>flatMap</code>，考虑如下情况：</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-scala data-lang=scala><span style=color:#66d9ef>val</span> firstName<span style=color:#66d9ef>:</span> <span style=color:#66d9ef>Option</span><span style=color:#f92672>[</span><span style=color:#66d9ef>String</span><span style=color:#f92672>]</span> <span style=color:#66d9ef>=</span> request getParameter <span style=color:#e6db74>&#34;first-name&#34;</span>
-<span style=color:#66d9ef>val</span> lastName<span style=color:#66d9ef>:</span> <span style=color:#66d9ef>Option</span><span style=color:#f92672>[</span><span style=color:#66d9ef>String</span><span style=color:#f92672>]</span> <span style=color:#66d9ef>=</span> request getParameter <span style=color:#e6db74>&#34;last-name&#34;</span>
-<span style=color:#66d9ef>val</span> company<span style=color:#66d9ef>:</span> <span style=color:#66d9ef>Option</span><span style=color:#f92672>[</span><span style=color:#66d9ef>String</span><span style=color:#f92672>]</span> <span style=color:#66d9ef>=</span> request getParameter <span style=color:#e6db74>&#34;company&#34;</span>
-<span style=color:#66d9ef>val</span> record<span style=color:#66d9ef>:</span> <span style=color:#66d9ef>Option</span><span style=color:#f92672>[</span><span style=color:#66d9ef>Record</span><span style=color:#f92672>]</span> <span style=color:#66d9ef>=</span> firstName<span style=color:#f92672>.</span>flatMap <span style=color:#f92672>{</span> fName <span style=color:#66d9ef>=&gt;</span>
-  lastName<span style=color:#f92672>.</span>flatMap <span style=color:#f92672>{</span> lName <span style=color:#66d9ef>=&gt;</span>
-    company<span style=color:#f92672>.</span>flatMap <span style=color:#f92672>{</span> com <span style=color:#66d9ef>=&gt;</span>
-      <span style=color:#a6e22e>Record</span><span style=color:#f92672>(</span>fName<span style=color:#f92672>,</span> lName<span style=color:#f92672>,</span> com<span style=color:#f92672>)</span>
-    <span style=color:#f92672>}</span>
-  <span style=color:#f92672>}</span>
-<span style=color:#f92672>}</span>
-</code></pre></div><p>Scala 提供了 for-comprehension 来解决这个问题，这个设计类似于 Haskell 的 do-comprehension 但更为强大：</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-scala data-lang=scala><span style=color:#66d9ef>val</span> record<span style=color:#66d9ef>:</span> <span style=color:#66d9ef>Option</span><span style=color:#f92672>[</span><span style=color:#66d9ef>Record</span><span style=color:#f92672>]</span> <span style=color:#66d9ef>=</span> <span style=color:#66d9ef>for</span> <span style=color:#f92672>{</span>
-  fName <span style=color:#66d9ef>&lt;-</span> firstName
-  lName <span style=color:#66d9ef>&lt;-</span> lastName
-  com <span style=color:#66d9ef>&lt;-</span> company
-<span style=color:#f92672>}</span> <span style=color:#66d9ef>yield</span> <span style=color:#a6e22e>Record</span><span style=color:#f92672>(</span>fName<span style=color:#f92672>,</span> lName<span style=color:#f92672>,</span> com<span style=color:#f92672>)</span>
-</code></pre></div><p>这种表示更为清晰直观，且避免了嵌套。而且，这个语法糖不是为了 <code>Option</code> 专门制造的，而是能用于所有定义了 <code>flatMap</code>，<code>map</code> 和 <code>filter</code> 的场合，比如 <code>List</code>。更为准确的说，for-comprehension 提供了一个更好的操作 Monad 的方式，这里就不展开叙述了。</p>
+<div class=highlight><div style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4>
+<table style=border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block><tr><td style=vertical-align:top;padding:0;margin:0;border:0>
+<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span></code></pre></td>
+<td style=vertical-align:top;padding:0;margin:0;border:0;width:100%>
+<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-scala data-lang=scala><span style=color:#8f5902;font-style:italic>// optA: Option[A]
+</span><span style=color:#8f5902;font-style:italic></span><span style=color:#000>optA</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#000>flatMap</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#204a87;font-weight:700>_</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#000>getOptionB</span><span style=color:#ce5c00;font-weight:700>)</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>如果 <code>optA</code> 包裹的 <code>A</code> 类型对象返回了 <code>Some(b)</code> 则结果为 <code>Some(b)</code>，如果 <code>optA</code> 或调用 <code>getOptionB</code> 返回的值有一个为 <code>None</code>，则整个的结果为 <code>None</code>。使用 <code>flatMap</code> 会有一个问题，就是当需要同时用到几个 <code>Option</code> 包裹的值的时候会出现嵌套的 <code>flatMap</code>，考虑如下情况：</p>
+<div class=highlight><div style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4>
+<table style=border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block><tr><td style=vertical-align:top;padding:0;margin:0;border:0>
+<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 4
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 5
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 6
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 7
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 8
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 9
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">10
+</span></code></pre></td>
+<td style=vertical-align:top;padding:0;margin:0;border:0;width:100%>
+<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-scala data-lang=scala><span style=color:#204a87;font-weight:700>val</span> <span style=color:#000>firstName</span><span style=color:#204a87;font-weight:700>:</span> <span style=color:#204a87;font-weight:700>Option</span><span style=color:#ce5c00;font-weight:700>[</span><span style=color:#204a87;font-weight:700>String</span><span style=color:#ce5c00;font-weight:700>]</span> <span style=color:#204a87;font-weight:700>=</span> <span style=color:#000>request</span> <span style=color:#000>getParameter</span> <span style=color:#4e9a06>&#34;first-name&#34;</span>
+<span style=color:#204a87;font-weight:700>val</span> <span style=color:#000>lastName</span><span style=color:#204a87;font-weight:700>:</span> <span style=color:#204a87;font-weight:700>Option</span><span style=color:#ce5c00;font-weight:700>[</span><span style=color:#204a87;font-weight:700>String</span><span style=color:#ce5c00;font-weight:700>]</span> <span style=color:#204a87;font-weight:700>=</span> <span style=color:#000>request</span> <span style=color:#000>getParameter</span> <span style=color:#4e9a06>&#34;last-name&#34;</span>
+<span style=color:#204a87;font-weight:700>val</span> <span style=color:#000>company</span><span style=color:#204a87;font-weight:700>:</span> <span style=color:#204a87;font-weight:700>Option</span><span style=color:#ce5c00;font-weight:700>[</span><span style=color:#204a87;font-weight:700>String</span><span style=color:#ce5c00;font-weight:700>]</span> <span style=color:#204a87;font-weight:700>=</span> <span style=color:#000>request</span> <span style=color:#000>getParameter</span> <span style=color:#4e9a06>&#34;company&#34;</span>
+<span style=color:#204a87;font-weight:700>val</span> <span style=color:#000>record</span><span style=color:#204a87;font-weight:700>:</span> <span style=color:#204a87;font-weight:700>Option</span><span style=color:#ce5c00;font-weight:700>[</span><span style=color:#204a87;font-weight:700>Record</span><span style=color:#ce5c00;font-weight:700>]</span> <span style=color:#204a87;font-weight:700>=</span> <span style=color:#000>firstName</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#000>flatMap</span> <span style=color:#ce5c00;font-weight:700>{</span> <span style=color:#000>fName</span> <span style=color:#204a87;font-weight:700>=&gt;</span>
+  <span style=color:#000>lastName</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#000>flatMap</span> <span style=color:#ce5c00;font-weight:700>{</span> <span style=color:#000>lName</span> <span style=color:#204a87;font-weight:700>=&gt;</span>
+    <span style=color:#000>company</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#000>flatMap</span> <span style=color:#ce5c00;font-weight:700>{</span> <span style=color:#000>com</span> <span style=color:#204a87;font-weight:700>=&gt;</span>
+      <span style=color:#000>Record</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>fName</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>lName</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>com</span><span style=color:#ce5c00;font-weight:700>)</span>
+    <span style=color:#ce5c00;font-weight:700>}</span>
+  <span style=color:#ce5c00;font-weight:700>}</span>
+<span style=color:#ce5c00;font-weight:700>}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>Scala 提供了 for-comprehension 来解决这个问题，这个设计类似于 Haskell 的 do-comprehension 但更为强大：</p>
+<div class=highlight><div style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4>
+<table style=border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block><tr><td style=vertical-align:top;padding:0;margin:0;border:0>
+<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">4
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">5
+</span></code></pre></td>
+<td style=vertical-align:top;padding:0;margin:0;border:0;width:100%>
+<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-scala data-lang=scala><span style=color:#204a87;font-weight:700>val</span> <span style=color:#000>record</span><span style=color:#204a87;font-weight:700>:</span> <span style=color:#204a87;font-weight:700>Option</span><span style=color:#ce5c00;font-weight:700>[</span><span style=color:#204a87;font-weight:700>Record</span><span style=color:#ce5c00;font-weight:700>]</span> <span style=color:#204a87;font-weight:700>=</span> <span style=color:#204a87;font-weight:700>for</span> <span style=color:#ce5c00;font-weight:700>{</span>
+  <span style=color:#000>fName</span> <span style=color:#204a87;font-weight:700>&lt;-</span> <span style=color:#000>firstName</span>
+  <span style=color:#000>lName</span> <span style=color:#204a87;font-weight:700>&lt;-</span> <span style=color:#000>lastName</span>
+  <span style=color:#000>com</span> <span style=color:#204a87;font-weight:700>&lt;-</span> <span style=color:#000>company</span>
+<span style=color:#ce5c00;font-weight:700>}</span> <span style=color:#204a87;font-weight:700>yield</span> <span style=color:#000>Record</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>fName</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>lName</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>com</span><span style=color:#ce5c00;font-weight:700>)</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>这种表示更为清晰直观，且避免了嵌套。而且，这个语法糖不是为了 <code>Option</code> 专门制造的，而是能用于所有定义了 <code>flatMap</code>，<code>map</code> 和 <code>filter</code> 的场合，比如 <code>List</code>。更为准确的说，for-comprehension 提供了一个更好的操作 Monad 的方式，这里就不展开叙述了。</p>
 <p>除此之外，Scala 还能对其进行模式匹配，这也不是为 <code>Option</code> 专门设计的，但实现了类似 Kotlin 中根据控制流来进行类型收窄的效果：</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-scala data-lang=scala><span style=color:#66d9ef>val</span> nameMaybe <span style=color:#66d9ef>=</span> request getParameter <span style=color:#e6db74>&#34;name&#34;</span>
-nameMaybe <span style=color:#66d9ef>match</span> <span style=color:#f92672>{</span>
-  <span style=color:#66d9ef>case</span> <span style=color:#a6e22e>Some</span><span style=color:#f92672>(</span>name<span style=color:#f92672>)</span> <span style=color:#66d9ef>=&gt;</span>
-    println<span style=color:#f92672>(</span>name<span style=color:#f92672>.</span>trim<span style=color:#f92672>.</span>toUppercase<span style=color:#f92672>)</span>
-  <span style=color:#66d9ef>case</span> <span style=color:#a6e22e>None</span> <span style=color:#66d9ef>=&gt;</span>
-    println<span style=color:#f92672>(</span><span style=color:#e6db74>&#34;No name value&#34;</span><span style=color:#f92672>)</span>
-<span style=color:#f92672>}</span>
-</code></pre></div><p>需要注意的是，这里的类型匹配相当于对一个对象进行了类型的判断，并将类型转换为指定类型，不需要编译器对某个表达式进行特化的分析就保证了类型的安全。</p>
+<div class=highlight><div style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4>
+<table style=border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block><tr><td style=vertical-align:top;padding:0;margin:0;border:0>
+<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">4
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">5
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">6
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">7
+</span></code></pre></td>
+<td style=vertical-align:top;padding:0;margin:0;border:0;width:100%>
+<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-scala data-lang=scala><span style=color:#204a87;font-weight:700>val</span> <span style=color:#000>nameMaybe</span> <span style=color:#204a87;font-weight:700>=</span> <span style=color:#000>request</span> <span style=color:#000>getParameter</span> <span style=color:#4e9a06>&#34;name&#34;</span>
+<span style=color:#000>nameMaybe</span> <span style=color:#204a87;font-weight:700>match</span> <span style=color:#ce5c00;font-weight:700>{</span>
+  <span style=color:#204a87;font-weight:700>case</span> <span style=color:#000>Some</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>name</span><span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#204a87;font-weight:700>=&gt;</span>
+    <span style=color:#000>println</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>name</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#000>trim</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#000>toUppercase</span><span style=color:#ce5c00;font-weight:700>)</span>
+  <span style=color:#204a87;font-weight:700>case</span> <span style=color:#000>None</span> <span style=color:#204a87;font-weight:700>=&gt;</span>
+    <span style=color:#000>println</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#4e9a06>&#34;No name value&#34;</span><span style=color:#ce5c00;font-weight:700>)</span>
+<span style=color:#ce5c00;font-weight:700>}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>需要注意的是，这里的类型匹配相当于对一个对象进行了类型的判断，并将类型转换为指定类型，不需要编译器对某个表达式进行特化的分析就保证了类型的安全。</p>
 <p>当然 Scala 这个解决方案相对于 Kotlin 也有一些缺点，其中一个缺点是它并非是强制的，为了和 Java 交互，null 这个概念必须要保留，所以，Scala 也可以对一个对象赋 <code>null</code> 值，这样，在调用 Java 的代码或是调用不可信的 Scala 代码时，还是免不了要进行 <code>null</code> 的判断。这并非是这个处理方式的缺点，如果是语言本身不支持 <code>null</code>，则完全不会出现这样的问题，例如 Haskell，Rust 等。</p>
 <p>这个表示方式的巨大优点在于它很容易在其他语言里实现，几乎不需要新的语言特性的支持。在 Java 8 中，Java 也引入了这个处理方式，在 Java 中这个类型是 <code>Optional&lt;T></code> <sup id=fnref:9><a href=#fn:9 class=footnote-ref role=doc-noteref>9</a></sup>，它也提供了类似的方式，但由于没用好用的语法糖，导致使用的时候没这么美观。幸好 Java 8 有了 lambda 表达式，否则可能会变成一大堆匿名内部类的情况，估计就不会有人想用这个类了。另外，出于兼容性考量，类似于 Scala 面临的问题，由于 <code>null</code> 本身的保留，Java 即便引入了 <code>Optional&lt;T></code> 也难以免去对 <code>null</code> 的判断。</p>
 <p>但是，这个表示方式也不是在任何情况下都能被方便的使用，考虑如下场景，假设 <code>Student</code> 类是 <code>Person</code> 类的子类，我们希望表示一个空的 <code>Student</code> 类对象并将其值赋给一个 <code>Person</code> 类的对象。</p>
 <p>在传统的 Java 代码中我们可以这样写：</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java>Student s <span style=color:#f92672>=</span> <span style=color:#66d9ef>null</span><span style=color:#f92672>;</span>
-Person p <span style=color:#f92672>=</span> s<span style=color:#f92672>;</span>
-</code></pre></div><p>在 Kotlin 中，强制了 <code>null</code> 的检查，所以代码应该这样写：</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-kotlin data-lang=kotlin><span style=color:#66d9ef>val</span> s: Student? = <span style=color:#66d9ef>null</span>
-<span style=color:#66d9ef>val</span> p: Person? = s
-</code></pre></div><p>使用 Scala 的 <code>Option</code> 类，我们的代码将是：</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-scala data-lang=scala><span style=color:#66d9ef>val</span> s<span style=color:#66d9ef>:</span> <span style=color:#66d9ef>Option</span><span style=color:#f92672>[</span><span style=color:#66d9ef>Student</span><span style=color:#f92672>]</span> <span style=color:#66d9ef>=</span> <span style=color:#a6e22e>None</span>
-<span style=color:#66d9ef>val</span> p<span style=color:#66d9ef>:</span> <span style=color:#66d9ef>Option</span><span style=color:#f92672>[</span><span style=color:#66d9ef>Person</span><span style=color:#f92672>]</span> <span style=color:#66d9ef>=</span> s
-</code></pre></div><p>你可能会觉得我们用 Java 8 提供的 <code>Optional</code> 完全可以实现类似的代码，可惜如下代码无法编译通过：</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java>Optional<span style=color:#f92672>&lt;</span>Student<span style=color:#f92672>&gt;</span> s <span style=color:#f92672>=</span> Optional<span style=color:#f92672>.</span><span style=color:#a6e22e>empty</span><span style=color:#f92672>();</span>
-<span style=color:#75715e>// Compiler error:
-</span><span style=color:#75715e>// Incompatible types:
-</span><span style=color:#75715e>//   Required: Optional &lt;test.Person&gt;
-</span><span style=color:#75715e>//   Found:    Optional &lt;test.Student&gt;
-</span><span style=color:#75715e></span>Optional<span style=color:#f92672>&lt;</span>Person<span style=color:#f92672>&gt;</span> p <span style=color:#f92672>=</span> s<span style=color:#f92672>;</span>
-</code></pre></div><p>这段代码无法被编译通过的原因我在 <a href=/articles/covariant-and-contravariant>协变、逆变与不变</a> 一文中谈过，Java 无法在参数化类型声明的时候指定其在其类型参数上的型变类型，相对于 Scala 中直观的写法，为了使用 <code>Optional</code>，在 Java 中我们必须要这样写：</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java>Optional<span style=color:#f92672>&lt;</span>Student<span style=color:#f92672>&gt;</span> s <span style=color:#f92672>=</span> Optional<span style=color:#f92672>.</span><span style=color:#a6e22e>empty</span><span style=color:#f92672>();</span>
-Optional<span style=color:#f92672>&lt;?</span> <span style=color:#66d9ef>extends</span> Person<span style=color:#f92672>&gt;</span> p <span style=color:#f92672>=</span> s<span style=color:#f92672>;</span>
-</code></pre></div><p>这样用起来不仅有一种割裂感而且较为啰嗦，这也可以说是参数化类型这一解决方案对语言特性的一个限制，合适的语言特性能够使得这一解决方案的使用变得方便。如果一门语言连型变这一特性本身都不支持，那么这个解决方案的使用场景就比较受限了。</p>
+<div class=highlight><div style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4>
+<table style=border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block><tr><td style=vertical-align:top;padding:0;margin:0;border:0>
+<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span></code></pre></td>
+<td style=vertical-align:top;padding:0;margin:0;border:0;width:100%>
+<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=color:#000>Student</span> <span style=color:#000>s</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#204a87;font-weight:700>null</span><span style=color:#ce5c00;font-weight:700>;</span>
+<span style=color:#000>Person</span> <span style=color:#000>p</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>s</span><span style=color:#ce5c00;font-weight:700>;</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>在 Kotlin 中，强制了 <code>null</code> 的检查，所以代码应该这样写：</p>
+<div class=highlight><div style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4>
+<table style=border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block><tr><td style=vertical-align:top;padding:0;margin:0;border:0>
+<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span></code></pre></td>
+<td style=vertical-align:top;padding:0;margin:0;border:0;width:100%>
+<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-kotlin data-lang=kotlin><span style=color:#204a87;font-weight:700>val</span> <span style=color:#000>s</span><span style=color:#000;font-weight:700>:</span> <span style=color:#000>Student</span><span style=color:#000;font-weight:700>?</span> <span style=color:#000;font-weight:700>=</span> <span style=color:#204a87;font-weight:700>null</span>
+<span style=color:#204a87;font-weight:700>val</span> <span style=color:#000>p</span><span style=color:#000;font-weight:700>:</span> <span style=color:#000>Person</span><span style=color:#000;font-weight:700>?</span> <span style=color:#000;font-weight:700>=</span> <span style=color:#000>s</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>使用 Scala 的 <code>Option</code> 类，我们的代码将是：</p>
+<div class=highlight><div style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4>
+<table style=border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block><tr><td style=vertical-align:top;padding:0;margin:0;border:0>
+<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span></code></pre></td>
+<td style=vertical-align:top;padding:0;margin:0;border:0;width:100%>
+<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-scala data-lang=scala><span style=color:#204a87;font-weight:700>val</span> <span style=color:#000>s</span><span style=color:#204a87;font-weight:700>:</span> <span style=color:#204a87;font-weight:700>Option</span><span style=color:#ce5c00;font-weight:700>[</span><span style=color:#204a87;font-weight:700>Student</span><span style=color:#ce5c00;font-weight:700>]</span> <span style=color:#204a87;font-weight:700>=</span> <span style=color:#000>None</span>
+<span style=color:#204a87;font-weight:700>val</span> <span style=color:#000>p</span><span style=color:#204a87;font-weight:700>:</span> <span style=color:#204a87;font-weight:700>Option</span><span style=color:#ce5c00;font-weight:700>[</span><span style=color:#204a87;font-weight:700>Person</span><span style=color:#ce5c00;font-weight:700>]</span> <span style=color:#204a87;font-weight:700>=</span> <span style=color:#000>s</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>你可能会觉得我们用 Java 8 提供的 <code>Optional</code> 完全可以实现类似的代码，可惜如下代码无法编译通过：</p>
+<div class=highlight><div style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4>
+<table style=border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block><tr><td style=vertical-align:top;padding:0;margin:0;border:0>
+<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">4
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">5
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">6
+</span></code></pre></td>
+<td style=vertical-align:top;padding:0;margin:0;border:0;width:100%>
+<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=color:#000>Optional</span><span style=color:#ce5c00;font-weight:700>&lt;</span><span style=color:#000>Student</span><span style=color:#ce5c00;font-weight:700>&gt;</span> <span style=color:#000>s</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>Optional</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>empty</span><span style=color:#ce5c00;font-weight:700>();</span>
+<span style=color:#8f5902;font-style:italic>// Compiler error:
+</span><span style=color:#8f5902;font-style:italic>// Incompatible types:
+</span><span style=color:#8f5902;font-style:italic>//   Required: Optional &lt;test.Person&gt;
+</span><span style=color:#8f5902;font-style:italic>//   Found:    Optional &lt;test.Student&gt;
+</span><span style=color:#8f5902;font-style:italic></span><span style=color:#000>Optional</span><span style=color:#ce5c00;font-weight:700>&lt;</span><span style=color:#000>Person</span><span style=color:#ce5c00;font-weight:700>&gt;</span> <span style=color:#000>p</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>s</span><span style=color:#ce5c00;font-weight:700>;</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>这段代码无法被编译通过的原因我在 <a href=/articles/covariant-and-contravariant>协变、逆变与不变</a> 一文中谈过，Java 无法在参数化类型声明的时候指定其在其类型参数上的型变类型，相对于 Scala 中直观的写法，为了使用 <code>Optional</code>，在 Java 中我们必须要这样写：</p>
+<div class=highlight><div style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4>
+<table style=border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block><tr><td style=vertical-align:top;padding:0;margin:0;border:0>
+<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span></code></pre></td>
+<td style=vertical-align:top;padding:0;margin:0;border:0;width:100%>
+<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=color:#000>Optional</span><span style=color:#ce5c00;font-weight:700>&lt;</span><span style=color:#000>Student</span><span style=color:#ce5c00;font-weight:700>&gt;</span> <span style=color:#000>s</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>Optional</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>empty</span><span style=color:#ce5c00;font-weight:700>();</span>
+<span style=color:#000>Optional</span><span style=color:#ce5c00;font-weight:700>&lt;?</span> <span style=color:#204a87;font-weight:700>extends</span> <span style=color:#000>Person</span><span style=color:#ce5c00;font-weight:700>&gt;</span> <span style=color:#000>p</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>s</span><span style=color:#ce5c00;font-weight:700>;</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>这样用起来不仅有一种割裂感而且较为啰嗦，这也可以说是参数化类型这一解决方案对语言特性的一个限制，合适的语言特性能够使得这一解决方案的使用变得方便。如果一门语言连型变这一特性本身都不支持，那么这个解决方案的使用场景就比较受限了。</p>
 <h1 id=总结>总结</h1>
 <p>总之，空值这个概念必然是需要的，只是表示方式有所不同。如何处理才能更好地利用编译器来帮程序员及早发现错误是一个需要精心设计的事情。所谓「十亿美金错误」的本质在于语言的粗糙设计导致类型声明不诚实，一个值或是接口的用户无法通过类型声明确信他所获得的值的类型究竟是什么。在新生代的语言中，基本上都会对 null 这个 bug 温床进行一些处理，具体处理的方式算是各有优劣。由于兼容性的问题，老的语言里可能还是免不了见到 <code>null</code>，但新写的代码最好还是使用更好的处理方式，避免「十亿美金错误」。</p>
 <section class=footnotes role=doc-endnotes>
