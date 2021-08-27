@@ -149,7 +149,7 @@ g++ -o main main.cc a.a
 </code></pre></td></tr></table>
 </div>
 </div><p>已经知道两个链接方式会产生区别了，那执行 <code>./main</code> 后的输出分别是什么呢？</p>
-<p>答案是：链接方式 1 产生的 <code>main</code> 输出 <code>normal</code>，链接方式 2 产生的 <code>main</code> 输出 <code>specialization</code>。</p>
+<p>答案是：链接方式 1 产生的 <code>main</code> 输出 <code>specialization</code>，链接方式 2 产生的 <code>main</code> 输出 <code>normal</code>。</p>
 <p>这看起来完全不讲道理啊，凭什么同样一个库，链接 <code>.a</code> 和链接 <code>.o</code> 的结果不一样？这就要说到，编译器在链接 <code>.a</code> 和 <code>.o</code> 时的行为差别了。当编译器链接 <code>.o</code> 的时候，它会将 <code>.o</code> 中的符号全部链接进最终文件中，而当链接 <code>.a</code> 的时候，编译器则是会看当前链接结果是否存在未定义的符号，如果没有，那就不链接这个 <code>.a</code> 文件里面的内容。而如果有需要链接的符号，则尝试在 <code>.a</code> 文件中查找，如果找到了，就链接这个 <code>.a</code> 里面的内容，否则就跳过。</p>
 <p>仔细看一下代码就会发现，这里的特化声明没有声明在头文件里，因此在编译 <code>main.cc</code> 的时候，编译器会实例化 <code>A&lt;int>::print()</code>，这会导致后续链接的时候产生问题。在链接 <code>.a</code> 的时候，编译器发现我已经有 <code>A&lt;int>::print()</code> 了，不需要去链接 <code>.a</code>，因此就跳过了这个库，这就导致了最终输出的是编译器实例化出来的版本，而不是我们定义的特化版本。而在链接 <code>.o</code> 的时候，编译器无论如何都会去进行链接，因此就还是用了特化的版本。</p>
 <p>简单来说，正确的模板特化写法应该是将特化声明写在头文件里，必须在使用该模板之前出现对应声明，否则编译器就会进行自动实例化：</p>
@@ -253,7 +253,8 @@ g++ -o main main.o a.o
 # 0000000000000000 r _ZStL19piecewise_construct
 # 0000000000000000 b _ZStL8__ioinit
 </code></pre><p>可以看到，这里的 <code>_ZN1AIiE5printEv</code> 前面标记了 <code>U</code>，这说明这是一个未定义的符号，需要在外部查找，这就是为什么在正确实现的版本中，编译器会去查找 <code>.a</code> 文件中的定义。</p>
-<p>至此，这个问题算是可以合理解释了：</p>
+<p>另外，这顺便也能解释另一件事情：如果 <code>main</code> 依赖于 <code>liba.a</code>，而 <code>liba.a</code> 依赖于 <code>libb.a</code>，那么我们在链接库的时候就需要先链接 <code>liba.a</code> 再链接 <code>libb.a</code>，否则就会出现符号未定义的问题。这是因为如果我们先链接 <code>libb.a</code>，那么由于 <code>main</code> 没有直接依赖 <code>libb.a</code> 中的符号，此时 <code>libb.a</code> 会被直接跳过，当链接 <code>liba.a</code> 之后，<code>libb.a</code> 中的符号就再也不会被链进来了，此时 <code>liba.a</code> 中依赖于 <code>libb.a</code> 的符号就是未定义的了。</p>
+<p>至此，这次的问题算是可以完整地合理解释了：</p>
 <ol>
 <li>链接的时候，<code>.o</code> 文件必然链接，<code>.a</code> 文件只会在符号找不到的时候链接</li>
 <li>模板自动实例化出来的版本是弱符号，手写特化的是强符号，当二者同时参与链接时会选择强符号而不是产生冲突</li>
