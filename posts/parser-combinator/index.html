@@ -7,7 +7,7 @@
 <meta name=author content="Zhirui Li">
 <meta property="og:url" content="https://zhiruili.github.io/posts/parser-combinator/">
 <link rel=canonical href=https://zhiruili.github.io/posts/parser-combinator/><link rel=alternate type=application/atom+xml href=https://zhiruili.github.ioindex.xml title="简单易懂的现代魔法 - Zhirui Li">
-<script type=application/ld+json>{"@context":"http://schema.org","@type":"BlogPosting","mainEntityOfPage":{"@type":"WebPage","@id":"https:\/\/zhiruili.github.io"},"articleSection":"posts","name":"Parser Combinator","headline":"Parser Combinator","description":"词法分析和语法分析 词法分析（lexical analysis）1 和语法分析（syntactic analysis，又称为 parsing）2，同属于编译器的前端部分。词法分析器（lexer）将输入拆分为一个个的 token，然后语法分析器根据特定的语法规则将输入的 token 解析为一个结构化的表示，一般为抽象语法树（abstract syntax tree），供之后的语义分析器使用。\n在实际开发中，为了简化写词法分析和语法分析的过程，常常会使用生成器来代替人工操作，Lex 和 Yacc 就是生成器的经典实现 3。Lex 是 Lexical Analyzer 的简写，是一个词法分析器的生成器，Yacc 是 Yet Another Compiler Compiler 的简写，是一个语法分析器的生成器。这两个工具允许用户用类似 BNF 范式的写法声明一个词法描述和语法描述文件，然后自动生成能够解析对应词法语法的 C 语言程序。\n这个解决方案直观有效，实际应用也很普遍，不止是 C 语言，在其他平台也常有类似的实现，例如 Java 的 ANTLR。但是它也存在一些问题，首先是用机器生成的代码质量往往不如手写高。这个代码质量的问题在程序正常运作的时候倒也不算什么问题，毕竟可以将生成出来的代码当作一个黑盒来调用，不太需要理会内部的实现，但实际情况有时并不这么理想，如果描述的时候出现问题怎么办？甚至如果生成器本身就有 bug 又怎么办？由于生成出来的代码质量较低，所以这就带来了调试困难的问题。所以，在很多重要的应用中，parser 的部分往往是手写的而非用生成器生成 4。不过手写解析器毕竟会有代码不直观的问题，而且这个过程往往比较枯燥乏味。\n也就是说，我们希望有一个方法，能够使得我们在用某种规范形式描述出一个语言的语法后，就能构造出针对该语言的词法分析器和语法分析器，且这个特性必须要尽可能不损失可调试性，同时又足够简单易用。\n使用 Parser Combinator 解析文本 Parser combinator 5 也许是对上述问题的一个比较好的回答，虽然 parser combinator 也有不少缺点使得它解析复杂语法的时候往往力不从心，但在简单的情况下还是比较好用的，另外其中反映的编程思想也相当有趣。\n举个例子，在 Java 中，bool 类型的字面值写法有 true 和 false 两种，用 BNF 范式表述大概是这样：\nbool_literal ::= \u0026quot;true\u0026quot; | \u0026quot;false\u0026quot; 如果使用 Haskell 的 Megaparsec 6 来写，就可以写成这样：","inLanguage":"en-US","author":"Zhirui Li","creator":"Zhirui Li","publisher":"Zhirui Li","accountablePerson":"Zhirui Li","copyrightHolder":"Zhirui Li","copyrightYear":"2016","datePublished":"2016-09-10 00:00:00 \u002b0000 UTC","dateModified":"2016-09-10 00:00:00 \u002b0000 UTC","url":"https:\/\/zhiruili.github.io\/posts\/parser-combinator\/","keywords":["Functional Programming","Compiler","Haskell","Scala"]}</script>
+<script type=application/ld+json>{"@context":"http://schema.org","@type":"BlogPosting","mainEntityOfPage":{"@type":"WebPage","@id":"https:\/\/zhiruili.github.io"},"articleSection":"posts","name":"Parser Combinator","headline":"Parser Combinator","description":"词法分析和语法分析 词法分析（lexical analysis）1 和语法分析（syntactic analysis，又称为 parsing）2，同属于编译器的前端部分。词法分析器（lexer）将输入拆分为一个个的 token，然后语法分析器根据特定的语法规则将输入的 token 解析为一个结构化的表示，一般为抽象语法树（abstract syntax tree），供之后的语义分析器使用。\n在实际开发中，为了简化写词法分析和语法分析的过程，常常会使用生成器来代替人工操作，Lex 和 Yacc 就是生成器的经典实现 3。Lex 是 Lexical Analyzer 的简写，是一个词法分析器的生成器，Yacc 是 Yet Another Compiler Compiler 的简写，是一个语法分析器的生成器。这两个工具允许用户用类似 BNF 范式的写法声明一个词法描述和语法描述文件，然后自动生成能够解析对应词法语法的 C 语言程序。\n这个解决方案直观有效，实际应用也很普遍，不止是 C 语言，在其他平台也常有类似的实现，例如 Java 的 ANTLR。但是它也存在一些问题，首先是用机器生成的代码质量往往不如手写高。这个代码质量的问题在程序正常运作的时候倒也不算什么问题，毕竟可以将生成出来的代码当作一个黑盒来调用，不太需要理会内部的实现，但实际情况有时并不这么理想，如果描述的时候出现问题怎么办？甚至如果生成器本身就有 bug 又怎么办？由于生成出来的代码质量较低，所以这就带来了调试困难的问题。所以，在很多重要的应用中，parser 的部分往往是手写的而非用生成器生成 4。不过手写解析器毕竟会有代码不直观的问题，而且这个过程往往比较枯燥乏味。\n也就是说，我们希望有一个方法，能够使得我们在用某种规范形式描述出一个语言的语法后，就能构造出针对该语言的词法分析器和语法分析器，且这个特性必须要尽可能不损失可调试性，同时又足够简单易用。\n使用 Parser Combinator 解析文本 Parser combinator 5 也许是对上述问题的一个比较好的回答，虽然 parser combinator 也有不少缺点使得它解析复杂语法的时候往往力不从心，但在简单的情况下还是比较好用的，另外其中反映的编程思想也相当有趣。\n举个例子，在 Java 中，bool 类型的字面值写法有 true 和 false 两种，用 BNF 范式表述大概是这样：\nbool_literal ::= \u0026quot;true\u0026quot; | \u0026quot;false\u0026quot; 如果使用 Haskell 的 Megaparsec 6 来写，就可以写成这样：","inLanguage":"en-US","author":"Zhirui Li","creator":"Zhirui Li","publisher":"Zhirui Li","accountablePerson":"Zhirui Li","copyrightHolder":"Zhirui Li","copyrightYear":"2016","datePublished":"2016-09-10 00:00:00 \u002b0000 UTC","dateModified":"2016-09-10 00:00:00 \u002b0000 UTC","url":"https:\/\/zhiruili.github.io\/posts\/parser-combinator\/","keywords":["Haskell","Scala"]}</script>
 <title>Parser Combinator</title>
 <meta property="og:title" content="Parser Combinator">
 <meta property="og:type" content="article">
@@ -963,16 +963,6 @@ Some(hello)
 </div>
 <div class="row middle-xs">
 <div class=col-xs-12>
-<div class=post-tags>
-<a href=/tags/functional-programming/>
-Functional Programming
-</a>
-</div>
-<div class=post-tags>
-<a href=/tags/compiler/>
-Compiler
-</a>
-</div>
 <div class=post-tags>
 <a href=/tags/haskell/>
 Haskell

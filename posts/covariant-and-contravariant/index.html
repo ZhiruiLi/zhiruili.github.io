@@ -7,7 +7,7 @@
 <meta name=author content="Zhirui Li">
 <meta property="og:url" content="https://zhiruili.github.io/posts/covariant-and-contravariant/">
 <link rel=canonical href=https://zhiruili.github.io/posts/covariant-and-contravariant/><link rel=alternate type=application/atom+xml href=https://zhiruili.github.ioindex.xml title="简单易懂的现代魔法 - Zhirui Li">
-<script type=application/ld+json>{"@context":"http://schema.org","@type":"BlogPosting","mainEntityOfPage":{"@type":"WebPage","@id":"https:\/\/zhiruili.github.io"},"articleSection":"posts","name":"协变、逆变与不变","headline":"协变、逆变与不变","description":"型变（variance）是类型系统里的概念，包括协变（covariance）、逆变（contravariance）和不变（invariance）。这组术语的目的是描述泛型情况下类型参数的父子类关系如何影响参数化类型的父子类关系。也就是说，假设有一个接收一个类型参数的参数化类型 T 和两个类 A，B，且 B 是 A 的子类，那么 T[A] 与 T[B] 的关系是什么？如果 T[B] 是 T[A] 的子类，那么这种型变就是「协变」，因为参数化类型 T 的父子类关系与其类型参数的父子类关系是「同一个方向的」。如果 T[A] 是 T[B] 的子类，则这种关系是「逆变」，因为参数化类型 T 的父子类关系与类型参数的父子类关系是「相反方向的」。类似地，如果 T[A] 和 T[B] 之间不存在父子类关系，那么这种型变就是「不变」1。\n协变 在 Java 中，数组是协变的，也就是说，假设有一个基类 Person 和一个 Person 的子类 Student。因为 Student 类型是 Person 类型的子类，所以 Student[] 类型是 Person[] 类型的子类，这个设计似乎相当符合直觉，一个学生（Student）是一个人（Person），那一个存放着学生的数组当然也应该是一个存放着人的数组了。\n然而这是错误的。\n假设 Person 有另一个子类 Teacher，考虑如下代码：\n1 2 3 4 5  Student[] students = { new Student() } students[0].study(); Person[] persons = students; persons[0] = new Teacher(); students[0].","inLanguage":"en-US","author":"Zhirui Li","creator":"Zhirui Li","publisher":"Zhirui Li","accountablePerson":"Zhirui Li","copyrightHolder":"Zhirui Li","copyrightYear":"2016","datePublished":"2016-07-14 00:00:00 \u002b0000 UTC","dateModified":"2016-07-14 00:00:00 \u002b0000 UTC","url":"https:\/\/zhiruili.github.io\/posts\/covariant-and-contravariant\/","keywords":["Object-oriented Programming","Type System","Scala","Java"]}</script>
+<script type=application/ld+json>{"@context":"http://schema.org","@type":"BlogPosting","mainEntityOfPage":{"@type":"WebPage","@id":"https:\/\/zhiruili.github.io"},"articleSection":"posts","name":"协变、逆变与不变","headline":"协变、逆变与不变","description":"型变（variance）是类型系统里的概念，包括协变（covariance）、逆变（contravariance）和不变（invariance）。这组术语的目的是描述泛型情况下类型参数的父子类关系如何影响参数化类型的父子类关系。也就是说，假设有一个接收一个类型参数的参数化类型 T 和两个类 A，B，且 B 是 A 的子类，那么 T[A] 与 T[B] 的关系是什么？如果 T[B] 是 T[A] 的子类，那么这种型变就是「协变」，因为参数化类型 T 的父子类关系与其类型参数的父子类关系是「同一个方向的」。如果 T[A] 是 T[B] 的子类，则这种关系是「逆变」，因为参数化类型 T 的父子类关系与类型参数的父子类关系是「相反方向的」。类似地，如果 T[A] 和 T[B] 之间不存在父子类关系，那么这种型变就是「不变」1。\n协变 在 Java 中，数组是协变的，也就是说，假设有一个基类 Person 和一个 Person 的子类 Student。因为 Student 类型是 Person 类型的子类，所以 Student[] 类型是 Person[] 类型的子类，这个设计似乎相当符合直觉，一个学生（Student）是一个人（Person），那一个存放着学生的数组当然也应该是一个存放着人的数组了。\n然而这是错误的。\n假设 Person 有另一个子类 Teacher，考虑如下代码：\n1 2 3 4 5  Student[] students = { new Student() } students[0].study(); Person[] persons = students; persons[0] = new Teacher(); students[0].","inLanguage":"en-US","author":"Zhirui Li","creator":"Zhirui Li","publisher":"Zhirui Li","accountablePerson":"Zhirui Li","copyrightHolder":"Zhirui Li","copyrightYear":"2016","datePublished":"2016-07-14 00:00:00 \u002b0000 UTC","dateModified":"2016-07-14 00:00:00 \u002b0000 UTC","url":"https:\/\/zhiruili.github.io\/posts\/covariant-and-contravariant\/","keywords":["Type System","Scala","Java"]}</script>
 <title>协变、逆变与不变</title>
 <meta property="og:title" content="协变、逆变与不变">
 <meta property="og:type" content="article">
@@ -323,11 +323,6 @@
 </div>
 <div class="row middle-xs">
 <div class=col-xs-12>
-<div class=post-tags>
-<a href=/tags/object-oriented-programming/>
-Object-oriented Programming
-</a>
-</div>
 <div class=post-tags>
 <a href=/tags/type-system/>
 Type System
