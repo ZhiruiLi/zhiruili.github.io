@@ -407,7 +407,7 @@ xxx坐标系{&quot;X&quot;=&quot;2&quot;,&quot;Y&quot;=&quot;1&quot;}
 </span><span style=color:#f8f8f8;text-decoration:underline></span><span style=color:#000;font-weight:700>{</span><span style=color:#f57900>job</span><span style=color:#ce5c00;font-weight:700>=~</span><span style=color:#000;font-weight:700>&#34;</span><span style=color:#4e9a06>.*</span><span style=color:#000;font-weight:700>&#34;,</span><span style=color:#f57900>method</span><span style=color:#ce5c00;font-weight:700>=</span><span style=color:#000;font-weight:700>&#34;</span><span style=color:#4e9a06>get</span><span style=color:#000;font-weight:700>&#34;}</span><span style=color:#f8f8f8;text-decoration:underline>  </span><span style=color:#8f5902;font-style:italic># OK，虽然 job 会匹配到空字符串，但 method 不会</span><span style=color:#f8f8f8;text-decoration:underline>
 </span></code></pre></td></tr></table>
 </div>
-</div><p>前面提到，histogram 和 summary 会产生多个时间序列，那么它们的时间序列要如何进行查询呢？事实上，Prometheus 会根据一定的规则来给这些时间序列命名，以 histgram 为例，假设存在一个监控 <code>mymetric</code>，设置了 1, 2, 3 bucket ，且采集到了如下数据：</p>
+</div><p>前面提到，histogram 和 summary 会产生多个时间序列，那么它们的时间序列要如何进行查询呢？事实上，Prometheus 会根据一定的规则来给这些时间序列命名，以 histgram 为例，假设存在一个监控 <code>mymetric</code>，设置了 1, 2, 3 bucket，且采集到了如下数据：</p>
 <table>
 <thead>
 <tr>
