@@ -7,9 +7,9 @@
 <meta name=author content="Zhirui Li">
 <meta property="og:url" content="https://zhiruili.github.io/posts/unity-with-android/">
 <link rel=canonical href=https://zhiruili.github.io/posts/unity-with-android/><link rel=alternate type=application/atom+xml href=https://zhiruili.github.ioindex.xml title="简单易懂的现代魔法 - Zhirui Li">
-<script type=application/ld+json>{"@context":"http://schema.org","@type":"BlogPosting","mainEntityOfPage":{"@type":"WebPage","@id":"https:\/\/zhiruili.github.io"},"articleSection":"posts","name":"Unity 和 Android 模块交互","headline":"Unity 和 Android 模块交互","description":"有时候，我们需要在 Unity 里调用一些 Android 的功能，这些功能在 Unity 中可能并没有提供接口，需要在 Android 平台上实现。此时，我们需要有一个方法来让 Android 代码和 Unity 代码互交互。这里记录一下操作方法，并提供一个工具来简化两个工程之间的集成流程。\n示例工程 下面的记录中所使用的工程可以参考 UnityAndroidExample。其中，根目录是 Unity 工程，可以直接用 Unity 打开。根目录下的 AndroidSample 子目录是 Android 工程，可以用 Android Studio 打开。\nUnity 工程运行后如下图左所示，只有一个文本和一个按钮，点击按钮就会触发 Unity 到 Anrdoid 的调用，在主界面上产生一个 toast，同时，触发一次从 Anrdoid 到 Unity 的调用，主界面上的文本变为「Hello From Android」：\n具体操作方式 新建一个 Android 工程 这里随便用 Android Studio 建立空一个工程就行了。建立好工程后，参考官方文档在工程里添加一个自定义的模块：\n 菜单栏点击 「File」-「New」-「New Module\u0026hellip;」 弹出窗口中左侧选「Android Library」 右侧填入相关信息后创建模块  假设创建的模块名为「mod」，那么就会在工程根目录下新增一个名为 mod 的目录。此时可以删除工程根目录中默认创建的 app 目录，并将工程根目录中 settings.gradle 文件里的 include \u0027:app\u0027 这一行删除。\n添加 Unity jar 依赖 为了在 Android 中和 Unity 互交互，我们需要引入 Unity 提供的库，这个库以 jar 包的形式提供。以下目录中都有这个 classes.","inLanguage":"en-US","author":"Zhirui Li","creator":"Zhirui Li","publisher":"Zhirui Li","accountablePerson":"Zhirui Li","copyrightHolder":"Zhirui Li","copyrightYear":"2021","datePublished":"2021-09-01 00:00:00 \u002b0000 UTC","dateModified":"2021-09-01 00:00:00 \u002b0000 UTC","url":"https:\/\/zhiruili.github.io\/posts\/unity-with-android\/","keywords":["Unity","Android"]}</script>
-<title>Unity 和 Android 模块交互</title>
-<meta property="og:title" content="Unity 和 Android 模块交互">
+<script type=application/ld+json>{"@context":"http://schema.org","@type":"BlogPosting","mainEntityOfPage":{"@type":"WebPage","@id":"https:\/\/zhiruili.github.io"},"articleSection":"posts","name":"Unity 和 Android 的工程集成","headline":"Unity 和 Android 的工程集成","description":"有时候，我们需要在 Unity 里调用一些 Android 的功能，这些功能在 Unity 中可能并没有提供接口，需要在 Android 平台上实现。此时，我们需要有一个方法来让 Android 代码和 Unity 代码互交互。这里记录一下操作方法，并提供一个工具来简化两个工程之间的集成流程。\n示例工程 下面的记录中所使用的工程可以参考 UnityAndroidExample。其中，根目录是 Unity 工程，可以直接用 Unity 打开。根目录下的 AndroidSample 子目录是 Android 工程，可以用 Android Studio 打开。\nUnity 工程运行后如下图左所示，只有一个文本和一个按钮，点击按钮就会触发 Unity 到 Anrdoid 的调用，在主界面上产生一个 toast，同时，触发一次从 Anrdoid 到 Unity 的调用，主界面上的文本变为「Hello From Android」：\n具体操作方式 新建一个 Android 工程 这里随便用 Android Studio 建立空一个工程就行了。建立好工程后，参考官方文档在工程里添加一个自定义的模块：\n 菜单栏点击 「File」-「New」-「New Module\u0026hellip;」 弹出窗口中左侧选「Android Library」 右侧填入相关信息后创建模块  假设创建的模块名为「mod」，那么就会在工程根目录下新增一个名为 mod 的目录。此时可以删除工程根目录中默认创建的 app 目录，并将工程根目录中 settings.gradle 文件里的 include \u0027:app\u0027 这一行删除。\n添加 Unity jar 依赖 为了在 Android 中和 Unity 互交互，我们需要引入 Unity 提供的库，这个库以 jar 包的形式提供。以下目录中都有这个 classes.","inLanguage":"en-US","author":"Zhirui Li","creator":"Zhirui Li","publisher":"Zhirui Li","accountablePerson":"Zhirui Li","copyrightHolder":"Zhirui Li","copyrightYear":"2021","datePublished":"2021-09-01 00:00:00 \u002b0000 UTC","dateModified":"2021-09-01 00:00:00 \u002b0000 UTC","url":"https:\/\/zhiruili.github.io\/posts\/unity-with-android\/","keywords":["Unity","Android"]}</script>
+<title>Unity 和 Android 的工程集成</title>
+<meta property="og:title" content="Unity 和 Android 的工程集成">
 <meta property="og:type" content="article">
 <meta property="og:description" content="有时候，我们需要在 Unity 里调用一些 Android 的功能，这些功能在 Unity 中可能并没有提供接口，需要在 Android 平台上实现。此时，我们需要有一个方法来让 Android 代码和 Unity 代码互交互。这里记录一下操作方法，并提供一个工具来简化两个工程之间的集成流程。
 示例工程 下面的记录中所使用的工程可以参考 UnityAndroidExample。其中，根目录是 Unity 工程，可以直接用 Unity 打开。根目录下的 AndroidSample 子目录是 Android 工程，可以用 Android Studio 打开。
@@ -57,7 +57,7 @@ Unity 工程运行后如下图左所示，只有一个文本和一个按钮，�
 <div class=header-line></div>
 </div>
 <header class=post-header>
-<h1 class=post-title>Unity 和 Android 模块交互</h1>
+<h1 class=post-title>Unity 和 Android 的工程集成</h1>
 <div class="row post-desc">
 <div class=col-xs-6>
 <time class=post-date datetime="2021-09-01 00:00:00 UTC">
