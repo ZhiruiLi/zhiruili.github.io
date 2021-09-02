@@ -7,19 +7,21 @@
 <meta name=author content="Zhirui Li">
 <meta property="og:url" content="https://zhiruili.github.io/posts/unity-with-android/">
 <link rel=canonical href=https://zhiruili.github.io/posts/unity-with-android/><link rel=alternate type=application/atom+xml href=https://zhiruili.github.ioindex.xml title="简单易懂的现代魔法 - Zhirui Li">
-<script type=application/ld+json>{"@context":"http://schema.org","@type":"BlogPosting","mainEntityOfPage":{"@type":"WebPage","@id":"https:\/\/zhiruili.github.io"},"articleSection":"posts","name":"Unity 和 Android 模块交互","headline":"Unity 和 Android 模块交互","description":"有时候，我们需要在 Unity 里调用一些 Android 的功能，这些功能在 Unity 中可能并没有提供接口，需要在 Android 平台上实现。此时，我们需要有一个方法来让 Android 代码和 Unity 代码互交互。这里记录一下操作方法，并提供一个工具来简化这个过程。\n示例工程 下面的记录可以参考示例工程。其中，根目录是 Unity 工程，可以直接用 Unity 打开。根目录下的 AndroidSample 子目录是 Android 工程，可以用 Android Studio 打开。运行后如下图左所示，点击其中的按钮，就会触发 Unity 到 Anrdoid 的调用，在主界面上产生一个 toast，同时，触发一次从 Anrdoid 到 Unity 的调用，主界面上的 text 变为「Hello From Android」：\n具体操作方式 新建一个 Android 工程 这里随便用 Android Studio 建立一个工程就行了。建立好工程后，参考官方文档在工程里添加一个自定义的模块：\n 菜单栏点击 「File」-「New」-「New Module\u0026hellip;」 弹出窗口中左侧选「Android Library」 右侧填入相关信息后创建模块  假设创建的模块名为「mod」会在工程根目录下新增一个名为 mod 的目录。此时可以删除工程根目录中默认创建的 app 目录，并将工程根目录中 settings.gradle 文件里的 include \u0027:app\u0027 这一行删除。\n添加 Unity jar 依赖 为了在 Android 中和 Unity 互交互，我们需要引入 Unity 提供的库，这个库以 jar 包的形式提供。以下目录中都有这个 classes.","inLanguage":"en-US","author":"Zhirui Li","creator":"Zhirui Li","publisher":"Zhirui Li","accountablePerson":"Zhirui Li","copyrightHolder":"Zhirui Li","copyrightYear":"2021","datePublished":"2021-09-01 00:00:00 \u002b0000 UTC","dateModified":"2021-09-01 00:00:00 \u002b0000 UTC","url":"https:\/\/zhiruili.github.io\/posts\/unity-with-android\/","keywords":["Unity","Android"]}</script>
+<script type=application/ld+json>{"@context":"http://schema.org","@type":"BlogPosting","mainEntityOfPage":{"@type":"WebPage","@id":"https:\/\/zhiruili.github.io"},"articleSection":"posts","name":"Unity 和 Android 模块交互","headline":"Unity 和 Android 模块交互","description":"有时候，我们需要在 Unity 里调用一些 Android 的功能，这些功能在 Unity 中可能并没有提供接口，需要在 Android 平台上实现。此时，我们需要有一个方法来让 Android 代码和 Unity 代码互交互。这里记录一下操作方法，并提供一个工具来简化这个过程。\n示例工程 下面的记录中所使用的工程可以参考 UnityAndroidExample。其中，根目录是 Unity 工程，可以直接用 Unity 打开。根目录下的 AndroidSample 子目录是 Android 工程，可以用 Android Studio 打开。\nUnity 工程运行后如下图左所示，只有一个文本和一个按钮，点击按钮就会触发 Unity 到 Anrdoid 的调用，在主界面上产生一个 toast，同时，触发一次从 Anrdoid 到 Unity 的调用，主界面上的文本变为「Hello From Android」：\n具体操作方式 新建一个 Android 工程 这里随便用 Android Studio 建立空一个工程就行了。建立好工程后，参考官方文档在工程里添加一个自定义的模块：\n 菜单栏点击 「File」-「New」-「New Module\u0026hellip;」 弹出窗口中左侧选「Android Library」 右侧填入相关信息后创建模块  假设创建的模块名为「mod」，那么就会在工程根目录下新增一个名为 mod 的目录。此时可以删除工程根目录中默认创建的 app 目录，并将工程根目录中 settings.gradle 文件里的 include \u0027:app\u0027 这一行删除。\n添加 Unity jar 依赖 为了在 Android 中和 Unity 互交互，我们需要引入 Unity 提供的库，这个库以 jar 包的形式提供。以下目录中都有这个 classes.","inLanguage":"en-US","author":"Zhirui Li","creator":"Zhirui Li","publisher":"Zhirui Li","accountablePerson":"Zhirui Li","copyrightHolder":"Zhirui Li","copyrightYear":"2021","datePublished":"2021-09-01 00:00:00 \u002b0000 UTC","dateModified":"2021-09-01 00:00:00 \u002b0000 UTC","url":"https:\/\/zhiruili.github.io\/posts\/unity-with-android\/","keywords":["Unity","Android"]}</script>
 <title>Unity 和 Android 模块交互</title>
 <meta property="og:title" content="Unity 和 Android 模块交互">
 <meta property="og:type" content="article">
 <meta property="og:description" content="有时候，我们需要在 Unity 里调用一些 Android 的功能，这些功能在 Unity 中可能并没有提供接口，需要在 Android 平台上实现。此时，我们需要有一个方法来让 Android 代码和 Unity 代码互交互。这里记录一下操作方法，并提供一个工具来简化这个过程。
-示例工程 下面的记录可以参考示例工程。其中，根目录是 Unity 工程，可以直接用 Unity 打开。根目录下的 AndroidSample 子目录是 Android 工程，可以用 Android Studio 打开。运行后如下图左所示，点击其中的按钮，就会触发 Unity 到 Anrdoid 的调用，在主界面上产生一个 toast，同时，触发一次从 Anrdoid 到 Unity 的调用，主界面上的 text 变为「Hello From Android」：
-具体操作方式 新建一个 Android 工程 这里随便用 Android Studio 建立一个工程就行了。建立好工程后，参考官方文档在工程里添加一个自定义的模块：
- 菜单栏点击 「File」-「New」-「New Module&amp;hellip;」 弹出窗口中左侧选「Android Library」 右侧填入相关信息后创建模块  假设创建的模块名为「mod」会在工程根目录下新增一个名为 mod 的目录。此时可以删除工程根目录中默认创建的 app 目录，并将工程根目录中 settings.gradle 文件里的 include ':app' 这一行删除。
+示例工程 下面的记录中所使用的工程可以参考 UnityAndroidExample。其中，根目录是 Unity 工程，可以直接用 Unity 打开。根目录下的 AndroidSample 子目录是 Android 工程，可以用 Android Studio 打开。
+Unity 工程运行后如下图左所示，只有一个文本和一个按钮，点击按钮就会触发 Unity 到 Anrdoid 的调用，在主界面上产生一个 toast，同时，触发一次从 Anrdoid 到 Unity 的调用，主界面上的文本变为「Hello From Android」：
+具体操作方式 新建一个 Android 工程 这里随便用 Android Studio 建立空一个工程就行了。建立好工程后，参考官方文档在工程里添加一个自定义的模块：
+ 菜单栏点击 「File」-「New」-「New Module&amp;hellip;」 弹出窗口中左侧选「Android Library」 右侧填入相关信息后创建模块  假设创建的模块名为「mod」，那么就会在工程根目录下新增一个名为 mod 的目录。此时可以删除工程根目录中默认创建的 app 目录，并将工程根目录中 settings.gradle 文件里的 include ':app' 这一行删除。
 添加 Unity jar 依赖 为了在 Android 中和 Unity 互交互，我们需要引入 Unity 提供的库，这个库以 jar 包的形式提供。以下目录中都有这个 classes.">
 <meta name=description content="有时候，我们需要在 Unity 里调用一些 Android 的功能，这些功能在 Unity 中可能并没有提供接口，需要在 Android 平台上实现。此时，我们需要有一个方法来让 Android 代码和 Unity 代码互交互。这里记录一下操作方法，并提供一个工具来简化这个过程。
-示例工程 下面的记录可以参考示例工程。其中，根目录是 Unity 工程，可以直接用 Unity 打开。根目录下的 AndroidSample 子目录是 Android 工程，可以用 Android Studio 打开。运行后如下图左所示，点击其中的按钮，就会触发 Unity 到 Anrdoid 的调用，在主界面上产生一个 toast，同时，触发一次从 Anrdoid 到 Unity 的调用，主界面上的 text 变为「Hello From Android」：
-具体操作方式 新建一个 Android 工程 这里随便用 Android Studio 建立一个工程就行了。建立好工程后，参考官方文档在工程里添加一个自定义的模块：
- 菜单栏点击 「File」-「New」-「New Module&amp;hellip;」 弹出窗口中左侧选「Android Library」 右侧填入相关信息后创建模块  假设创建的模块名为「mod」会在工程根目录下新增一个名为 mod 的目录。此时可以删除工程根目录中默认创建的 app 目录，并将工程根目录中 settings.gradle 文件里的 include ':app' 这一行删除。
+示例工程 下面的记录中所使用的工程可以参考 UnityAndroidExample。其中，根目录是 Unity 工程，可以直接用 Unity 打开。根目录下的 AndroidSample 子目录是 Android 工程，可以用 Android Studio 打开。
+Unity 工程运行后如下图左所示，只有一个文本和一个按钮，点击按钮就会触发 Unity 到 Anrdoid 的调用，在主界面上产生一个 toast，同时，触发一次从 Anrdoid 到 Unity 的调用，主界面上的文本变为「Hello From Android」：
+具体操作方式 新建一个 Android 工程 这里随便用 Android Studio 建立空一个工程就行了。建立好工程后，参考官方文档在工程里添加一个自定义的模块：
+ 菜单栏点击 「File」-「New」-「New Module&amp;hellip;」 弹出窗口中左侧选「Android Library」 右侧填入相关信息后创建模块  假设创建的模块名为「mod」，那么就会在工程根目录下新增一个名为 mod 的目录。此时可以删除工程根目录中默认创建的 app 目录，并将工程根目录中 settings.gradle 文件里的 include ':app' 这一行删除。
 添加 Unity jar 依赖 为了在 Android 中和 Unity 互交互，我们需要引入 Unity 提供的库，这个库以 jar 包的形式提供。以下目录中都有这个 classes.">
 <meta property="og:locale" content="zh-cn">
 <style>body{font-family:bree serif,sans-serif;-webkit-font-smoothing:antialiased;margin:0 20px}article{max-width:800px;margin-left:auto;margin-right:auto}a{color:#000;text-decoration:none}a:hover{font-weight:600;text-decoration:underline}.post-ads{margin:50px 0}.markdown-body{font-size:18px;max-width:100%}.markdown-body a{text-decoration:underline;text-decoration-color:#000}.markdown-body pre{padding:16px;overflow:auto;border-radius:10px}.markdown-body code{padding:.2em .4em;font-size:85%;background-color:#f6f8fa;border-radius:6px}.markdown-body pre>code{padding:0;font-size:100%;background-color:inherit;border:0}.Chinese .markdown-body{line-height:200%}.site-date-catalog{font-size:2rem}.header-title{font-size:2rem;font-weight:700;margin-top:32px;font-family:bungee shade,sans-serif}.header-title a{text-decoration:none}.header-subtitle{color:#666}.header-items{margin:10px 0}.header-item{margin:0 5px}.header-line{width:100%;border-width:2px;border-color:#482936;border-style:solid none none none}.lang-switch{font-weight:600}#posts-list{min-height:600px}.posts-line{font-size:1.2rem;margin:12px 0}.posts-categories{font-size:.8rem;margin:auto;text-align:center}.posts-category{padding:3px 0;border:#000 2px solid;border-radius:5px}.site-footer{margin-top:50px}.site-footer-item{margin-right:12px}.post-content img{max-width:100%;display:block;margin-right:auto;margin-top:12px}.post-header{margin-bottom:50px}.post-title{font-size:2rem;font-weight:600}.post-tags{display:inline;font-weight:600;padding:2px 5px;margin-right:6px;border:#000 2px solid;border-radius:5px}.post-date{font-weight:800;font-style:italic}.post-author{float:right;font-weight:600}.page-content{min-height:60%}.post-content{margin-bottom:50px}.post-content p{hyphens:auto;line-height:1.8;text-justify:ideographic;margin-bottom:1em}.related-content{border-width:3px;border-style:solid;border-color:#000;padding:0 10px;margin-bottom:50px;margin-top:100px}.related-content li{margin:5px 0}.taxonomy-term{font-size:3rem}.gallery-img{text-align:center}.gallery-img span{text-align:center}.gallery-img-desc{font-size:.8em;font-weight:800}#disqus_thread{position:relative}#disqus_thread:after{content:"";display:block;height:55px;width:100%;position:absolute;bottom:0;background:#fff}@media screen and (max-width:600px){.header-title,.header-subtitle,.header-items{text-align:center}.posts-line{font-size:16px}.markdown-body{font-size:16px}.post-title{font-size:2rem}.post-content p{letter-spacing:.05em}}@media screen and (max-width:48em){.posts-category{display:none}}</style>
@@ -72,27 +74,30 @@
 <div class="post-content markdown-body">
 <p>有时候，我们需要在 Unity 里调用一些 Android 的功能，这些功能在 Unity 中可能并没有提供接口，需要在 Android 平台上实现。此时，我们需要有一个方法来让 Android 代码和 Unity 代码互交互。这里记录一下操作方法，并提供一个工具来简化这个过程。</p>
 <h1 id=示例工程>示例工程</h1>
-<p>下面的记录可以参考<a href=https://github.com/ZhiruiLi/UnityAndroidExample>示例工程</a>。其中，根目录是 Unity 工程，可以直接用 Unity 打开。根目录下的 <code>AndroidSample</code> 子目录是 Android 工程，可以用 Android Studio 打开。运行后如下图左所示，点击其中的按钮，就会触发 Unity 到 Anrdoid 的调用，在主界面上产生一个 toast，同时，触发一次从 Anrdoid 到 Unity 的调用，主界面上的 text 变为「Hello From Android」：</p>
+<p>下面的记录中所使用的工程可以参考 <a href=https://github.com/ZhiruiLi/UnityAndroidExample>UnityAndroidExample</a>。其中，根目录是 Unity 工程，可以直接用 Unity 打开。根目录下的 AndroidSample 子目录是 Android 工程，可以用 Android Studio 打开。</p>
+<p>Unity 工程运行后如下图左所示，只有一个文本和一个按钮，点击按钮就会触发 Unity 到 Anrdoid 的调用，在主界面上产生一个 toast，同时，触发一次从 Anrdoid 到 Unity 的调用，主界面上的文本变为「Hello From Android」：</p>
 <p><img src=/images/2021-09-02-15-30-47.png alt></p>
 <h1 id=具体操作方式>具体操作方式</h1>
 <h2 id=新建一个-android-工程>新建一个 Android 工程</h2>
-<p>这里随便用 Android Studio 建立一个工程就行了。建立好工程后，参考<a href=https://developer.android.com/studio/projects/android-library>官方文档</a>在工程里添加一个自定义的模块：</p>
+<p>这里随便用 Android Studio 建立空一个工程就行了。建立好工程后，参考<a href=https://developer.android.com/studio/projects/android-library>官方文档</a>在工程里添加一个自定义的模块：</p>
 <ul>
 <li>菜单栏点击 「File」-「New」-「New Module&mldr;」</li>
 <li>弹出窗口中左侧选「Android Library」</li>
 <li>右侧填入相关信息后创建模块</li>
 </ul>
-<p>假设创建的模块名为「mod」会在工程根目录下新增一个名为 <code>mod</code> 的目录。此时可以删除工程根目录中默认创建的 <code>app</code> 目录，并将工程根目录中 <code>settings.gradle</code> 文件里的 <code>include ':app'</code> 这一行删除。</p>
+<p><img src=/images/2021-09-02-17-04-53.png alt></p>
+<p>假设创建的模块名为「mod」，那么就会在工程根目录下新增一个名为 mod 的目录。此时可以删除工程根目录中默认创建的 app 目录，并将工程根目录中 settings.gradle 文件里的 <code>include ':app'</code> 这一行删除。</p>
+<p><img src=/images/2021-09-02-17-07-57.png alt></p>
 <h2 id=添加-unity-jar-依赖>添加 Unity jar 依赖</h2>
-<p>为了在 Android 中和 Unity 互交互，我们需要引入 Unity 提供的库，这个库以 jar 包的形式提供。以下目录中都有这个 <code>classes.jar</code> 文件，有 mono 和 il2cpp 版本，还区分 Release 和 Development：</p>
+<p>为了在 Android 中和 Unity 互交互，我们需要引入 Unity 提供的库，这个库以 jar 包的形式提供。以下目录中都有这个 classes.jar 文件，有 mono 和 il2cpp 版本，还区分 Release 和 Development：</p>
 <ul>
-<li><code>YOUR_EDITOR_PATH/Data/PlaybackEngines/AndroidPlayer/Variations/il2cpp/Release/Classes</code></li>
-<li><code>YOUR_EDITOR_PATH/Data/PlaybackEngines/AndroidPlayer/Variations/mono/Release/Classes</code></li>
-<li><code>YOUR_EDITOR_PATH/Data/PlaybackEngines/AndroidPlayer/Variations/il2cpp/Development/Classes</code></li>
-<li><code>YOUR_EDITOR_PATH/Data/PlaybackEngines/AndroidPlayer/Variations/mono/Development/Classes</code></li>
+<li>YOUR_EDITOR_PATH/Data/PlaybackEngines/AndroidPlayer/Variations/il2cpp/Release/Classes</li>
+<li>YOUR_EDITOR_PATH/Data/PlaybackEngines/AndroidPlayer/Variations/mono/Release/Classes</li>
+<li>YOUR_EDITOR_PATH/Data/PlaybackEngines/AndroidPlayer/Variations/il2cpp/Development/Classes</li>
+<li>YOUR_EDITOR_PATH/Data/PlaybackEngines/AndroidPlayer/Variations/mono/Development/Classes</li>
 </ul>
-<p>这里的 <code>YOUR_EDITOR_PATH</code> 是 Unity editor 程序所在的路径，例如，如果在 Windows 上用 Unity Hub 安装了 2020.3.5fc1 的 Unity，那么这个路径就是 <code>C:\Program Files\Unity\Hub\Editor\2020.3.5f1c1\Editor</code>。</p>
-<p>参考<a href=https://developer.android.com/studio/build/dependencies#dependency_configurations>Android 官方文档</a>添加依赖，将该 jar 文件复制到 Android 工程中的对应模块的 <code>libs</code> 目录中，具体是复制哪一个 jar 无关紧要，因为后面的流程中并不会实际加入这个 jar 包。在复制的之后可以修改一个名字，例如修改为 <code>unity.jar</code>。然后修改 gradle 构建文件，注意这里是修改模块目录下的 <code>build.gradle</code> 而非根目录下的。在 <code>dependencies</code> 中添加如下内容：</p>
+<p>这里的「YOUR_EDITOR_PATH」是 Unity editor 程序所在的路径，例如，如果在 Windows 上用 Unity Hub 安装了 2020.3.5fc1 的 Unity，那么这个路径就是 C:\Program Files\Unity\Hub\Editor\2020.3.5f1c1\Editor。</p>
+<p>参考<a href=https://developer.android.com/studio/build/dependencies#dependency_configurations>Android 官方文档</a>添加依赖，将该 jar 文件复制到 Android 工程中的对应模块的 libs 目录中，具体是复制哪一个 jar 无关紧要，因为后面的流程中并不会实际加入这个 jar 包。在复制的之后可以修改一个名字，例如修改为 unity.jar。然后修改 gradle 构建文件，注意这里是修改模块目录下的 build.gradle 而非根目录下的。在 <code>dependencies</code> 中添加如下内容：</p>
 <div class=highlight><div style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4>
 <table style=border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block><tr><td style=vertical-align:top;padding:0;margin:0;border:0>
 <pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1
@@ -119,13 +124,14 @@
 <span style=color:#ce5c00;font-weight:700>}</span>
 </code></pre></td></tr></table>
 </div>
-</div><p>修改完后，Android Studio 会提示是否要 Sync，点击 Sync 即可。</p>
+</div><p><img src=/images/2021-09-02-17-09-37.png alt></p>
+<p>修改完后，Android Studio 会提示是否要同步，点击「Sync Now」即可。</p>
+<p><img src=/images/2021-09-02-17-10-38.png alt></p>
 <h2 id=引入-unityplayeractivity>引入 <code>UnityPlayerActivity</code></h2>
-<p>我们在实现自己的 Activity 时不能直接实现，而是需要继承 Unity 的 <code>UnityPlayerActivity</code>，这个类型会按照一定的规则去调用 Unity 的回调函数，以确保程序的正确运行。从前这个类就在刚刚我们引入的 <code>unity.jar</code> 中，而在新版本的 Unity 中这个类却以单独文件的形式存在，需要自己拷贝一下，这个文件所在的路径为：</p>
-<p><code>YOUR_EDITOR_PATH/Data/PlaybackEngines/AndroidPlayer/Source/com/unity3d/player</code></p>
-<p>我们直接将 <code>YOUR_EDITOR_PATH/Data/PlaybackEngines/AndroidPlayer/Source/com</code> 这个目录直接拷到工程里的 <code>mod/src/main/java</code> 目录下，这样一来，我们的代码就可以看到这个 Activity 了。</p>
+<p>我们在实现自己的 Activity 时不能直接实现，而是需要继承 Unity 的 <code>UnityPlayerActivity</code>，这个类型会按照一定的规则去调用 Unity 的回调函数，以确保程序的正确运行。从前这个类就在刚刚我们引入的 unity.jar 中，而在新版本的 Unity 中这个类却以单独文件的形式存在，需要自己拷贝一下，这个文件所在的路径为：YOUR_EDITOR_PATH/Data/PlaybackEngines/AndroidPlayer/Source/com/unity3d/player/UnityPlayerActivity.java。</p>
+<p>我们直接将 YOUR_EDITOR_PATH/Data/PlaybackEngines/AndroidPlayer/Source/com 这个目录直接拷到工程里的 mod/src/main/java 目录下，这样一来，我们的代码就可以看到这个 Activity 了。</p>
 <h2 id=新增一个-activity-继承-unityplayeractivity>新增一个 Activity 继承 <code>UnityPlayerActivity</code></h2>
-<p>在这里，我们添加一个 <code>showMessage</code> 函数用于给 Unity 调用，同时，在这个函数里面，我们通过 <code>UnityPlayer.UnitySendMessage</code> 来调用 Unity 中的函数。这个 <code>UnityPlayer</code> 定义于我们引入的 <code>unity.jar</code> 文件中。其中第一个参数是 Unity 场景中的对象名，第二个参数是需要调用的函数名，第三个参数是传递的参数：</p>
+<p>在这里，我们添加一个 <code>showMessage</code> 函数用于给 Unity 调用，同时，在这个函数里面，我们通过 <code>UnityPlayer.UnitySendMessage</code> 来调用 Unity 中的函数。这个 <code>UnityPlayer</code> 定义于我们引入的 unity.jar 文件中。其中第一个参数是 Unity 场景中的对象名，第二个参数是需要调用的函数名，第三个参数是传递的参数：</p>
 <div class=highlight><div style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4>
 <table style=border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block><tr><td style=vertical-align:top;padding:0;margin:0;border:0>
 <pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
@@ -148,11 +154,13 @@
 <span style=color:#ce5c00;font-weight:700>}</span>
 </code></pre></td></tr></table>
 </div>
-</div><h2 id=构建模块>构建模块</h2>
-<p>菜单栏中选择「Build」-「Make Module &lsquo;mod&rsquo;」。等待构建完成后，会在 <code>mod/build/output/aar</code> 目录下看到构建出来的包。</p>
+</div><p>此时，文件结构如下图所示：</p>
+<p><img src=/images/2021-09-02-17-21-53.png alt></p>
+<h2 id=构建模块>构建模块</h2>
+<p>菜单栏中选择「Build」-「Make Module &lsquo;mod&rsquo;」。等待构建完成后，会在 mod/build/output/aar 目录下看到构建出来的包。</p>
 <h2 id=和-unity-集成>和 Unity 集成</h2>
 <p>接下来，我们需要将这个库和 Unity 集成，并让 Unity 以这个 Activity 为入口启动程序。</p>
-<p>将这个 aar 包解压，放入 Unity 工程的 <code>Plugins/Android/mod</code> 目录下，然后在这个目录下建立一个 <code>project.properties</code> 文件，填入如下内容：</p>
+<p>将这个 aar 包解压，放入 Unity 工程的 Plugins/Android/mod 目录下，然后在这个目录下建立一个 project.properties 文件，填入如下内容：</p>
 <div class=highlight><div style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4>
 <table style=border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block><tr><td style=vertical-align:top;padding:0;margin:0;border:0>
 <pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
@@ -161,7 +169,7 @@
 <pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-ini data-lang=ini><span style=color:#c4a000>android.library</span><span style=color:#ce5c00;font-weight:700>=</span><span style=color:#4e9a06>true</span>
 </code></pre></td></tr></table>
 </div>
-</div><p>再在 <code>Plugins/Android</code> 目录下（和 <code>mod</code> 同级）建立一个 <code>AndroidManifest.xml</code> 文件，填入如下内容，注意其中的 <code>ACTIVITY_NAME</code> 需要换成 main Activity 的完整类名（完整包名加上类名）。如果有什么需要申请的权限，也可在此加入：</p>
+</div><p>再在 Plugins/Android 目录下（和 mod 同级）建立一个 AndroidManifest.xml 文件，填入如下内容，注意其中的 <code>ACTIVITY_NAME</code> 需要换成 main Activity 的完整类名（完整包名加上类名）。如果有什么需要申请的权限，也可在此加入：</p>
 <div class=highlight><div style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4>
 <table style=border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block><tr><td style=vertical-align:top;padding:0;margin:0;border:0>
 <pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1
@@ -253,12 +261,24 @@
 </span><span style=color:#8f5902;font-style:italic>#endif
 </span></code></pre></td></tr></table>
 </div>
-</div><p>另外我们还需要在 Unity 场景中添加刚刚 Android 代码中调用 Unity 时 Unity 侧的接收者（在本示例中为 <code>Canvas</code>），这块具体操作直接参考示例工程即可。</p>
+</div><p>这一块代码用 <code>#if UNITY_ANDROID && !UNITY_EDITOR</code> 包裹，只在 Android 设备上生效。</p>
+<p>另外我们还需要在 Unity 场景中添加刚刚 Android 代码中调用 Unity 时 Unity 侧的接收者（在本示例中为 <code>Canvas</code>），这块具体操作直接参考示例工程即可。</p>
 <h2 id=unity-构建>Unity 构建</h2>
 <p>在 Unity 菜单中点击「File」-「Build Settings&mldr;」，在弹出的窗口中选择 Android 平台，然后构建即可。</p>
 <h1 id=一个小工具>一个小工具</h1>
-<p>上面这个流程有些是只用操作一次的（例如新建工程），但也存在一批需要反复操作的（例如编译 Android 工程、删除 Unity 的 Activity 等），这些需要反复操作的流程在每次修改 Android 工程中的代码后，都需要进行一次，非常麻烦还容易出错，因此，这里提供一个简单的<a href=https://github.com/ZhiruiLi/upack>小工具</a>来简化这个工作。</p>
-<p>这个小工具可以编译指定的 Android 模块，然后将 aar 压缩包解压到 Unity 工程中，删除 Unity 的 Activity class，并生成 <code>project.properties</code> 和 <code>AndroidManifest.xml</code> 文件。在生成 <code>AndroidManifest.xml</code> 的时候，提供了默认的文件模板，允许通过命令行参数指定需要申请的 Android 权限。在示例工程中，每次修改这个 Android 工程中的代码，都可以执行一下工程根目录下的 <code>update_android.bat</code> 脚本，这个脚本会调用这个工具，重新构建 Android 工程。这个工具的编译需要用到 go，需要先安装一下 go 的环境。</p>
+<p>上面这个流程有些是只用操作一次的（例如新建工程），但也存在一批需要反复操作的（例如编译 Android 工程、删除 Unity 的 Activity 等），这些需要反复操作的流程在每次修改 Android 工程中的代码后，都需要进行一次，非常麻烦还容易出错，因此，这里提供一个简单的<a href=https://github.com/ZhiruiLi/upack>小工具</a>来简化这个工作。这个工具的安装需要用到 go，需要先<a href=https://golang.org/doc/install>安装一下 go 的环境</a>。</p>
+<p>这个小工具可以编译指定的 Android 模块，然后将 aar 压缩包解压到 Unity 工程中，删除 Unity 的 Activity class，并生成 project.properties 和 AndroidManifest.xml 文件。在生成 AndroidManifest.xml 的时候，提供了默认的文件模板，允许通过命令行参数指定需要申请的 Android 权限。</p>
+<p>例如这样的命令：</p>
+<div class=highlight><div style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4>
+<table style=border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block><tr><td style=vertical-align:top;padding:0;margin:0;border:0>
+<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span></code></pre></td>
+<td style=vertical-align:top;padding:0;margin:0;border:0;width:100%>
+<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-cmd data-lang=cmd>upack -a ./AndroidSample -e com.example.mod.MainActivity -m mod -p android.permission.BATTERY_STATS ./Assets/Plugins/Android
+</code></pre></td></tr></table>
+</div>
+</div><p>可以将 Android 工程 AndroidSample 编译，然后将数据解压到 ./Assets/Plugins/Android 目录下，其中参数 <code>-e</code> 用来指定入口 Activity 的类型全名，参数 <code>-m</code> 用来指定 Android 模块名，<code>-p</code> 用来指定需要申请的权限，如果有多个权限需要申请，则可以增加多个 <code>-p</code> 参数。</p>
+<p>在示例工程中也可以体验这个工具，每次修改这个 Android 工程中的代码，都可以执行一下工程根目录下的 update_android.bat 脚本，这个脚本会调用这个工具，重新构建 Android 工程并自动将相关内容解压到 Unity 工程中。</p>
 </div>
 <div class="row middle-xs">
 <div class=col-xs-12>
