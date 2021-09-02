@@ -1,0 +1,307 @@
+<!doctype html><html lang=en>
+<head>
+<meta charset=utf-8>
+<meta name=generator content="Hugo 0.87.0">
+<meta http-equiv=x-ua-compatible content="IE=edge">
+<meta name=viewport content="width=device-width,initial-scale=1">
+<meta name=author content="Zhirui Li">
+<meta property="og:url" content="https://zhiruili.github.io/posts/unity_with_android/">
+<link rel=canonical href=https://zhiruili.github.io/posts/unity_with_android/><link rel=alternate type=application/atom+xml href=https://zhiruili.github.ioindex.xml title="简单易懂的现代魔法 - Zhirui Li">
+<script type=application/ld+json>{"@context":"http://schema.org","@type":"BlogPosting","mainEntityOfPage":{"@type":"WebPage","@id":"https:\/\/zhiruili.github.io"},"articleSection":"posts","name":"Unity 和 Android 模块交互","headline":"Unity 和 Android 模块交互","description":"有时候，我们需要在 Unity 里调用一些 Android 的功能，这些功能在 Unity 中可能并没有提供接口，需要在 Android 平台上实现。此时，我们需要有一个方法来让 Android 代码和 Unity 代码互交互。这里记录一下操作方法，并提供一个工具来简化这个过程。\n示例工程 下面的记录可以参考示例工程。其中，根目录是 Unity 工程，可以直接用 Unity 打开。根目录下的 AndroidSample 子目录是 Android 工程，可以用 Android Studio 打开。运行后如下图左所示，点击其中的按钮，就会触发 Unity 到 Anrdoid 的调用，在主界面上产生一个 toast，同时，触发一次从 Anrdoid 到 Unity 的调用，主界面上的 text 变为「Hello From Android」：\n具体操作方式 新建一个 Android 工程 这里随便用 Android Studio 建立一个工程就行了。建立好工程后，参考官方文档在工程里添加一个自定义的模块：\n 菜单栏点击 「File」-「New」-「New Module\u0026hellip;」 弹出窗口中左侧选「Android Library」 右侧填入相关信息后创建模块  假设创建的模块名为「mod」会在工程根目录下新增一个名为 mod 的目录。此时可以删除工程根目录中默认创建的 app 目录，并将工程根目录中 settings.gradle 文件里的 include \u0027:app\u0027 这一行删除。\n添加 Unity jar 依赖 为了在 Android 中和 Unity 互交互，我们需要引入 Unity 提供的库，这个库以 jar 包的形式提供。以下目录中都有这个 classes.","inLanguage":"en-US","author":"Zhirui Li","creator":"Zhirui Li","publisher":"Zhirui Li","accountablePerson":"Zhirui Li","copyrightHolder":"Zhirui Li","copyrightYear":"2021","datePublished":"2021-09-01 00:00:00 \u002b0000 UTC","dateModified":"2021-09-01 00:00:00 \u002b0000 UTC","url":"https:\/\/zhiruili.github.io\/posts\/unity_with_android\/","keywords":["Unity","Android"]}</script>
+<title>Unity 和 Android 模块交互</title>
+<meta property="og:title" content="Unity 和 Android 模块交互">
+<meta property="og:type" content="article">
+<meta property="og:description" content="有时候，我们需要在 Unity 里调用一些 Android 的功能，这些功能在 Unity 中可能并没有提供接口，需要在 Android 平台上实现。此时，我们需要有一个方法来让 Android 代码和 Unity 代码互交互。这里记录一下操作方法，并提供一个工具来简化这个过程。
+示例工程 下面的记录可以参考示例工程。其中，根目录是 Unity 工程，可以直接用 Unity 打开。根目录下的 AndroidSample 子目录是 Android 工程，可以用 Android Studio 打开。运行后如下图左所示，点击其中的按钮，就会触发 Unity 到 Anrdoid 的调用，在主界面上产生一个 toast，同时，触发一次从 Anrdoid 到 Unity 的调用，主界面上的 text 变为「Hello From Android」：
+具体操作方式 新建一个 Android 工程 这里随便用 Android Studio 建立一个工程就行了。建立好工程后，参考官方文档在工程里添加一个自定义的模块：
+ 菜单栏点击 「File」-「New」-「New Module&amp;hellip;」 弹出窗口中左侧选「Android Library」 右侧填入相关信息后创建模块  假设创建的模块名为「mod」会在工程根目录下新增一个名为 mod 的目录。此时可以删除工程根目录中默认创建的 app 目录，并将工程根目录中 settings.gradle 文件里的 include ':app' 这一行删除。
+添加 Unity jar 依赖 为了在 Android 中和 Unity 互交互，我们需要引入 Unity 提供的库，这个库以 jar 包的形式提供。以下目录中都有这个 classes.">
+<meta name=description content="有时候，我们需要在 Unity 里调用一些 Android 的功能，这些功能在 Unity 中可能并没有提供接口，需要在 Android 平台上实现。此时，我们需要有一个方法来让 Android 代码和 Unity 代码互交互。这里记录一下操作方法，并提供一个工具来简化这个过程。
+示例工程 下面的记录可以参考示例工程。其中，根目录是 Unity 工程，可以直接用 Unity 打开。根目录下的 AndroidSample 子目录是 Android 工程，可以用 Android Studio 打开。运行后如下图左所示，点击其中的按钮，就会触发 Unity 到 Anrdoid 的调用，在主界面上产生一个 toast，同时，触发一次从 Anrdoid 到 Unity 的调用，主界面上的 text 变为「Hello From Android」：
+具体操作方式 新建一个 Android 工程 这里随便用 Android Studio 建立一个工程就行了。建立好工程后，参考官方文档在工程里添加一个自定义的模块：
+ 菜单栏点击 「File」-「New」-「New Module&amp;hellip;」 弹出窗口中左侧选「Android Library」 右侧填入相关信息后创建模块  假设创建的模块名为「mod」会在工程根目录下新增一个名为 mod 的目录。此时可以删除工程根目录中默认创建的 app 目录，并将工程根目录中 settings.gradle 文件里的 include ':app' 这一行删除。
+添加 Unity jar 依赖 为了在 Android 中和 Unity 互交互，我们需要引入 Unity 提供的库，这个库以 jar 包的形式提供。以下目录中都有这个 classes.">
+<meta property="og:locale" content="zh-cn">
+<style>body{font-family:bree serif,sans-serif;-webkit-font-smoothing:antialiased;margin:0 20px}article{max-width:800px;margin-left:auto;margin-right:auto}a{color:#000;text-decoration:none}a:hover{font-weight:600;text-decoration:underline}.post-ads{margin:50px 0}.markdown-body{font-size:18px;max-width:100%}.markdown-body a{text-decoration:underline;text-decoration-color:#000}.markdown-body pre{padding:16px;overflow:auto;border-radius:10px}.markdown-body code{padding:.2em .4em;font-size:85%;background-color:#f6f8fa;border-radius:6px}.markdown-body pre>code{padding:0;font-size:100%;background-color:inherit;border:0}.Chinese .markdown-body{line-height:200%}.site-date-catalog{font-size:2rem}.header-title{font-size:2rem;font-weight:700;margin-top:32px;font-family:bungee shade,sans-serif}.header-title a{text-decoration:none}.header-subtitle{color:#666}.header-items{margin:10px 0}.header-item{margin:0 5px}.header-line{width:100%;border-width:2px;border-color:#482936;border-style:solid none none none}.lang-switch{font-weight:600}#posts-list{min-height:600px}.posts-line{font-size:1.2rem;margin:12px 0}.posts-categories{font-size:.8rem;margin:auto;text-align:center}.posts-category{padding:3px 0;border:#000 2px solid;border-radius:5px}.site-footer{margin-top:50px}.site-footer-item{margin-right:12px}.post-content img{max-width:100%;display:block;margin-right:auto;margin-top:12px}.post-header{margin-bottom:50px}.post-title{font-size:2rem;font-weight:600}.post-tags{display:inline;font-weight:600;padding:2px 5px;margin-right:6px;border:#000 2px solid;border-radius:5px}.post-date{font-weight:800;font-style:italic}.post-author{float:right;font-weight:600}.page-content{min-height:60%}.post-content{margin-bottom:50px}.post-content p{hyphens:auto;line-height:1.8;text-justify:ideographic;margin-bottom:1em}.related-content{border-width:3px;border-style:solid;border-color:#000;padding:0 10px;margin-bottom:50px;margin-top:100px}.related-content li{margin:5px 0}.taxonomy-term{font-size:3rem}.gallery-img{text-align:center}.gallery-img span{text-align:center}.gallery-img-desc{font-size:.8em;font-weight:800}#disqus_thread{position:relative}#disqus_thread:after{content:"";display:block;height:55px;width:100%;position:absolute;bottom:0;background:#fff}@media screen and (max-width:600px){.header-title,.header-subtitle,.header-items{text-align:center}.posts-line{font-size:16px}.markdown-body{font-size:16px}.post-title{font-size:2rem}.post-content p{letter-spacing:.05em}}@media screen and (max-width:48em){.posts-category{display:none}}</style>
+<style>.container,.container-fluid{margin-right:auto;margin-left:auto}.container-fluid{padding-right:2rem;padding-left:2rem}.row{box-sizing:border-box;display:-webkit-box;display:-ms-flexbox;display:flex;-webkit-box-flex:0;-ms-flex:0 1 auto;flex:initial;-webkit-box-orient:horizontal;-webkit-box-direction:normal;-ms-flex-direction:row;flex-direction:row;-ms-flex-wrap:wrap;flex-wrap:wrap;margin-right:-.5rem;margin-left:-.5rem}.row.reverse{-webkit-box-orient:horizontal;-webkit-box-direction:reverse;-ms-flex-direction:row-reverse;flex-direction:row-reverse}.col.reverse{-webkit-box-orient:vertical;-webkit-box-direction:reverse;-ms-flex-direction:column-reverse;flex-direction:column-reverse}.col-xs,.col-xs-1,.col-xs-10,.col-xs-11,.col-xs-12,.col-xs-2,.col-xs-3,.col-xs-4,.col-xs-5,.col-xs-6,.col-xs-7,.col-xs-8,.col-xs-9,.col-xs-offset-0,.col-xs-offset-1,.col-xs-offset-10,.col-xs-offset-11,.col-xs-offset-12,.col-xs-offset-2,.col-xs-offset-3,.col-xs-offset-4,.col-xs-offset-5,.col-xs-offset-6,.col-xs-offset-7,.col-xs-offset-8,.col-xs-offset-9{box-sizing:border-box;-webkit-box-flex:0;-ms-flex:0 0 auto;flex:none;padding-right:.5rem;padding-left:.5rem}.col-xs{-webkit-box-flex:1;-ms-flex-positive:1;flex-grow:1;-ms-flex-preferred-size:0;flex-basis:0;max-width:100%}.col-xs-1{-ms-flex-preferred-size:8.33333333%;flex-basis:8.33333333%;max-width:8.33333333%}.col-xs-2{-ms-flex-preferred-size:16.66666667%;flex-basis:16.66666667%;max-width:16.66666667%}.col-xs-3{-ms-flex-preferred-size:25%;flex-basis:25%;max-width:25%}.col-xs-4{-ms-flex-preferred-size:33.33333333%;flex-basis:33.33333333%;max-width:33.33333333%}.col-xs-5{-ms-flex-preferred-size:41.66666667%;flex-basis:41.66666667%;max-width:41.66666667%}.col-xs-6{-ms-flex-preferred-size:50%;flex-basis:50%;max-width:50%}.col-xs-7{-ms-flex-preferred-size:58.33333333%;flex-basis:58.33333333%;max-width:58.33333333%}.col-xs-8{-ms-flex-preferred-size:66.66666667%;flex-basis:66.66666667%;max-width:66.66666667%}.col-xs-9{-ms-flex-preferred-size:75%;flex-basis:75%;max-width:75%}.col-xs-10{-ms-flex-preferred-size:83.33333333%;flex-basis:83.33333333%;max-width:83.33333333%}.col-xs-11{-ms-flex-preferred-size:91.66666667%;flex-basis:91.66666667%;max-width:91.66666667%}.col-xs-12{-ms-flex-preferred-size:100%;flex-basis:100%;max-width:100%}.col-xs-offset-0{margin-left:0}.col-xs-offset-1{margin-left:8.33333333%}.col-xs-offset-2{margin-left:16.66666667%}.col-xs-offset-3{margin-left:25%}.col-xs-offset-4{margin-left:33.33333333%}.col-xs-offset-5{margin-left:41.66666667%}.col-xs-offset-6{margin-left:50%}.col-xs-offset-7{margin-left:58.33333333%}.col-xs-offset-8{margin-left:66.66666667%}.col-xs-offset-9{margin-left:75%}.col-xs-offset-10{margin-left:83.33333333%}.col-xs-offset-11{margin-left:91.66666667%}.start-xs{-webkit-box-pack:start;-ms-flex-pack:start;justify-content:flex-start;text-align:start}.center-xs{-webkit-box-pack:center;-ms-flex-pack:center;justify-content:center;text-align:center}.end-xs{-webkit-box-pack:end;-ms-flex-pack:end;justify-content:flex-end;text-align:end}.top-xs{-webkit-box-align:start;-ms-flex-align:start;align-items:flex-start}.middle-xs{-webkit-box-align:center;-ms-flex-align:center;align-items:center}.bottom-xs{-webkit-box-align:end;-ms-flex-align:end;align-items:flex-end}.around-xs{-ms-flex-pack:distribute;justify-content:space-around}.between-xs{-webkit-box-pack:justify;-ms-flex-pack:justify;justify-content:space-between}.first-xs{-webkit-box-ordinal-group:0;-ms-flex-order:-1;order:-1}.last-xs{-webkit-box-ordinal-group:2;-ms-flex-order:1;order:1}@media only screen and (min-width:48em){.container{width:49rem}.col-sm,.col-sm-1,.col-sm-10,.col-sm-11,.col-sm-12,.col-sm-2,.col-sm-3,.col-sm-4,.col-sm-5,.col-sm-6,.col-sm-7,.col-sm-8,.col-sm-9,.col-sm-offset-0,.col-sm-offset-1,.col-sm-offset-10,.col-sm-offset-11,.col-sm-offset-12,.col-sm-offset-2,.col-sm-offset-3,.col-sm-offset-4,.col-sm-offset-5,.col-sm-offset-6,.col-sm-offset-7,.col-sm-offset-8,.col-sm-offset-9{box-sizing:border-box;-webkit-box-flex:0;-ms-flex:0 0 auto;flex:none;padding-right:.5rem;padding-left:.5rem}.col-sm{-webkit-box-flex:1;-ms-flex-positive:1;flex-grow:1;-ms-flex-preferred-size:0;flex-basis:0;max-width:100%}.col-sm-1{-ms-flex-preferred-size:8.33333333%;flex-basis:8.33333333%;max-width:8.33333333%}.col-sm-2{-ms-flex-preferred-size:16.66666667%;flex-basis:16.66666667%;max-width:16.66666667%}.col-sm-3{-ms-flex-preferred-size:25%;flex-basis:25%;max-width:25%}.col-sm-4{-ms-flex-preferred-size:33.33333333%;flex-basis:33.33333333%;max-width:33.33333333%}.col-sm-5{-ms-flex-preferred-size:41.66666667%;flex-basis:41.66666667%;max-width:41.66666667%}.col-sm-6{-ms-flex-preferred-size:50%;flex-basis:50%;max-width:50%}.col-sm-7{-ms-flex-preferred-size:58.33333333%;flex-basis:58.33333333%;max-width:58.33333333%}.col-sm-8{-ms-flex-preferred-size:66.66666667%;flex-basis:66.66666667%;max-width:66.66666667%}.col-sm-9{-ms-flex-preferred-size:75%;flex-basis:75%;max-width:75%}.col-sm-10{-ms-flex-preferred-size:83.33333333%;flex-basis:83.33333333%;max-width:83.33333333%}.col-sm-11{-ms-flex-preferred-size:91.66666667%;flex-basis:91.66666667%;max-width:91.66666667%}.col-sm-12{-ms-flex-preferred-size:100%;flex-basis:100%;max-width:100%}.col-sm-offset-0{margin-left:0}.col-sm-offset-1{margin-left:8.33333333%}.col-sm-offset-2{margin-left:16.66666667%}.col-sm-offset-3{margin-left:25%}.col-sm-offset-4{margin-left:33.33333333%}.col-sm-offset-5{margin-left:41.66666667%}.col-sm-offset-6{margin-left:50%}.col-sm-offset-7{margin-left:58.33333333%}.col-sm-offset-8{margin-left:66.66666667%}.col-sm-offset-9{margin-left:75%}.col-sm-offset-10{margin-left:83.33333333%}.col-sm-offset-11{margin-left:91.66666667%}.start-sm{-webkit-box-pack:start;-ms-flex-pack:start;justify-content:flex-start;text-align:start}.center-sm{-webkit-box-pack:center;-ms-flex-pack:center;justify-content:center;text-align:center}.end-sm{-webkit-box-pack:end;-ms-flex-pack:end;justify-content:flex-end;text-align:end}.top-sm{-webkit-box-align:start;-ms-flex-align:start;align-items:flex-start}.middle-sm{-webkit-box-align:center;-ms-flex-align:center;align-items:center}.bottom-sm{-webkit-box-align:end;-ms-flex-align:end;align-items:flex-end}.around-sm{-ms-flex-pack:distribute;justify-content:space-around}.between-sm{-webkit-box-pack:justify;-ms-flex-pack:justify;justify-content:space-between}.first-sm{-webkit-box-ordinal-group:0;-ms-flex-order:-1;order:-1}.last-sm{-webkit-box-ordinal-group:2;-ms-flex-order:1;order:1}}@media only screen and (min-width:64em){.container{width:65rem}.col-md,.col-md-1,.col-md-10,.col-md-11,.col-md-12,.col-md-2,.col-md-3,.col-md-4,.col-md-5,.col-md-6,.col-md-7,.col-md-8,.col-md-9,.col-md-offset-0,.col-md-offset-1,.col-md-offset-10,.col-md-offset-11,.col-md-offset-12,.col-md-offset-2,.col-md-offset-3,.col-md-offset-4,.col-md-offset-5,.col-md-offset-6,.col-md-offset-7,.col-md-offset-8,.col-md-offset-9{box-sizing:border-box;-webkit-box-flex:0;-ms-flex:0 0 auto;flex:none;padding-right:.5rem;padding-left:.5rem}.col-md{-webkit-box-flex:1;-ms-flex-positive:1;flex-grow:1;-ms-flex-preferred-size:0;flex-basis:0;max-width:100%}.col-md-1{-ms-flex-preferred-size:8.33333333%;flex-basis:8.33333333%;max-width:8.33333333%}.col-md-2{-ms-flex-preferred-size:16.66666667%;flex-basis:16.66666667%;max-width:16.66666667%}.col-md-3{-ms-flex-preferred-size:25%;flex-basis:25%;max-width:25%}.col-md-4{-ms-flex-preferred-size:33.33333333%;flex-basis:33.33333333%;max-width:33.33333333%}.col-md-5{-ms-flex-preferred-size:41.66666667%;flex-basis:41.66666667%;max-width:41.66666667%}.col-md-6{-ms-flex-preferred-size:50%;flex-basis:50%;max-width:50%}.col-md-7{-ms-flex-preferred-size:58.33333333%;flex-basis:58.33333333%;max-width:58.33333333%}.col-md-8{-ms-flex-preferred-size:66.66666667%;flex-basis:66.66666667%;max-width:66.66666667%}.col-md-9{-ms-flex-preferred-size:75%;flex-basis:75%;max-width:75%}.col-md-10{-ms-flex-preferred-size:83.33333333%;flex-basis:83.33333333%;max-width:83.33333333%}.col-md-11{-ms-flex-preferred-size:91.66666667%;flex-basis:91.66666667%;max-width:91.66666667%}.col-md-12{-ms-flex-preferred-size:100%;flex-basis:100%;max-width:100%}.col-md-offset-0{margin-left:0}.col-md-offset-1{margin-left:8.33333333%}.col-md-offset-2{margin-left:16.66666667%}.col-md-offset-3{margin-left:25%}.col-md-offset-4{margin-left:33.33333333%}.col-md-offset-5{margin-left:41.66666667%}.col-md-offset-6{margin-left:50%}.col-md-offset-7{margin-left:58.33333333%}.col-md-offset-8{margin-left:66.66666667%}.col-md-offset-9{margin-left:75%}.col-md-offset-10{margin-left:83.33333333%}.col-md-offset-11{margin-left:91.66666667%}.start-md{-webkit-box-pack:start;-ms-flex-pack:start;justify-content:flex-start;text-align:start}.center-md{-webkit-box-pack:center;-ms-flex-pack:center;justify-content:center;text-align:center}.end-md{-webkit-box-pack:end;-ms-flex-pack:end;justify-content:flex-end;text-align:end}.top-md{-webkit-box-align:start;-ms-flex-align:start;align-items:flex-start}.middle-md{-webkit-box-align:center;-ms-flex-align:center;align-items:center}.bottom-md{-webkit-box-align:end;-ms-flex-align:end;align-items:flex-end}.around-md{-ms-flex-pack:distribute;justify-content:space-around}.between-md{-webkit-box-pack:justify;-ms-flex-pack:justify;justify-content:space-between}.first-md{-webkit-box-ordinal-group:0;-ms-flex-order:-1;order:-1}.last-md{-webkit-box-ordinal-group:2;-ms-flex-order:1;order:1}}@media only screen and (min-width:75em){.container{width:76rem}.col-lg,.col-lg-1,.col-lg-10,.col-lg-11,.col-lg-12,.col-lg-2,.col-lg-3,.col-lg-4,.col-lg-5,.col-lg-6,.col-lg-7,.col-lg-8,.col-lg-9,.col-lg-offset-0,.col-lg-offset-1,.col-lg-offset-10,.col-lg-offset-11,.col-lg-offset-12,.col-lg-offset-2,.col-lg-offset-3,.col-lg-offset-4,.col-lg-offset-5,.col-lg-offset-6,.col-lg-offset-7,.col-lg-offset-8,.col-lg-offset-9{box-sizing:border-box;-webkit-box-flex:0;-ms-flex:0 0 auto;flex:none;padding-right:.5rem;padding-left:.5rem}.col-lg{-webkit-box-flex:1;-ms-flex-positive:1;flex-grow:1;-ms-flex-preferred-size:0;flex-basis:0;max-width:100%}.col-lg-1{-ms-flex-preferred-size:8.33333333%;flex-basis:8.33333333%;max-width:8.33333333%}.col-lg-2{-ms-flex-preferred-size:16.66666667%;flex-basis:16.66666667%;max-width:16.66666667%}.col-lg-3{-ms-flex-preferred-size:25%;flex-basis:25%;max-width:25%}.col-lg-4{-ms-flex-preferred-size:33.33333333%;flex-basis:33.33333333%;max-width:33.33333333%}.col-lg-5{-ms-flex-preferred-size:41.66666667%;flex-basis:41.66666667%;max-width:41.66666667%}.col-lg-6{-ms-flex-preferred-size:50%;flex-basis:50%;max-width:50%}.col-lg-7{-ms-flex-preferred-size:58.33333333%;flex-basis:58.33333333%;max-width:58.33333333%}.col-lg-8{-ms-flex-preferred-size:66.66666667%;flex-basis:66.66666667%;max-width:66.66666667%}.col-lg-9{-ms-flex-preferred-size:75%;flex-basis:75%;max-width:75%}.col-lg-10{-ms-flex-preferred-size:83.33333333%;flex-basis:83.33333333%;max-width:83.33333333%}.col-lg-11{-ms-flex-preferred-size:91.66666667%;flex-basis:91.66666667%;max-width:91.66666667%}.col-lg-12{-ms-flex-preferred-size:100%;flex-basis:100%;max-width:100%}.col-lg-offset-0{margin-left:0}.col-lg-offset-1{margin-left:8.33333333%}.col-lg-offset-2{margin-left:16.66666667%}.col-lg-offset-3{margin-left:25%}.col-lg-offset-4{margin-left:33.33333333%}.col-lg-offset-5{margin-left:41.66666667%}.col-lg-offset-6{margin-left:50%}.col-lg-offset-7{margin-left:58.33333333%}.col-lg-offset-8{margin-left:66.66666667%}.col-lg-offset-9{margin-left:75%}.col-lg-offset-10{margin-left:83.33333333%}.col-lg-offset-11{margin-left:91.66666667%}.start-lg{-webkit-box-pack:start;-ms-flex-pack:start;justify-content:flex-start;text-align:start}.center-lg{-webkit-box-pack:center;-ms-flex-pack:center;justify-content:center;text-align:center}.end-lg{-webkit-box-pack:end;-ms-flex-pack:end;justify-content:flex-end;text-align:end}.top-lg{-webkit-box-align:start;-ms-flex-align:start;align-items:flex-start}.middle-lg{-webkit-box-align:center;-ms-flex-align:center;align-items:center}.bottom-lg{-webkit-box-align:end;-ms-flex-align:end;align-items:flex-end}.around-lg{-ms-flex-pack:distribute;justify-content:space-around}.between-lg{-webkit-box-pack:justify;-ms-flex-pack:justify;justify-content:space-between}.first-lg{-webkit-box-ordinal-group:0;-ms-flex-order:-1;order:-1}.last-lg{-webkit-box-ordinal-group:2;-ms-flex-order:1;order:1}}</style>
+<link href=/index.xml rel=alternate type=application/rss+xml title="简单易懂的现代魔法 - Zhirui Li">
+<link rel=preconnect href=https://fonts.gstatic.com>
+<link href="https://fonts.googleapis.com/css?family=Bree+Serif|Bungee+Shade" rel=stylesheet>
+</head>
+<body>
+<article class="post Chinese" id=article>
+<div class=row>
+<div class=col-xs-12>
+<div class=site-header>
+<header>
+<div class=header-title>
+<a href=/>简单易懂的现代魔法</a>
+</div>
+<div class=header-subtitle></div>
+</header>
+<div class="row end-md center-xs header-items">
+<div class=header-item>
+<a href=/index.xml target=_blank>RSS</a>
+</div>
+<div class=header-item>
+<a href=mailto:zr.public@outlook.com target=_blank>E-mail</a>
+</div>
+<div class=header-item>
+<a href=https://www.github.com/ZhiruiLi target=_blank>Github</a>
+</div>
+</div>
+<div class="row end-xs">
+</div>
+<div class=header-line></div>
+</div>
+<header class=post-header>
+<h1 class=post-title>Unity 和 Android 模块交互</h1>
+<div class="row post-desc">
+<div class=col-xs-6>
+<time class=post-date datetime="2021-09-01 00:00:00 UTC">
+01 Sep 2021
+</time>
+</div>
+<div class=col-xs-6>
+<div class=post-author>
+<a target=_blank href=https://www.github.com/ZhiruiLi>@Zhirui Li</a>
+</div>
+</div>
+</div>
+</header>
+<div class="post-content markdown-body">
+<p>有时候，我们需要在 Unity 里调用一些 Android 的功能，这些功能在 Unity 中可能并没有提供接口，需要在 Android 平台上实现。此时，我们需要有一个方法来让 Android 代码和 Unity 代码互交互。这里记录一下操作方法，并提供一个工具来简化这个过程。</p>
+<h1 id=示例工程>示例工程</h1>
+<p>下面的记录可以参考<a href=https://github.com/ZhiruiLi/UnityAndroidExample>示例工程</a>。其中，根目录是 Unity 工程，可以直接用 Unity 打开。根目录下的 <code>AndroidSample</code> 子目录是 Android 工程，可以用 Android Studio 打开。运行后如下图左所示，点击其中的按钮，就会触发 Unity 到 Anrdoid 的调用，在主界面上产生一个 toast，同时，触发一次从 Anrdoid 到 Unity 的调用，主界面上的 text 变为「Hello From Android」：</p>
+<p><img src=/images/2021-09-02-15-30-47.png alt></p>
+<h1 id=具体操作方式>具体操作方式</h1>
+<h2 id=新建一个-android-工程>新建一个 Android 工程</h2>
+<p>这里随便用 Android Studio 建立一个工程就行了。建立好工程后，参考<a href=https://developer.android.com/studio/projects/android-library>官方文档</a>在工程里添加一个自定义的模块：</p>
+<ul>
+<li>菜单栏点击 「File」-「New」-「New Module&mldr;」</li>
+<li>弹出窗口中左侧选「Android Library」</li>
+<li>右侧填入相关信息后创建模块</li>
+</ul>
+<p>假设创建的模块名为「mod」会在工程根目录下新增一个名为 <code>mod</code> 的目录。此时可以删除工程根目录中默认创建的 <code>app</code> 目录，并将工程根目录中 <code>settings.gradle</code> 文件里的 <code>include ':app'</code> 这一行删除。</p>
+<h2 id=添加-unity-jar-依赖>添加 Unity jar 依赖</h2>
+<p>为了在 Android 中和 Unity 互交互，我们需要引入 Unity 提供的库，这个库以 jar 包的形式提供。以下目录中都有这个 <code>classes.jar</code> 文件，有 mono 和 il2cpp 版本，还区分 Release 和 Development：</p>
+<ul>
+<li><code>YOUR_EDITOR_PATH/Data/PlaybackEngines/AndroidPlayer/Variations/il2cpp/Release/Classes</code></li>
+<li><code>YOUR_EDITOR_PATH/Data/PlaybackEngines/AndroidPlayer/Variations/mono/Release/Classes</code></li>
+<li><code>YOUR_EDITOR_PATH/Data/PlaybackEngines/AndroidPlayer/Variations/il2cpp/Development/Classes</code></li>
+<li><code>YOUR_EDITOR_PATH/Data/PlaybackEngines/AndroidPlayer/Variations/mono/Development/Classes</code></li>
+</ul>
+<p>这里的 <code>YOUR_EDITOR_PATH</code> 是 Unity editor 程序所在的路径，例如，如果在 Windows 上用 Unity Hub 安装了 2020.3.5fc1 的 Unity，那么这个路径就是 <code>C:\Program Files\Unity\Hub\Editor\2020.3.5f1c1\Editor</code>。</p>
+<p>参考<a href=https://developer.android.com/studio/build/dependencies#dependency_configurations>Android 官方文档</a>添加依赖，将该 jar 文件复制到 Android 工程中的对应模块的 <code>libs</code> 目录中，具体是复制哪一个 jar 无关紧要，因为后面的流程中并不会实际加入这个 jar 包。在复制的之后可以修改一个名字，例如修改为 <code>unity.jar</code>。然后修改 gradle 构建文件，注意这里是修改模块目录下的 <code>build.gradle</code> 而非根目录下的。在 <code>dependencies</code> 中添加如下内容：</p>
+<div class=highlight><div style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4>
+<table style=border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block><tr><td style=vertical-align:top;padding:0;margin:0;border:0>
+<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 4
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 5
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 6
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 7
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 8
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 9
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">10
+</span></code></pre></td>
+<td style=vertical-align:top;padding:0;margin:0;border:0;width:100%>
+<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-groovy data-lang=groovy><span style=color:#000>dependencies</span> <span style=color:#ce5c00;font-weight:700>{</span>
+    <span style=color:#8f5902;font-style:italic>// ... 前面有一堆默认的
+</span><span style=color:#8f5902;font-style:italic></span>
+    <span style=color:#8f5902;font-style:italic>// 添加 unity 的 jar
+</span><span style=color:#8f5902;font-style:italic></span>    <span style=color:#8f5902;font-style:italic>// 注意这里必须是 compileOnly 以避免该 jar 包被打入 aar 包中，否则会在之后发生命名冲突
+</span><span style=color:#8f5902;font-style:italic></span>    <span style=color:#000>compileOnly</span> <span style=color:#000>files</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#4e9a06>&#39;./libs/unity.jar&#39;</span><span style=color:#ce5c00;font-weight:700>)</span>
+
+    <span style=color:#8f5902;font-style:italic>// 如果还有别的自定义的 jar 就用 implementation
+</span><span style=color:#8f5902;font-style:italic></span>    <span style=color:#000>implementation</span> <span style=color:#000>files</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#4e9a06>&#39;./libs/some_other_lib.jar&#39;</span><span style=color:#ce5c00;font-weight:700>)</span>
+<span style=color:#ce5c00;font-weight:700>}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>修改完后，Android Studio 会提示是否要 Sync，点击 Sync 即可。</p>
+<h2 id=引入-unityplayeractivity>引入 <code>UnityPlayerActivity</code></h2>
+<p>我们在实现自己的 Activity 时不能直接实现，而是需要继承 Unity 的 <code>UnityPlayerActivity</code>，这个类型会按照一定的规则去调用 Unity 的回调函数，以确保程序的正确运行。从前这个类就在刚刚我们引入的 <code>unity.jar</code> 中，而在新版本的 Unity 中这个类却以单独文件的形式存在，需要自己拷贝一下，这个文件所在的路径为：</p>
+<p><code>YOUR_EDITOR_PATH/Data/PlaybackEngines/AndroidPlayer/Source/com/unity3d/player</code></p>
+<p>我们直接将 <code>YOUR_EDITOR_PATH/Data/PlaybackEngines/AndroidPlayer/Source/com</code> 这个目录直接拷到工程里的 <code>mod/src/main/java</code> 目录下，这样一来，我们的代码就可以看到这个 Activity 了。</p>
+<h2 id=新增一个-activity-继承-unityplayeractivity>新增一个 Activity 继承 <code>UnityPlayerActivity</code></h2>
+<p>在这里，我们添加一个 <code>showMessage</code> 函数用于给 Unity 调用，同时，在这个函数里面，我们通过 <code>UnityPlayer.UnitySendMessage</code> 来调用 Unity 中的函数。这个 <code>UnityPlayer</code> 定义于我们引入的 <code>unity.jar</code> 文件中。其中第一个参数是 Unity 场景中的对象名，第二个参数是需要调用的函数名，第三个参数是传递的参数：</p>
+<div class=highlight><div style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4>
+<table style=border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block><tr><td style=vertical-align:top;padding:0;margin:0;border:0>
+<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">4
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">5
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">6
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">7
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">8
+</span></code></pre></td>
+<td style=vertical-align:top;padding:0;margin:0;border:0;width:100%>
+<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=color:#204a87;font-weight:700>public</span> <span style=color:#204a87;font-weight:700>class</span> <span style=color:#000>MainActivity</span> <span style=color:#204a87;font-weight:700>extends</span> <span style=color:#000>UnityPlayerActivity</span> <span style=color:#ce5c00;font-weight:700>{</span>
+    <span style=color:#8f5902;font-style:italic>// 被用于 Unity 调用的函数
+</span><span style=color:#8f5902;font-style:italic></span>    <span style=color:#204a87;font-weight:700>public</span> <span style=color:#204a87;font-weight:700>void</span> <span style=color:#000>showMessage</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#204a87;font-weight:700>final</span> <span style=color:#000>String</span> <span style=color:#000>message</span><span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#ce5c00;font-weight:700>{</span>
+        <span style=color:#000>runOnUiThread</span><span style=color:#ce5c00;font-weight:700>(()</span> <span style=color:#ce5c00;font-weight:700>-&gt;</span> <span style=color:#000>Toast</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>makeText</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>MainActivity</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>this</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>message</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>Toast</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>LENGTH_SHORT</span><span style=color:#ce5c00;font-weight:700>).</span><span style=color:#c4a000>show</span><span style=color:#ce5c00;font-weight:700>());</span>
+        <span style=color:#8f5902;font-style:italic>// 调用 Unity 的函数
+</span><span style=color:#8f5902;font-style:italic></span>        <span style=color:#000>UnityPlayer</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>UnitySendMessage</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#4e9a06>&#34;Canvas&#34;</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#4e9a06>&#34;ChangeText&#34;</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#4e9a06>&#34;Hello from Android!&#34;</span><span style=color:#ce5c00;font-weight:700>);</span>
+    <span style=color:#ce5c00;font-weight:700>}</span>
+<span style=color:#ce5c00;font-weight:700>}</span>
+</code></pre></td></tr></table>
+</div>
+</div><h2 id=构建模块>构建模块</h2>
+<p>菜单栏中选择「Build」-「Make Module &lsquo;mod&rsquo;」。等待构建完成后，会在 <code>mod/build/output/aar</code> 目录下看到构建出来的包。</p>
+<h2 id=和-unity-集成>和 Unity 集成</h2>
+<p>接下来，我们需要将这个库和 Unity 集成，并让 Unity 以这个 Activity 为入口启动程序。</p>
+<p>将这个 aar 包解压，放入 Unity 工程的 <code>Plugins/Android/mod</code> 目录下，然后在这个目录下建立一个 <code>project.properties</code> 文件，填入如下内容：</p>
+<div class=highlight><div style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4>
+<table style=border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block><tr><td style=vertical-align:top;padding:0;margin:0;border:0>
+<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span></code></pre></td>
+<td style=vertical-align:top;padding:0;margin:0;border:0;width:100%>
+<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-ini data-lang=ini><span style=color:#c4a000>android.library</span><span style=color:#ce5c00;font-weight:700>=</span><span style=color:#4e9a06>true</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>再在 <code>Plugins/Android</code> 目录下（和 <code>mod</code> 同级）建立一个 <code>AndroidManifest.xml</code> 文件，填入如下内容，注意其中的 <code>ACTIVITY_NAME</code> 需要换成 main Activity 的完整类名（完整包名加上类名）。如果有什么需要申请的权限，也可在此加入：</p>
+<div class=highlight><div style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4>
+<table style=border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block><tr><td style=vertical-align:top;padding:0;margin:0;border:0>
+<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 4
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 5
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 6
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 7
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 8
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 9
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">10
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">11
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">12
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">13
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">14
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">15
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">16
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">17
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">18
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">19
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">20
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">21
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">22
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">23
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">24
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">25
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">26
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">27
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">28
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">29
+</span></code></pre></td>
+<td style=vertical-align:top;padding:0;margin:0;border:0;width:100%>
+<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-xml data-lang=xml><span style=color:#8f5902;font-style:italic>&lt;?xml version=&#34;1.0&#34; encoding=&#34;utf-8&#34;?&gt;</span>
+<span style=color:#204a87;font-weight:700>&lt;manifest</span>
+    <span style=color:#c4a000>xmlns:android=</span><span style=color:#4e9a06>&#34;http://schemas.android.com/apk/res/android&#34;</span>
+    <span style=color:#c4a000>package=</span><span style=color:#4e9a06>&#34;com.unity3d.player&#34;</span>
+    <span style=color:#c4a000>android:installLocation=</span><span style=color:#4e9a06>&#34;preferExternal&#34;</span>
+    <span style=color:#c4a000>android:versionCode=</span><span style=color:#4e9a06>&#34;1&#34;</span>
+    <span style=color:#c4a000>android:versionName=</span><span style=color:#4e9a06>&#34;1.0&#34;</span><span style=color:#204a87;font-weight:700>&gt;</span>
+    <span style=color:#204a87;font-weight:700>&lt;supports-screens</span>
+        <span style=color:#c4a000>android:smallScreens=</span><span style=color:#4e9a06>&#34;true&#34;</span>
+        <span style=color:#c4a000>android:normalScreens=</span><span style=color:#4e9a06>&#34;true&#34;</span>
+        <span style=color:#c4a000>android:largeScreens=</span><span style=color:#4e9a06>&#34;true&#34;</span>
+        <span style=color:#c4a000>android:xlargeScreens=</span><span style=color:#4e9a06>&#34;true&#34;</span>
+        <span style=color:#c4a000>android:anyDensity=</span><span style=color:#4e9a06>&#34;true&#34;</span><span style=color:#204a87;font-weight:700>/&gt;</span>
+
+    <span style=color:#204a87;font-weight:700>&lt;application</span>
+        <span style=color:#c4a000>android:theme=</span><span style=color:#4e9a06>&#34;@style/UnityThemeSelector&#34;</span>
+        <span style=color:#c4a000>android:icon=</span><span style=color:#4e9a06>&#34;@drawable/app_icon&#34;</span>
+        <span style=color:#c4a000>android:label=</span><span style=color:#4e9a06>&#34;@string/app_name&#34;</span>
+        <span style=color:#c4a000>android:debuggable=</span><span style=color:#4e9a06>&#34;true&#34;</span><span style=color:#204a87;font-weight:700>&gt;</span>
+        <span style=color:#204a87;font-weight:700>&lt;activity</span> <span style=color:#c4a000>android:name=</span><span style=color:#4e9a06>&#34;ACTIVITY_NAME&#34;</span>
+                  <span style=color:#c4a000>android:label=</span><span style=color:#4e9a06>&#34;@string/app_name&#34;</span><span style=color:#204a87;font-weight:700>&gt;</span>
+            <span style=color:#204a87;font-weight:700>&lt;intent-filter&gt;</span>
+                <span style=color:#204a87;font-weight:700>&lt;action</span> <span style=color:#c4a000>android:name=</span><span style=color:#4e9a06>&#34;android.intent.action.MAIN&#34;</span> <span style=color:#204a87;font-weight:700>/&gt;</span>
+                <span style=color:#204a87;font-weight:700>&lt;category</span> <span style=color:#c4a000>android:name=</span><span style=color:#4e9a06>&#34;android.intent.category.LAUNCHER&#34;</span> <span style=color:#204a87;font-weight:700>/&gt;</span>
+            <span style=color:#204a87;font-weight:700>&lt;/intent-filter&gt;</span>
+            <span style=color:#204a87;font-weight:700>&lt;meta-data</span> <span style=color:#c4a000>android:name=</span><span style=color:#4e9a06>&#34;unityplayer.UnityActivity&#34;</span> <span style=color:#c4a000>android:value=</span><span style=color:#4e9a06>&#34;true&#34;</span> <span style=color:#204a87;font-weight:700>/&gt;</span>
+        <span style=color:#204a87;font-weight:700>&lt;/activity&gt;</span>
+    <span style=color:#204a87;font-weight:700>&lt;/application&gt;</span>
+<span style=color:#204a87;font-weight:700>&lt;/manifest&gt;</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>要在 Unity 中调用 Android 的函数，需要用类似这样的方法实现。首先，我们要找到当前的 Android Activity，然后我们通过 <code>Call</code> 方法来调用其中的逻辑。其中第一个参数是方法名，后面的参数是需要传递的参数：</p>
+<div class=highlight><div style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4>
+<table style=border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block><tr><td style=vertical-align:top;padding:0;margin:0;border:0>
+<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 4
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 5
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 6
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 7
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 8
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 9
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">10
+</span></code></pre></td>
+<td style=vertical-align:top;padding:0;margin:0;border:0;width:100%>
+<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-csharp data-lang=csharp><span style=color:#8f5902;font-style:italic>#if UNITY_ANDROID &amp;&amp; !UNITY_EDITOR
+</span><span style=color:#8f5902;font-style:italic></span><span style=color:#204a87;font-weight:700>using</span> <span style=color:#000;font-weight:700>(</span><span style=color:#000>AndroidJavaClass</span> <span style=color:#000>jc</span> <span style=color:#000;font-weight:700>=</span> <span style=color:#204a87;font-weight:700>new</span> <span style=color:#000>AndroidJavaClass</span><span style=color:#000;font-weight:700>(</span><span style=color:#4e9a06>&#34;com.unity3d.player.UnityPlayer&#34;</span><span style=color:#000;font-weight:700>))</span>
+<span style=color:#000;font-weight:700>{</span>
+    <span style=color:#204a87;font-weight:700>using</span> <span style=color:#000;font-weight:700>(</span><span style=color:#000>AndroidJavaObject</span> <span style=color:#000>activity</span> <span style=color:#000;font-weight:700>=</span> <span style=color:#000>jc</span><span style=color:#000;font-weight:700>.</span><span style=color:#000>GetStatic</span><span style=color:#000;font-weight:700>&lt;</span><span style=color:#000>AndroidJavaObject</span><span style=color:#000;font-weight:700>&gt;(</span><span style=color:#4e9a06>&#34;currentActivity&#34;</span><span style=color:#000;font-weight:700>))</span>
+    <span style=color:#000;font-weight:700>{</span>
+        <span style=color:#000>activity</span><span style=color:#000;font-weight:700>.</span><span style=color:#000>Call</span><span style=color:#000;font-weight:700>(</span><span style=color:#4e9a06>&#34;showMessage&#34;</span><span style=color:#000;font-weight:700>,</span> <span style=color:#4e9a06>&#34;Hello from Unity&#34;</span><span style=color:#000;font-weight:700>);</span>
+    <span style=color:#000;font-weight:700>}</span>
+<span style=color:#000;font-weight:700>}</span>
+<span style=color:#8f5902;font-style:italic>#else
+</span><span style=color:#8f5902;font-style:italic>#endif
+</span></code></pre></td></tr></table>
+</div>
+</div><p>另外我们还需要在 Unity 场景中添加刚刚 Android 代码中调用 Unity 时 Unity 侧的接收者（在本示例中为 <code>Canvas</code>），这块具体操作直接参考示例工程即可。</p>
+<h2 id=unity-构建>Unity 构建</h2>
+<p>在 Unity 菜单中点击「File」-「Build Settings&mldr;」，在弹出的窗口中选择 Android 平台，然后构建即可。</p>
+<h1 id=一个小工具>一个小工具</h1>
+<p>上面这个流程有些是只用操作一次的（例如新建工程），但也存在一批需要反复操作的（例如编译 Android 工程、删除 Unity 的 Activity 等），这些需要反复操作的流程在每次修改 Android 工程中的代码后，都需要进行一次，非常麻烦还容易出错，因此，这里提供一个简单的<a href=https://github.com/ZhiruiLi/upack>小工具</a>来简化这个工作。</p>
+<p>这个小工具可以编译指定的 Android 模块，然后将 aar 压缩包解压到 Unity 工程中，删除 Unity 的 Activity class，并生成 <code>project.properties</code> 和 <code>AndroidManifest.xml</code> 文件。在生成 <code>AndroidManifest.xml</code> 的时候，提供了默认的文件模板，允许通过命令行参数指定需要申请的 Android 权限。在示例工程中，每次修改这个 Android 工程中的代码，都可以执行一下工程根目录下的 <code>update_android.bat</code> 脚本，这个脚本会调用这个工具，重新构建 Android 工程。这个工具的编译需要用到 go，需要先安装一下 go 的环境。</p>
+</div>
+<div class="row middle-xs">
+<div class=col-xs-12>
+<div class=post-tags>
+<a href=/tags/unity/>
+Unity
+</a>
+</div>
+<div class=post-tags>
+<a href=/tags/android/>
+Android
+</a>
+</div>
+</div>
+</div>
+<div class=row>
+<div class=col-xs-12>
+<br><p>我的博客即将同步至腾讯云+社区，<a target=_blank href="https://cloud.tencent.com/developer/support-plan?invite_code=11dehb9vzutlx">邀请大家一同入驻</a>。</p>
+</div>
+</div>
+<div class=related-content>
+<h3>Related Posts</h3>
+<ul>
+<li><a href=/posts/android-animation/>Android 动画笔记</a></li>
+</ul>
+</div>
+<div style=height:50px></div>
+<div class=post-comments>
+<div id=disqus_thread></div>
+<script>window.addEventListener("load",()=>{(function(){var a=document,b=a.createElement("script");b.src="https://ZhiruiLi.disqus.com/embed.js",b.setAttribute("data-timestamp",+new Date),(a.head||a.body).appendChild(b)})()})</script>
+<noscript>Please enable JavaScript to view the
+<a href=https://disqus.com/?ref_noscript>comments powered by Disqus.</a></noscript>
+</div>
+<div class=site-footer>
+</div>
+</div>
+</div>
+</article>
+<script src=https://unpkg.com/quicklink@0.1.1/dist/quicklink.umd.js></script>
+<script>var posts=document.getElementById('posts-list');posts&&quicklink({el:posts,priority:!0})</script>
+<script>MathJax={tex:{inlineMath:[['$','$'],['\\(','\\)']]},svg:{fontCache:'global'}}</script>
+<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script id=MathJax-script async src=https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js></script>
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-80302213-1"></script>
+</body>
+</html>
