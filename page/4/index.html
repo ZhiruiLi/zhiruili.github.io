@@ -1,0 +1,173 @@
+<!doctype html><html lang=cn>
+<head>
+<meta name=generator content="Hugo 0.88.0">
+<title>
+简单易懂的现代魔法 —
+Zhirui Li's Blog
+</title>
+<meta charset=utf-8>
+<meta name=viewport content="width=device-width,initial-scale=1">
+<meta name=description content="Zhirui Li's Blog">
+<meta name=keywords content="编程,计算机图形学,游戏开发">
+<meta name=robots content="noodp">
+<link rel=canonical href=/>
+<link rel=stylesheet href=/assets/style.css>
+<link rel=stylesheet href=/style.css>
+<link rel=apple-touch-icon-precomposed sizes=144x144 href=/img/apple-touch-icon-144-precomposed.png>
+<link rel="shortcut icon" href=/img/favicon.png>
+<link href=/assets/fonts/Inter-Italic.woff2 rel=preload type=font/woff2 as=font crossorigin>
+<link href=/assets/fonts/Inter-Regular.woff2 rel=preload type=font/woff2 as=font crossorigin>
+<link href=/assets/fonts/Inter-Medium.woff2 rel=preload type=font/woff2 as=font crossorigin>
+<link href=/assets/fonts/Inter-MediumItalic.woff2 rel=preload type=font/woff2 as=font crossorigin>
+<link href=/assets/fonts/Inter-Bold.woff2 rel=preload type=font/woff2 as=font crossorigin>
+<link href=/assets/fonts/Inter-BoldItalic.woff2 rel=preload type=font/woff2 as=font crossorigin>
+<meta name=twitter:card content="summary">
+<meta name=twitter:title content="简单易懂的现代魔法">
+<meta name=twitter:description content>
+<meta property="og:title" content="简单易懂的现代魔法">
+<meta property="og:description" content>
+<meta property="og:type" content="website">
+<meta property="og:url" content="/"><meta property="og:site_name" content="简单易懂的现代魔法">
+<link rel=alternate type=application/rss+xml href=/index.xml title=简单易懂的现代魔法>
+<script>var posts=document.getElementById('posts-list');posts&&quicklink({el:posts,priority:!0})</script>
+<script>MathJax={tex:{inlineMath:[['$','$'],['\\(','\\)']]},svg:{fontCache:'global'}}</script>
+<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script id=MathJax-script async src=https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js></script>
+</head>
+<body>
+<div class=container>
+<header class=header>
+<span class=header__inner>
+<a href=/ class=logo style=text-decoration:none>
+<span class=logo__mark><svg xmlns="http://www.w3.org/2000/svg" class="greater-icon" viewBox="0 0 44 44"><path fill="none" d="M15 8l14.729 14.382L15 35.367"/></svg>
+</span>
+<span class=logo__text>简单易懂的现代魔法</span>
+<span class=logo__cursor></span>
+</a>
+<span class=header__right>
+<nav class=menu>
+<ul class="menu__inner menu__inner--desktop">
+<li><a href=/archive>Archive</a></li>
+<li><a href=https://www.github.com/zhiruili>Github</a></li>
+<li><a href=/index.xml>RSS</a></li>
+</ul>
+<ul class="menu__inner menu__inner--mobile">
+<li><a href=/archive>Archive</a></li>
+<li><a href=https://www.github.com/zhiruili>Github</a></li>
+<li><a href=/index.xml>RSS</a></li>
+</ul>
+</nav>
+<span class=menu-trigger><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M0 0h24v24H0z" fill="none"/><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></svg>
+</span>
+<span class=theme-toggle><svg class="theme-toggler" width="24" height="24" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M22 41c10.4934.0 19-8.5066 19-19C41 11.5066 32.4934 3 22 3 11.5066 3 3 11.5066 3 22s8.5066 19 19 19zM7 22C7 13.7157 13.7157 7 22 7V37C13.7157 37 7 30.2843 7 22z"/></svg>
+</span>
+</span>
+</span>
+</header>
+<div class=content>
+<div class=posts>
+<div class="post on-list">
+<h1 class=post-title><a href=/posts/golang-design-study/>从并发模型看 Go 的语言设计</a></h1>
+<div class=post-meta>
+<span class=post-date>
+2019-05-03
+</span>
+</div>
+<span class=post-tags>
+<a href=/tags/go/>#Go</a>&nbsp;
+</span>
+<div class=post-content>
+传统的程序语言设计都不会将输入输出作为语言的核心，但 Tony Hoare 认为输入输出是基本的编程原语，且通信顺序进程（Communicating sequential processes，CSP）的并行组合（这里可能用「并发」会更为准确）是基本的程序组织方法。Go 语言的并发设计就是基于 CSP 模型的。
+在最初的 CSP 模型中，程序总由若干个可以相互通信的进程构成，其中每一个进程内部是顺序执行的（这也就是 CSP 名称的含义）。注意这里的「进程」并不一定指操作系统中的进程，也不一定是操作系统的线程，它是一个抽象的概念，代表一组计算的序列，例如 goroutine 这种在应用层调度的计算序列也算 CSP 中的「P」。与 Go 语言不同的地方在于，这个最初的设计中并没有通信管道的概念，每个进程是直接和另一个进程进行通信的，但在 Go 语言中，goroutine 是匿名的，一个 goroutine 并没有办法直接将消息发给另一个 goroutine，为了实现 goroutine 之间的通信，Go 语言提供了 first class 的 channel，消息通过 channel 来从一个 goroutine 发到另一个 goroutine。而且，Go 语言也不要求 goroutine 内部是顺序执行的，goroutine 内部可以创建更多的 goroutine，并发地完成工作。
+下面，我们通过例子说明基于 CSP 模型是如何组织程序的。
+阶乘计算 首先来看的是一个计算阶乘的例子，阶乘的一个简单的递归实现可以是这样的：
+fact 0 = 1 fact n = n * fact (n - 1) 而基于 CSP 组织程序，我们可以这样做：
+// 阶乘计算的实体 func FactCalc(in &lt;-chan int, out chan&lt;- int) { var subIn, subOut chan int for { n := &lt;-in if n == 0 { out &lt;- 1 } else { if subIn == nil { subIn, subOut = make(chan int), make(chan int) go FactCalc(subIn, subOut) } subIn &lt;- n - 1 r := &lt;-subOut out &lt;- n * r } } } // 包装一个阶乘计算函数 func MakeFactFunc() func(int) int { in, out := make(chan int), make(chan int) go FactCalc(in, out) return func(x int) int { in &lt;- x return &lt;-out } } MakeFactFunc 就是简单地封装一下 FactCalc，获取一个计算阶乘的函数。主要的计算是由 FactCalc 进行的。
+</div>
+<div><a class="read-more button" href=/posts/golang-design-study/>Read more →</a></div>
+</div>
+<div class="post on-list">
+<h1 class=post-title><a href=/posts/android-animation/>Android 动画笔记</a></h1>
+<div class=post-meta>
+<span class=post-date>
+2017-07-25
+</span>
+</div>
+<span class=post-tags>
+<a href=/tags/android/>#Android</a>&nbsp;
+<a href=/tags/animation/>#Animation</a>&nbsp;
+</span>
+<div class=post-content>
+动画分类 属性动画 Property Animation
+最为方便强大，推荐使用。
+视图动画 View Animation
+旧版本的动画方式。
+绘制动画 Drawable Animation
+即一帧帧绘制画面，万能但仅在必要时使用。
+属性动画和视图动画的区别 视图动画只能作用于 View 对象，属性动画没有这个限制。 视图动画只能操纵少数几个属性，例如缩放比例、旋转角度等，许多属性，例如背景颜色，就没法通过视图动画进行操作，属性动画更加通用。 视图动画仅仅修改了绘制位置，并没有实际修改属性值，例如用视图动画实现一个按钮移动的效果，按钮可以正确移动，但是用户点按按钮的位置却没有改变。 属性动画相对于视图动画而言要复杂一些，对于一些简单情形可以考虑用视图动画解决。 属性动画 属性动画几乎可以实现任何想要的动画效果，非常具有可扩展性并且非常稳健。属性动画可供设定的选项包括了：
+持续时间（默认 300 ms）
+时间插值（Time interpolation）
+即指定一个关于时间的函数，使得属性值的计算依赖于这个函数。
+重复播放、逆向播放
+动画集合
+可以将一组动画合并成一个集合，然后同时播放或是顺序播放或是延时播放。
+帧刷新间隔
+默认是 10 ms，可以改成别的值，但最终取决于系统状态。
+属性动画的工作方式 属性动画通过指定一个对象的属性的改变方式来实现动画，举例来说，如果想要实现一个对象在 x 轴上的横向移动动画，那就让这个对象的 x 轴坐标每隔一个时间间隔变化一点即可。例如下图表示了一个对象在 40 ms 内沿 x 轴移动了 40 px 的动画：
+</div>
+<div><a class="read-more button" href=/posts/android-animation/>Read more →</a></div>
+</div>
+<div class="post on-list">
+<h1 class=post-title><a href=/posts/translation-dispatch-queues/>Apple 官方指南 - Dispatch Queues</a></h1>
+<div class=post-meta>
+<span class=post-date>
+2017-05-17
+</span>
+</div>
+<span class=post-tags>
+<a href=/tags/objective-c/>#Objective-C</a>&nbsp;
+<a href=/tags/concurrency/>#Concurrency</a>&nbsp;
+</span>
+<div class=post-content>
+Grand Central Dispatch（GCD）分派队列（dispatch queues）是一个用于处理任务（tasks）的强大工具。分派队列让你能够异步（asynchronously）或同步地（synchronously）执行任意的代码块（blocks of code）。你可以使用分派队列来处理几乎所有的可放在不同线程中处理的任务。使用分派队列的优点在于它们相对于直接使用线程来说要更加易用且更加高效。
+本章将介绍分派队列，并提供了关于如何在自己的应用程序中用它们来执行一般任务的参考。如果你希望将当前直接使用线程的代码改为使用分派队列，你可以在 Migrating Aray from Threads 里找到一些额外的提示。
+关于分派队列 分派队列能简化异步并发（concurrently）处理任务的过程。所谓任务就是指你的应用程序中需要处理的一些工作。例如定义一个任务用来处理一些计算、创建或修改一个数据结构、从一个文件中读取数据或者做其他的事情。定义一个任务的方式是将相应的代码放进一个函数（function）或者一个块对象（block object）中并将其添加进一个分派队列。
+分派队列是一个类似于对象的结构，它负责管理你向它提交的任务。所有的分派队列都是一个先入先出的数据结构。所以，你添加进队列的任务的开始顺序都和添加顺序一样。GCD 自动提供了一些分派队列，你也可以根据特定的需求创建其他的分派队列。表 1 列出了你能在应用程序中获取到的分派队列以及你使用它们的方式。
+表 1：分派队列的类型
+类型 描述 串行（Serial） 串行队列（又被称为私有分派队列（private dispatch queues））在同一时间内只会执行一个任务，并且执行的顺序是你向该队列添加任务的顺序。当前正在执行的任务运行于一个特定的线程中（不同任务可能会运行于不同的线程中），该过程由分派队列进行管理。串行队列常常被用来同步对特定资源的访问。你可以根据你的需要创建任意数量的串行队列，每一个串行队列的操作是与其他队列并发进行的。换句话说，如果你创建了四个串行队列，每一个队列在同一时间内只执行一个任务，但仍然可能最多有四个任务并发执行，每一个任务都来自单独的一个队列。参看「创建串行分派队列」一节以获取关于如何创建串行队列的信息。 并发（Concurrent） 并发队列（又被称为一种全局分派队列（a type of global dispatch queue））并发地执行一个或多个任务，但是任务仍然按照它们被添加进队列的顺序来启动。并发执行的任务运行于不同的线程中，该过程由分派队列来进行管理。在每一个时间点执行的具体任务数是可变的，具体数量取决于系统的状况。在 iOS 5 或之后的版本中，你可以通过将队列类型设置为 DISPATCH_QUEUE_CONCURRENT 来创建自己的并发分派队列。不仅如此，系统还提供了四个预定义的全局并发队列供你的应用程序使用。参看「获取全局并发分派队列」一节以获取更多关于如何获取全局并发队列的信息。 主分派队列（ Main dispatch queue） 主分派队列是一个全局的串行分派队列，它在应用程序的主线程中执行任务。该队列和应用程序的运行循环（run loop)（如果有的话）协同工作，将排队中的任务和其他的事件源交错放入运行循环中。因为主队列在你的应用程序的主线程中执行任务，所以它常常被用作一个应用程序的关键同步点。尽管你不需要创建一个主分派队列，然而你需要确保你的应用程序合理地声明了（drains）它。参看「在主线程中处理任务」一节以获取关于该队列是如何被管理的信息。 当涉及到提高一个应用程序并发性的时候，分派队列相对于线程来说有几个优势。最直接的优势就是工作队列编程模型较为简单。使用线程的时候，你需要同时写两部分的代码，一个是待处理工作的代码，另一个是创建和管理线程的代码。分派队列则让你专注于你要处理的工作，系统帮助你处理所有线程的创建和管理工作，使你不需要担心线程的创建和管理。这里有一个优势在于系统可以比单个应用程序更加高效地管理线程，系统能够根据可用资源和当前系统的状态动态地增减线程数量。不仅如此，系统还常常能比你自己创建线程时更加快速地开始运行你的任务。
+尽管你可能认为将你的代码重写为使用分派队列的形式会比较困难，但事实上写使用分派队列的代码经常比写使用线程的代码简单。写这样的代码的关键在于设计自包含的（self-contained）能异步执行的独立任务。（事实上无论是使用分派队列还是直接使用线程，你都应该这样设计。）分派队列的一个优势是它的可预测性。如果你有两个运行于不同线程的任务访问同一个资源，其中任意一个线程可能先修改该资源，此时你会需要用一个锁来确保这两个任务不会同时修改该资源。如果你使用了分派队列来实现这一逻辑，你可以将这两个任务添加到一个串行队列中以确保在任意给定时间内，只有一个任务在修改该资源。这种基于分派队列的同步比使用锁要更加高效，因为锁无论是在争用还是在无争用的情况下都需要进行一个代价高昂的内核陷阱中断，而分派队列则主要工作在应用程序的进程空间里，只有当必须要陷入内核的时候才会陷入内核。
+你也许会指出，两个运行于一个串行队列中的任务并没有并发地运行，尽管这是对的，但你要记住，如果两个线程在争用一个锁，那么任何线程提供的并发性都会失去或是大幅减少。更重要的是，线程编程模型需要创建两个线程，这需要申请内核和用户空间的内存。分派队列则不需要付出这种创建线程的内存代价，它们使用的线程总是处于占用状态并且不会阻塞。
+关于分派队列，你需要记住一些关键点：
+一个分派队列与其他分派队列并发地执行任务。任务的顺序性只限于单个分派队列内。 在任意时间执行任务的总数由系统决定。所以，如果一个应用程序将 100 个任务放进 100 个不同的分派队列中，那么这些任务并不一定会并发地执行（除非有 100 个或者更多个可用的核）。 系统在选择开始一个新的任务的时候会考虑队列的优先级。参看「向分派队列提供一个清理函数」一节以获取有关如何设置串行队列的优先级的信息。 队列中的任务必须在它被添加进队列的时候就要作好被调用的准备。（如果你曾经用过 Cocoa 操作对象（Cocoa operation objects），注意该行为与模型操作不同。） 私有分派队列是引用计数的对象。除了在你自己的代码中保持（retain）对队列的引用，你还需要注意分派源也可以被加入到一个队列中，这也会增加其保持计数。所以，你必须确保所有分派源都被取消了（canceled）且每一个保持调用都有一个合适的释放（release）调用与之平衡。参看「分派队列的内存管理」一节以获取更多有关保持和释放队列的信息。参看 About Dispatch Sources 以获取更多关于分派源的信息。 参看 Grand Central Dispatch (GCD) Reference（注：原链接失效，这里替换了另一个链接）以获取更多有关分派队列的操作接口的信息。
+</div>
+<div><a class="read-more button" href=/posts/translation-dispatch-queues/>Read more →</a></div>
+</div>
+<div class=pagination>
+<div class=pagination__buttons>
+<span class="button previous">
+<a href=/page/3/>
+<span class=button__icon>←</span>
+<span class=button__text>Newer posts</span>
+</a>
+</span>
+<span class="button next">
+<a href=/page/5/>
+<span class=button__text>Older posts</span>
+<span class=button__icon>→</span>
+</a>
+</span>
+</div>
+</div>
+</div>
+</div>
+<footer class=footer>
+<div class=footer__inner>
+<div class="copyright copyright--user"><p>我的博客即将同步至腾讯云+社区，<a target=_blank href="https://cloud.tencent.com/developer/support-plan?invite_code=11dehb9vzutlx">邀请大家一同入驻</a></p><p>本网站采用 <a href=https://creativecommons.org/licenses/by-sa/4.0/>CC BY-SA 4.0</a> 协议进行授权</p></div>
+</div>
+</footer>
+<script src=/assets/main.js></script>
+<script src=/assets/prism.js></script>
+</div>
+<script type=application/javascript>var doNotTrack=!1;doNotTrack||(function(a,e,f,g,b,c,d){a.GoogleAnalyticsObject=b,a[b]=a[b]||function(){(a[b].q=a[b].q||[]).push(arguments)},a[b].l=1*new Date,c=e.createElement(f),d=e.getElementsByTagName(f)[0],c.async=1,c.src=g,d.parentNode.insertBefore(c,d)}(window,document,'script','https://www.google-analytics.com/analytics.js','ga'),ga('create','UA-80302213-1','auto'),ga('send','pageview'))</script>
+</body>
+</html>

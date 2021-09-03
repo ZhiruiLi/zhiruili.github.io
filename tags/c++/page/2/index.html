@@ -1,0 +1,199 @@
+<!doctype html><html lang=cn>
+<head>
+<title>
+C++ ::
+简单易懂的现代魔法 — Zhirui Li's Blog
+</title>
+<meta charset=utf-8>
+<meta name=viewport content="width=device-width,initial-scale=1">
+<meta name=description content>
+<meta name=keywords content="编程,计算机图形学,游戏开发">
+<meta name=robots content="noodp">
+<link rel=canonical href=/tags/c++/>
+<link rel=stylesheet href=/assets/style.css>
+<link rel=stylesheet href=/style.css>
+<link rel=apple-touch-icon-precomposed sizes=144x144 href=/img/apple-touch-icon-144-precomposed.png>
+<link rel="shortcut icon" href=/img/favicon.png>
+<link href=/assets/fonts/Inter-Italic.woff2 rel=preload type=font/woff2 as=font crossorigin>
+<link href=/assets/fonts/Inter-Regular.woff2 rel=preload type=font/woff2 as=font crossorigin>
+<link href=/assets/fonts/Inter-Medium.woff2 rel=preload type=font/woff2 as=font crossorigin>
+<link href=/assets/fonts/Inter-MediumItalic.woff2 rel=preload type=font/woff2 as=font crossorigin>
+<link href=/assets/fonts/Inter-Bold.woff2 rel=preload type=font/woff2 as=font crossorigin>
+<link href=/assets/fonts/Inter-BoldItalic.woff2 rel=preload type=font/woff2 as=font crossorigin>
+<meta name=twitter:card content="summary">
+<meta name=twitter:title content="C++">
+<meta name=twitter:description content>
+<meta property="og:title" content="C++">
+<meta property="og:description" content>
+<meta property="og:type" content="website">
+<meta property="og:url" content="/tags/c++/"><meta property="og:site_name" content="简单易懂的现代魔法">
+<link rel=alternate type=application/rss+xml href=/tags/c++/index.xml title=简单易懂的现代魔法>
+<script>var posts=document.getElementById('posts-list');posts&&quicklink({el:posts,priority:!0})</script>
+<script>MathJax={tex:{inlineMath:[['$','$'],['\\(','\\)']]},svg:{fontCache:'global'}}</script>
+<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script id=MathJax-script async src=https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js></script>
+</head>
+<body>
+<div class=container>
+<header class=header>
+<span class=header__inner>
+<a href=/ class=logo style=text-decoration:none>
+<span class=logo__mark><svg xmlns="http://www.w3.org/2000/svg" class="greater-icon" viewBox="0 0 44 44"><path fill="none" d="M15 8l14.729 14.382L15 35.367"/></svg>
+</span>
+<span class=logo__text>简单易懂的现代魔法</span>
+<span class=logo__cursor></span>
+</a>
+<span class=header__right>
+<nav class=menu>
+<ul class="menu__inner menu__inner--desktop">
+<li><a href=/archive>Archive</a></li>
+<li><a href=https://www.github.com/zhiruili>Github</a></li>
+<li><a href=/index.xml>RSS</a></li>
+</ul>
+<ul class="menu__inner menu__inner--mobile">
+<li><a href=/archive>Archive</a></li>
+<li><a href=https://www.github.com/zhiruili>Github</a></li>
+<li><a href=/index.xml>RSS</a></li>
+</ul>
+</nav>
+<span class=menu-trigger><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M0 0h24v24H0z" fill="none"/><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></svg>
+</span>
+<span class=theme-toggle><svg class="theme-toggler" width="24" height="24" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M22 41c10.4934.0 19-8.5066 19-19C41 11.5066 32.4934 3 22 3 11.5066 3 3 11.5066 3 22s8.5066 19 19 19zM7 22C7 13.7157 13.7157 7 22 7V37C13.7157 37 7 30.2843 7 22z"/></svg>
+</span>
+</span>
+</span>
+</header>
+<div class=content>
+<div class=posts>
+<div class="post on-list">
+<h1 class=post-title><a href=/posts/cpp-template-specialization/>错误使用 C++ 模板特化产生的坑</a></h1>
+<div class=post-meta>
+<span class=post-date>
+2021-08-27
+</span>
+</div>
+<span class=post-tags>
+<a href=/tags/c++/>#C++</a>&nbsp;
+</span>
+<div class=post-content>
+今天在群里看到了一个错误使用 C++ 模板特化产生的坑，有点意思，这里记录一下。
+问题是这样的：
+有一个名为 A 的库，包含如下的头文件 a.h 和代码文件 a.cc
+// a.h #pragma once #include &lt;iostream>template &lt;class T> struct A { void print() { std::cout &lt;&lt; "normal" &lt;&lt; std::endl; } }; // a.cc #include "a.h"template &lt;> void A&lt;int>::print() { std::cout &lt;&lt; "specialization" &lt;&lt; std::endl; } 有如下代码文件 main.cc 使用了这个库：
+#include "a.h"int main() { A&lt;int> a{}; a.print(); } 那么请问，我们编译这个库和这个代码文件之后，输出结果会是什么呢？
+答案是……不一定。这要看你是怎么链接的。这听起来很奇怪是吧，不过确实是这样：
+链接方式 1：
+g++ -c a.cc g++ -o main main.cc a.o 链接方式 2：
+</div>
+<div>
+<a class="read-more button" href=/posts/cpp-template-specialization/>Read more →</a>
+</div>
+</div>
+<div class="post on-list">
+<h1 class=post-title><a href=/posts/cpp-error-handling/>另一种 C++ 程序错误处理方式</a></h1>
+<div class=post-meta>
+<span class=post-date>
+2020-03-22
+</span>
+</div>
+<span class=post-tags>
+<a href=/tags/c++/>#C++</a>&nbsp;
+<a href=/tags/go/>#Go</a>&nbsp;
+</span>
+<div class=post-content>
+C++ 是一个很灵活的语言，这把双刃剑一方面使得 C++ 有很强大的表达能力，但也使得其编程风格相当混乱，就连错误处理到底是使用错误码还是异常都常常争论不休。例如在 C 中我们默认用错误码处理错误，而在 Python、Java 中，则默认用异常来处理错误。而在 C++ 中，使用这两种形式的错误处理形式都有，而目前来看，在我所在的团队中，除非是外部库，否则基本都是使用错误码。在这篇文章中，我将聊一下 C++ 错误处理的方式优劣，以及我们团队是如何进行 C++ 错误处理的。
+错误码的问题 在我们的工程实践中，错误码首先带来的问题是代码中充斥着大量的 -1、-2、-10000 这样的错误码，这样错误码在日志中出现总是让人头痛，在代码中一搜就出来数不清的匹配项，根本无法定位问题。当然，你可能会说，这个主要是开发者水平参差不齐和开发规范不够严明的问题，我们可以通过全局统一错误码来解决问题。这当然是一个合理的反对意见，但问题是，即便确定要全局统一错误码，但这个全局统一错误码应该做到什么层级呢？
+例如，在我们的后台采用了微服务架构，那么一个很显然的处理方案就是全局统一错误码是在服务级别的，A 服务调用 B 服务的时候，通过错误码来获知调用过程中出了什么错误。但是，这事实上并没有解决问题，例如我们现在发现 B 服务给 A 服务返回了 12345 这个错误码，然后我们尝试查看 B 服务的代码，看看为什么会导致这样的错误：
+enum Errors { kErrFailToCallSomeFunction = 12345, }; int Handle(Req const &req, Rsp *rsp) { int ret = SomeFunction(); if (ret) { ERRORLOG("call SomeFunction fail: %d\n", ret); return kErrFailToCallSomeFunction; } // ... } 因为错误码统一，我们很快就发现了是调用 SomeFunction 失败导致了这个错误，然后我们知道了应该找 call SomeFunction fail: 这条日志，可以我们一查阅这条日志就发现，call SomeFunction fail: -1，结果我们又回到了之前的问题，尤其是我们可能在 SomeFunction 中看到这样的实现：
+</div>
+<div>
+<a class="read-more button" href=/posts/cpp-error-handling/>Read more →</a>
+</div>
+</div>
+<div class="post on-list">
+<h1 class=post-title><a href=/posts/real-world-cpp-template/>实际工程中的 C++ 模板</a></h1>
+<div class=post-meta>
+<span class=post-date>
+2019-09-17
+</span>
+</div>
+<span class=post-tags>
+<a href=/tags/c++/>#C++</a>&nbsp;
+</span>
+<div class=post-content>
+C++ 的模板是 C++ 的一个重要的语言特性，我们使用的 STL 就是 Standard Template Library 的缩写，但是在很多情况下，开发者都对其敬而远之，有些团队甚至是直接在工程中禁用模板。模板常被当作洪水猛兽的一个原因是许多人提起模板就要提 C++ 模板图灵完备，甚至还要再秀一段编译期排序，这种表现模板强大的方式不仅不会让人觉得模板有用，反而让人觉得模板难以理解而且不应该使用。在这篇文章里，我将聊一下最近实际工程中的一些模板的应用，希望可以让更多人了解到模板并不是一个可怕的存在，以及一些常见的使用方式。
+按版本号过滤配置 我所在的项目组前后台的复杂配置现在都用 protobuf 进行承载，然后生成 Excel 进行配置，生成 C++ 代码进行加载。例如这样的 message：
+message ConfigItem1 { int32 id = 1; string text = 2;}message Config { repeated ConfigItem1 items1 = 1;}这里的 Config 会被映射为一个 Excel，里面有一个表 items1，其中，这个表有两列，一列 id，一列 text。这个表的每一行都是一个具体的配置项。也就是我们可以这样获取配置：
+cout &lt;&lt; cfg.items1(0).id() &lt;&lt; ": " &lt;&lt; cfg.items1(0).text(); 现在有个需求是这样的，在加载某些配置的时候，前台需要根据版本号进行配置的过滤，部分配置项只会在某些版本中可见，例如这样：
+message VersionRange { int32 lo = 1; int32 hi = 2;}message ConfigItem2 { repeated VersionRange version_ranges = 1; int32 id = 2; int32 value = 3;}message Config { repeated ConfigItem1 items1 = 1; repeated ConfigItem2 items2 = 2;}加载的时候大概有这样的代码：
+</div>
+<div>
+<a class="read-more button" href=/posts/real-world-cpp-template/>Read more →</a>
+</div>
+</div>
+<div class="post on-list">
+<h1 class=post-title><a href=/posts/dynamic-scope/>静态作用域和动态作用域</a></h1>
+<div class=post-meta>
+<span class=post-date>
+2017-03-25
+</span>
+</div>
+<span class=post-tags>
+<a href=/tags/c++/>#C++</a>&nbsp;
+<a href=/tags/haskell/>#Haskell</a>&nbsp;
+<a href=/tags/lisp/>#Lisp</a>&nbsp;
+</span>
+<div class=post-content>
+静态作用域和动态作用域 所谓作用域规则就是程序解析名字的方法。如果一个变量的名称不在当前作用域内，则这样的变量称为 unbound variable，例如有一个函数 (lambda () (+ a a))，a 就是一个 unbound variable，在当前作用域内我们无法找到这个变量。那么调用这个函数的求值结果是什么呢？显然要根据 context 来确定，对于 unbound variables 的解析，从解析的时机来划分，有两种规则，一种是「静态作用域」（Static Scope）也被称为「词法作用域」（Lexical Scope），另一种是「动态作用域」（Dynamic Scope）1。
+对于现在流行的大多数语言来说，其作用域规则都是静态作用域规则，例如 Java、C++ 等，其特点根据函数定义处的环境解析里面用到的 unbound variables。仅有少数语言使用动态作用域规则，例如 Emacs Lisp，其函数内的 unbound variables 的解析是根据函数被调用时的环境来决定的。举例而言，对如下的表达式求值：
+(let ((a 1)) (let ((doubleA (lambda () (+ a a)))) (let ((a 2)) (doubleA)))) 如果采用静态作用域规则，这个表达式的值为 2，而如果采用动态作用域规则，其值则为 4。原因是当 doubleA 被定义时，可以在外层作用域找到 a = 1。而对于采用动态作用域的语言来说，a 的查找并不是在 doubleA 被定义的时候，而是在 doubleA 被调用的地方，此时 a = 2。当然，采用动态作用域规则的语言也会不断向外层作用域寻找名字，所以对下面这个表达式求值，无论是采用静态作用域规则还是动态作用域规则，其结果都是 2：
+(let ((a 1)) (let ((doubleA (lambda () (+ a a)))) (doubleA))) 那这两种规则哪种比较好呢？看被语言所采用的比例就知道，显然是静态作用域规则更好。其原因是在采用静态作用域规则的时候，对于函数的定义者来说，他可以通过阅读自己的代码很容易地知道他所使用到的变量当前绑定的具体实体是什么，而在使用采用动态作用域的语言时，则需要考虑这个函数被调用的时候该变量所对应的具体实体，这事实上是一种破坏封装的行为。举个例子，假设我们需要写几个对传入参数加一个数字的函数，例如 (lambda (n) (+ n 1))，那我们可能会希望对这组函数进行一个抽象，构建一个 createAddN 函数：
+</div>
+<div>
+<a class="read-more button" href=/posts/dynamic-scope/>Read more →</a>
+</div>
+</div>
+<div class="post on-list">
+<h1 class=post-title><a href=/posts/rust-safety/>Rust 提升安全性的方式</a></h1>
+<div class=post-meta>
+<span class=post-date>
+2017-03-16
+</span>
+</div>
+<span class=post-tags>
+<a href=/tags/rust/>#Rust</a>&nbsp;
+<a href=/tags/c++/>#C++</a>&nbsp;
+</span>
+<div class=post-content>
+Rust 的起源与目的 Rust 1 是 Mozilla 公司开发的编程语言，它在 2010 才开始发布第一个版本，可以说是一个非常年轻的语言了。在提出一个新的编程语言的时候，设计者必须要回答的一个问题是「为什么要设计这样一个编程语言？」。对于 Rust 来说，他的目的就是要在保证安全的基础上不失对底层的控制力。
+注意这里所指的「安全」不是说防止黑客攻击服务器，而是内存安全。拿 Rust 的主要竞争对手 C++ 为例，下面这段代码是安全的吗？
+int foo(Bar* pBar) { if (pBar == nullptr) { return -1; } else { return pBar->baz(); } } 显然不是，尽管在 foo 函数中对 pBar 进行了非空的判断，但 pBar 可能指向了一块已经被释放掉了的内存，也就是所谓的「dangling pointer」错误 2，此时程序的行为是未定义的。在 Java 等跑在虚拟机里的语言中，一般会将指针操作隐藏起来，同时由于有 GC 的存在，避免了程序员手动去释放内存，当一个对象不可达的时候，虚拟机会帮程序员去释放掉其占用的内存，所以，这段代码在 Java 中是安全的：
+int foo(Bar bar) { if (bar == null) { return -1; } else { return bar.baz(); } } Java 对内存安全的解决方案的问题在于，用户额外增加了虚拟机运行的开销，而且其模型无法做到 C++ 引以为傲的「zero overhead abstraction」。什么叫「zero overhead abstraction」？考虑如下的 C++ 代码：
+</div>
+<div>
+<a class="read-more button" href=/posts/rust-safety/>Read more →</a>
+</div>
+</div>
+<div class=pagination>
+<div class=pagination__buttons>
+<span class="button previous">
+<a href=/tags/c++/>
+<span class=button__icon>←</span>
+<span class=button__text>Newer posts</span>
+</a>
+</span>
+</div>
+</div>
+</div>
+</div>
+<footer class=footer>
+<div class=footer__inner>
+<div class="copyright copyright--user"><p>我的博客即将同步至腾讯云+社区，<a target=_blank href="https://cloud.tencent.com/developer/support-plan?invite_code=11dehb9vzutlx">邀请大家一同入驻</a></p><p>本网站采用 <a href=https://creativecommons.org/licenses/by-sa/4.0/>CC BY-SA 4.0</a> 协议进行授权</p></div>
+</div>
+</footer>
+<script src=/assets/main.js></script>
+<script src=/assets/prism.js></script>
+</div>
+<script type=application/javascript>var doNotTrack=!1;doNotTrack||(function(a,e,f,g,b,c,d){a.GoogleAnalyticsObject=b,a[b]=a[b]||function(){(a[b].q=a[b].q||[]).push(arguments)},a[b].l=1*new Date,c=e.createElement(f),d=e.getElementsByTagName(f)[0],c.async=1,c.src=g,d.parentNode.insertBefore(c,d)}(window,document,'script','https://www.google-analytics.com/analytics.js','ga'),ga('create','UA-80302213-1','auto'),ga('send','pageview'))</script>
+</body>
+</html>

@@ -1,26 +1,11 @@
-<!doctype html><html lang=en>
+<!doctype html><html lang=cn>
 <head>
+<title>
+图形学入门（三）：基础着色 ::
+简单易懂的现代魔法 — Zhirui Li's Blog
+</title>
 <meta charset=utf-8>
-<meta name=generator content="Hugo 0.87.0">
-<meta http-equiv=x-ua-compatible content="IE=edge">
 <meta name=viewport content="width=device-width,initial-scale=1">
-<meta name=author content="Zhirui Li">
-<meta property="og:url" content="https://zhiruili.github.io/posts/basic-shading/">
-<link rel=canonical href=https://zhiruili.github.io/posts/basic-shading/><link rel=alternate type=application/atom+xml href=https://zhiruili.github.ioindex.xml title="简单易懂的现代魔法 - Zhirui Li">
-<script type=application/ld+json>{"@context":"http://schema.org","@type":"BlogPosting","mainEntityOfPage":{"@type":"WebPage","@id":"https:\/\/zhiruili.github.io"},"articleSection":"posts","name":"图形学入门（三）：基础着色","headline":"图形学入门（三）：基础着色","description":"在掌握了上一篇文章的知识之后，我们现在可以通过逐个绘制三角形面组合出一个模型了。但是我们现在绘制出来的结果看起来是一个色块，效果不太自然。在现实中，我们看到物体是因为这个物体反射了光线，而在这个过程中，根据物体形状以及与光线的相对位置关系，物体的表面总会呈现不同的明暗效果。这种明暗的变化使我们感觉这个物体是「立体的」。也就是说，我们更希望看到下图 1 中右侧的渲染效果而非左侧的渲染效果：\n在计算机图形学中，着色（Shading）1 表示在三维场景中基于模型表面与光源的角度、与光源的距离、与相机的角度等因素，来改变多边形颜色的过程，以此来生成具有真实感的效果。这里说的「真实感」是指类似照片拍摄的效果。\nPhong 反射模型 真实的符合物理规律的光照极其复杂，想要在计算机中正确模拟出这个效果非常困难。为了能在计算机中快速进行渲染，我们需要采用一些方法简化这个计算过程，现在被广泛使用的着色模型叫 Phong 反射模型（Phong Reflection Model）2。这个模型对现实中光照反射规律进行近似模拟，将物体对光线的反射拆成三个分量，分别是：漫反射光（Diffuse）、镜面高光（Specular）和环境光（Ambient）。在后面的讨论中我们会看到，这个模型本身虽然不是一个物理模型而是一个经验模型，但它也符合一些基本的物理规律，并可以很好地模拟相当广泛的视觉场景。\nPhong 反射模型基于这样的观察：\n 一个物体表面越粗糙，其对光线的反射就越分散，而这部分反射的光构成了物体本身的基础颜色，这部分颜色用漫反射分量 $L_d$ 表示 一个物体表面越光滑，其对光线的反射就越集中，就越会在某些位置上呈现比较集中明亮的高光，这部分颜色用镜面反射分量 $L_s$ 表示 如果场景中有光源，那么即便一个物体没有直接被光源照亮，我们也还是看到这个物体。事实上，这部分表面接收到了来自四面八方的间接光照，这部分颜色用环境光分量 $L_a$ 表示  这个观察基本上也符合我们的认知，而这三个分量叠加的效果看起来还是相当可信的，如下图所示 2：\n需要说明的是，Phong 反射模型是一个局部模型，所谓「局部」是指，在计算某个点（我们称之为着色点）的颜色时我们只考虑这个点本身的属性以及这个点和光线的关系，和其他物体无关。「非局部」的典型例子就是阴影，阴影的计算不仅需要考虑当前着色点，还需要考虑着色点与光源之间的遮挡物。因此 Phong 反射模型的计算中并不会产生阴影。具体来说，我们在计算一个点的颜色时，我们可用的局部信息有如下几部分：\n 观察方向 $\\hat{v}$ 每个光源的方向 $\\hat{l}$ 当前点的表面法线方向 $\\hat{n}$ 当前点的表面材质参数（例如颜色、光泽度等）  其中，$\\hat{v}$、$\\hat{l}$、$\\hat{n}$ 都是单位向量。\n漫反射分量 我们知道，一个粗糙的物体表面会将入射的光向周围各个方向反射，我们称之为漫反射，如下图 3 所示：\n我们前面提到，漫反射的分量构成了物体的整体颜色，它是 Phong 反射模型中最重要的一部分。我们知道，物体表面呈现不同的颜色是由于不同的表面会吸收不同波长的光并反射其他的光，我们用漫反射系数 $k_d$ 描述这种现象，如果 $k_d = 1$，那么物体本身不吸收对应颜色的光，对其进行完全的反射，如果为 $0$，那么说明完全吸收了对应颜色的光。而这个入射的光，我们则用 $I$ 表示。另外根据我们日常的观察也会发现，如果一个表面正对着光源，那么这个表面看起来就会比较亮，如果背对光源，这个表面看起来就会比较暗。如下图 3 所示，当一个物体表面正对光源时，它能接收到光源的全部能量，当它没有正对光源时，接收到的能量就变少了。这个能量的具体比例可以用平面法线方向 $\\hat{n}$ 和光源方向 $\\hat{l}$ 的夹角 $\\theta$ 的余弦值来确定：\n又由于 $\\hat{n}$ 和 $\\hat{l}$ 是单位向量，我们可以直接对其进行点乘来获取到这个余弦值，因此，我们的漫反射分量 $L_d$ 表示如下：","inLanguage":"en-US","author":"Zhirui Li","creator":"Zhirui Li","publisher":"Zhirui Li","accountablePerson":"Zhirui Li","copyrightHolder":"Zhirui Li","copyrightYear":"2021","datePublished":"2021-08-01 00:00:00 \u002b0000 UTC","dateModified":"2021-08-01 00:00:00 \u002b0000 UTC","url":"https:\/\/zhiruili.github.io\/posts\/basic-shading\/","keywords":["Computer Graphics"]}</script>
-<title>图形学入门（三）：基础着色</title>
-<meta property="og:title" content="图形学入门（三）：基础着色">
-<meta property="og:type" content="article">
-<meta property="og:description" content="在掌握了上一篇文章的知识之后，我们现在可以通过逐个绘制三角形面组合出一个模型了。但是我们现在绘制出来的结果看起来是一个色块，效果不太自然。在现实中，我们看到物体是因为这个物体反射了光线，而在这个过程中，根据物体形状以及与光线的相对位置关系，物体的表面总会呈现不同的明暗效果。这种明暗的变化使我们感觉这个物体是「立体的」。也就是说，我们更希望看到下图 1 中右侧的渲染效果而非左侧的渲染效果：
-在计算机图形学中，着色（Shading）1 表示在三维场景中基于模型表面与光源的角度、与光源的距离、与相机的角度等因素，来改变多边形颜色的过程，以此来生成具有真实感的效果。这里说的「真实感」是指类似照片拍摄的效果。
-Phong 反射模型 真实的符合物理规律的光照极其复杂，想要在计算机中正确模拟出这个效果非常困难。为了能在计算机中快速进行渲染，我们需要采用一些方法简化这个计算过程，现在被广泛使用的着色模型叫 Phong 反射模型（Phong Reflection Model）2。这个模型对现实中光照反射规律进行近似模拟，将物体对光线的反射拆成三个分量，分别是：漫反射光（Diffuse）、镜面高光（Specular）和环境光（Ambient）。在后面的讨论中我们会看到，这个模型本身虽然不是一个物理模型而是一个经验模型，但它也符合一些基本的物理规律，并可以很好地模拟相当广泛的视觉场景。
-Phong 反射模型基于这样的观察：
- 一个物体表面越粗糙，其对光线的反射就越分散，而这部分反射的光构成了物体本身的基础颜色，这部分颜色用漫反射分量 $L_d$ 表示 一个物体表面越光滑，其对光线的反射就越集中，就越会在某些位置上呈现比较集中明亮的高光，这部分颜色用镜面反射分量 $L_s$ 表示 如果场景中有光源，那么即便一个物体没有直接被光源照亮，我们也还是看到这个物体。事实上，这部分表面接收到了来自四面八方的间接光照，这部分颜色用环境光分量 $L_a$ 表示  这个观察基本上也符合我们的认知，而这三个分量叠加的效果看起来还是相当可信的，如下图所示 2：
-需要说明的是，Phong 反射模型是一个局部模型，所谓「局部」是指，在计算某个点（我们称之为着色点）的颜色时我们只考虑这个点本身的属性以及这个点和光线的关系，和其他物体无关。「非局部」的典型例子就是阴影，阴影的计算不仅需要考虑当前着色点，还需要考虑着色点与光源之间的遮挡物。因此 Phong 反射模型的计算中并不会产生阴影。具体来说，我们在计算一个点的颜色时，我们可用的局部信息有如下几部分：
- 观察方向 $\hat{v}$ 每个光源的方向 $\hat{l}$ 当前点的表面法线方向 $\hat{n}$ 当前点的表面材质参数（例如颜色、光泽度等）  其中，$\hat{v}$、$\hat{l}$、$\hat{n}$ 都是单位向量。
-漫反射分量 我们知道，一个粗糙的物体表面会将入射的光向周围各个方向反射，我们称之为漫反射，如下图 3 所示：
-我们前面提到，漫反射的分量构成了物体的整体颜色，它是 Phong 反射模型中最重要的一部分。我们知道，物体表面呈现不同的颜色是由于不同的表面会吸收不同波长的光并反射其他的光，我们用漫反射系数 $k_d$ 描述这种现象，如果 $k_d = 1$，那么物体本身不吸收对应颜色的光，对其进行完全的反射，如果为 $0$，那么说明完全吸收了对应颜色的光。而这个入射的光，我们则用 $I$ 表示。另外根据我们日常的观察也会发现，如果一个表面正对着光源，那么这个表面看起来就会比较亮，如果背对光源，这个表面看起来就会比较暗。如下图 3 所示，当一个物体表面正对光源时，它能接收到光源的全部能量，当它没有正对光源时，接收到的能量就变少了。这个能量的具体比例可以用平面法线方向 $\hat{n}$ 和光源方向 $\hat{l}$ 的夹角 $\theta$ 的余弦值来确定：
-又由于 $\hat{n}$ 和 $\hat{l}$ 是单位向量，我们可以直接对其进行点乘来获取到这个余弦值，因此，我们的漫反射分量 $L_d$ 表示如下：">
 <meta name=description content="在掌握了上一篇文章的知识之后，我们现在可以通过逐个绘制三角形面组合出一个模型了。但是我们现在绘制出来的结果看起来是一个色块，效果不太自然。在现实中，我们看到物体是因为这个物体反射了光线，而在这个过程中，根据物体形状以及与光线的相对位置关系，物体的表面总会呈现不同的明暗效果。这种明暗的变化使我们感觉这个物体是「立体的」。也就是说，我们更希望看到下图 1 中右侧的渲染效果而非左侧的渲染效果：
 在计算机图形学中，着色（Shading）1 表示在三维场景中基于模型表面与光源的角度、与光源的距离、与相机的角度等因素，来改变多边形颜色的过程，以此来生成具有真实感的效果。这里说的「真实感」是指类似照片拍摄的效果。
 Phong 反射模型 真实的符合物理规律的光照极其复杂，想要在计算机中正确模拟出这个效果非常困难。为了能在计算机中快速进行渲染，我们需要采用一些方法简化这个计算过程，现在被广泛使用的着色模型叫 Phong 反射模型（Phong Reflection Model）2。这个模型对现实中光照反射规律进行近似模拟，将物体对光线的反射拆成三个分量，分别是：漫反射光（Diffuse）、镜面高光（Specular）和环境光（Ambient）。在后面的讨论中我们会看到，这个模型本身虽然不是一个物理模型而是一个经验模型，但它也符合一些基本的物理规律，并可以很好地模拟相当广泛的视觉场景。
@@ -31,55 +16,93 @@ Phong 反射模型基于这样的观察：
 漫反射分量 我们知道，一个粗糙的物体表面会将入射的光向周围各个方向反射，我们称之为漫反射，如下图 3 所示：
 我们前面提到，漫反射的分量构成了物体的整体颜色，它是 Phong 反射模型中最重要的一部分。我们知道，物体表面呈现不同的颜色是由于不同的表面会吸收不同波长的光并反射其他的光，我们用漫反射系数 $k_d$ 描述这种现象，如果 $k_d = 1$，那么物体本身不吸收对应颜色的光，对其进行完全的反射，如果为 $0$，那么说明完全吸收了对应颜色的光。而这个入射的光，我们则用 $I$ 表示。另外根据我们日常的观察也会发现，如果一个表面正对着光源，那么这个表面看起来就会比较亮，如果背对光源，这个表面看起来就会比较暗。如下图 3 所示，当一个物体表面正对光源时，它能接收到光源的全部能量，当它没有正对光源时，接收到的能量就变少了。这个能量的具体比例可以用平面法线方向 $\hat{n}$ 和光源方向 $\hat{l}$ 的夹角 $\theta$ 的余弦值来确定：
 又由于 $\hat{n}$ 和 $\hat{l}$ 是单位向量，我们可以直接对其进行点乘来获取到这个余弦值，因此，我们的漫反射分量 $L_d$ 表示如下：">
-<meta property="og:locale" content="zh-cn">
-<style>body{font-family:bree serif,sans-serif;-webkit-font-smoothing:antialiased;margin:0 20px}article{max-width:800px;margin-left:auto;margin-right:auto}a{color:#000;text-decoration:none}a:hover{font-weight:600;text-decoration:underline}.post-ads{margin:50px 0}.markdown-body{font-size:18px;max-width:100%}.markdown-body a{text-decoration:underline;text-decoration-color:#000}.markdown-body pre{padding:16px;overflow:auto;border-radius:10px}.markdown-body code{padding:.2em .4em;font-size:85%;background-color:#f6f8fa;border-radius:6px}.markdown-body pre>code{padding:0;font-size:100%;background-color:inherit;border:0}.Chinese .markdown-body{line-height:200%}.site-date-catalog{font-size:2rem}.header-title{font-size:2rem;font-weight:700;margin-top:32px;font-family:bungee shade,sans-serif}.header-title a{text-decoration:none}.header-subtitle{color:#666}.header-items{margin:10px 0}.header-item{margin:0 5px}.header-line{width:100%;border-width:2px;border-color:#482936;border-style:solid none none none}.lang-switch{font-weight:600}#posts-list{min-height:600px}.posts-line{font-size:1.2rem;margin:12px 0}.posts-categories{font-size:.8rem;margin:auto;text-align:center}.posts-category{padding:3px 0;border:#000 2px solid;border-radius:5px}.site-footer{margin-top:50px}.site-footer-item{margin-right:12px}.post-content img{max-width:100%;display:block;margin-right:auto;margin-top:12px}.post-header{margin-bottom:50px}.post-title{font-size:2rem;font-weight:600}.post-tags{display:inline;font-weight:600;padding:2px 5px;margin-right:6px;border:#000 2px solid;border-radius:5px}.post-date{font-weight:800;font-style:italic}.post-author{float:right;font-weight:600}.page-content{min-height:60%}.post-content{margin-bottom:50px}.post-content p{hyphens:auto;line-height:1.8;text-justify:ideographic;margin-bottom:1em}.related-content{border-width:3px;border-style:solid;border-color:#000;padding:0 10px;margin-bottom:50px;margin-top:100px}.related-content li{margin:5px 0}.taxonomy-term{font-size:3rem}.gallery-img{text-align:center}.gallery-img span{text-align:center}.gallery-img-desc{font-size:.8em;font-weight:800}#disqus_thread{position:relative}#disqus_thread:after{content:"";display:block;height:55px;width:100%;position:absolute;bottom:0;background:#fff}@media screen and (max-width:600px){.header-title,.header-subtitle,.header-items{text-align:center}.posts-line{font-size:16px}.markdown-body{font-size:16px}.post-title{font-size:2rem}.post-content p{letter-spacing:.05em}}@media screen and (max-width:48em){.posts-category{display:none}}</style>
-<style>.container,.container-fluid{margin-right:auto;margin-left:auto}.container-fluid{padding-right:2rem;padding-left:2rem}.row{box-sizing:border-box;display:-webkit-box;display:-ms-flexbox;display:flex;-webkit-box-flex:0;-ms-flex:0 1 auto;flex:initial;-webkit-box-orient:horizontal;-webkit-box-direction:normal;-ms-flex-direction:row;flex-direction:row;-ms-flex-wrap:wrap;flex-wrap:wrap;margin-right:-.5rem;margin-left:-.5rem}.row.reverse{-webkit-box-orient:horizontal;-webkit-box-direction:reverse;-ms-flex-direction:row-reverse;flex-direction:row-reverse}.col.reverse{-webkit-box-orient:vertical;-webkit-box-direction:reverse;-ms-flex-direction:column-reverse;flex-direction:column-reverse}.col-xs,.col-xs-1,.col-xs-10,.col-xs-11,.col-xs-12,.col-xs-2,.col-xs-3,.col-xs-4,.col-xs-5,.col-xs-6,.col-xs-7,.col-xs-8,.col-xs-9,.col-xs-offset-0,.col-xs-offset-1,.col-xs-offset-10,.col-xs-offset-11,.col-xs-offset-12,.col-xs-offset-2,.col-xs-offset-3,.col-xs-offset-4,.col-xs-offset-5,.col-xs-offset-6,.col-xs-offset-7,.col-xs-offset-8,.col-xs-offset-9{box-sizing:border-box;-webkit-box-flex:0;-ms-flex:0 0 auto;flex:none;padding-right:.5rem;padding-left:.5rem}.col-xs{-webkit-box-flex:1;-ms-flex-positive:1;flex-grow:1;-ms-flex-preferred-size:0;flex-basis:0;max-width:100%}.col-xs-1{-ms-flex-preferred-size:8.33333333%;flex-basis:8.33333333%;max-width:8.33333333%}.col-xs-2{-ms-flex-preferred-size:16.66666667%;flex-basis:16.66666667%;max-width:16.66666667%}.col-xs-3{-ms-flex-preferred-size:25%;flex-basis:25%;max-width:25%}.col-xs-4{-ms-flex-preferred-size:33.33333333%;flex-basis:33.33333333%;max-width:33.33333333%}.col-xs-5{-ms-flex-preferred-size:41.66666667%;flex-basis:41.66666667%;max-width:41.66666667%}.col-xs-6{-ms-flex-preferred-size:50%;flex-basis:50%;max-width:50%}.col-xs-7{-ms-flex-preferred-size:58.33333333%;flex-basis:58.33333333%;max-width:58.33333333%}.col-xs-8{-ms-flex-preferred-size:66.66666667%;flex-basis:66.66666667%;max-width:66.66666667%}.col-xs-9{-ms-flex-preferred-size:75%;flex-basis:75%;max-width:75%}.col-xs-10{-ms-flex-preferred-size:83.33333333%;flex-basis:83.33333333%;max-width:83.33333333%}.col-xs-11{-ms-flex-preferred-size:91.66666667%;flex-basis:91.66666667%;max-width:91.66666667%}.col-xs-12{-ms-flex-preferred-size:100%;flex-basis:100%;max-width:100%}.col-xs-offset-0{margin-left:0}.col-xs-offset-1{margin-left:8.33333333%}.col-xs-offset-2{margin-left:16.66666667%}.col-xs-offset-3{margin-left:25%}.col-xs-offset-4{margin-left:33.33333333%}.col-xs-offset-5{margin-left:41.66666667%}.col-xs-offset-6{margin-left:50%}.col-xs-offset-7{margin-left:58.33333333%}.col-xs-offset-8{margin-left:66.66666667%}.col-xs-offset-9{margin-left:75%}.col-xs-offset-10{margin-left:83.33333333%}.col-xs-offset-11{margin-left:91.66666667%}.start-xs{-webkit-box-pack:start;-ms-flex-pack:start;justify-content:flex-start;text-align:start}.center-xs{-webkit-box-pack:center;-ms-flex-pack:center;justify-content:center;text-align:center}.end-xs{-webkit-box-pack:end;-ms-flex-pack:end;justify-content:flex-end;text-align:end}.top-xs{-webkit-box-align:start;-ms-flex-align:start;align-items:flex-start}.middle-xs{-webkit-box-align:center;-ms-flex-align:center;align-items:center}.bottom-xs{-webkit-box-align:end;-ms-flex-align:end;align-items:flex-end}.around-xs{-ms-flex-pack:distribute;justify-content:space-around}.between-xs{-webkit-box-pack:justify;-ms-flex-pack:justify;justify-content:space-between}.first-xs{-webkit-box-ordinal-group:0;-ms-flex-order:-1;order:-1}.last-xs{-webkit-box-ordinal-group:2;-ms-flex-order:1;order:1}@media only screen and (min-width:48em){.container{width:49rem}.col-sm,.col-sm-1,.col-sm-10,.col-sm-11,.col-sm-12,.col-sm-2,.col-sm-3,.col-sm-4,.col-sm-5,.col-sm-6,.col-sm-7,.col-sm-8,.col-sm-9,.col-sm-offset-0,.col-sm-offset-1,.col-sm-offset-10,.col-sm-offset-11,.col-sm-offset-12,.col-sm-offset-2,.col-sm-offset-3,.col-sm-offset-4,.col-sm-offset-5,.col-sm-offset-6,.col-sm-offset-7,.col-sm-offset-8,.col-sm-offset-9{box-sizing:border-box;-webkit-box-flex:0;-ms-flex:0 0 auto;flex:none;padding-right:.5rem;padding-left:.5rem}.col-sm{-webkit-box-flex:1;-ms-flex-positive:1;flex-grow:1;-ms-flex-preferred-size:0;flex-basis:0;max-width:100%}.col-sm-1{-ms-flex-preferred-size:8.33333333%;flex-basis:8.33333333%;max-width:8.33333333%}.col-sm-2{-ms-flex-preferred-size:16.66666667%;flex-basis:16.66666667%;max-width:16.66666667%}.col-sm-3{-ms-flex-preferred-size:25%;flex-basis:25%;max-width:25%}.col-sm-4{-ms-flex-preferred-size:33.33333333%;flex-basis:33.33333333%;max-width:33.33333333%}.col-sm-5{-ms-flex-preferred-size:41.66666667%;flex-basis:41.66666667%;max-width:41.66666667%}.col-sm-6{-ms-flex-preferred-size:50%;flex-basis:50%;max-width:50%}.col-sm-7{-ms-flex-preferred-size:58.33333333%;flex-basis:58.33333333%;max-width:58.33333333%}.col-sm-8{-ms-flex-preferred-size:66.66666667%;flex-basis:66.66666667%;max-width:66.66666667%}.col-sm-9{-ms-flex-preferred-size:75%;flex-basis:75%;max-width:75%}.col-sm-10{-ms-flex-preferred-size:83.33333333%;flex-basis:83.33333333%;max-width:83.33333333%}.col-sm-11{-ms-flex-preferred-size:91.66666667%;flex-basis:91.66666667%;max-width:91.66666667%}.col-sm-12{-ms-flex-preferred-size:100%;flex-basis:100%;max-width:100%}.col-sm-offset-0{margin-left:0}.col-sm-offset-1{margin-left:8.33333333%}.col-sm-offset-2{margin-left:16.66666667%}.col-sm-offset-3{margin-left:25%}.col-sm-offset-4{margin-left:33.33333333%}.col-sm-offset-5{margin-left:41.66666667%}.col-sm-offset-6{margin-left:50%}.col-sm-offset-7{margin-left:58.33333333%}.col-sm-offset-8{margin-left:66.66666667%}.col-sm-offset-9{margin-left:75%}.col-sm-offset-10{margin-left:83.33333333%}.col-sm-offset-11{margin-left:91.66666667%}.start-sm{-webkit-box-pack:start;-ms-flex-pack:start;justify-content:flex-start;text-align:start}.center-sm{-webkit-box-pack:center;-ms-flex-pack:center;justify-content:center;text-align:center}.end-sm{-webkit-box-pack:end;-ms-flex-pack:end;justify-content:flex-end;text-align:end}.top-sm{-webkit-box-align:start;-ms-flex-align:start;align-items:flex-start}.middle-sm{-webkit-box-align:center;-ms-flex-align:center;align-items:center}.bottom-sm{-webkit-box-align:end;-ms-flex-align:end;align-items:flex-end}.around-sm{-ms-flex-pack:distribute;justify-content:space-around}.between-sm{-webkit-box-pack:justify;-ms-flex-pack:justify;justify-content:space-between}.first-sm{-webkit-box-ordinal-group:0;-ms-flex-order:-1;order:-1}.last-sm{-webkit-box-ordinal-group:2;-ms-flex-order:1;order:1}}@media only screen and (min-width:64em){.container{width:65rem}.col-md,.col-md-1,.col-md-10,.col-md-11,.col-md-12,.col-md-2,.col-md-3,.col-md-4,.col-md-5,.col-md-6,.col-md-7,.col-md-8,.col-md-9,.col-md-offset-0,.col-md-offset-1,.col-md-offset-10,.col-md-offset-11,.col-md-offset-12,.col-md-offset-2,.col-md-offset-3,.col-md-offset-4,.col-md-offset-5,.col-md-offset-6,.col-md-offset-7,.col-md-offset-8,.col-md-offset-9{box-sizing:border-box;-webkit-box-flex:0;-ms-flex:0 0 auto;flex:none;padding-right:.5rem;padding-left:.5rem}.col-md{-webkit-box-flex:1;-ms-flex-positive:1;flex-grow:1;-ms-flex-preferred-size:0;flex-basis:0;max-width:100%}.col-md-1{-ms-flex-preferred-size:8.33333333%;flex-basis:8.33333333%;max-width:8.33333333%}.col-md-2{-ms-flex-preferred-size:16.66666667%;flex-basis:16.66666667%;max-width:16.66666667%}.col-md-3{-ms-flex-preferred-size:25%;flex-basis:25%;max-width:25%}.col-md-4{-ms-flex-preferred-size:33.33333333%;flex-basis:33.33333333%;max-width:33.33333333%}.col-md-5{-ms-flex-preferred-size:41.66666667%;flex-basis:41.66666667%;max-width:41.66666667%}.col-md-6{-ms-flex-preferred-size:50%;flex-basis:50%;max-width:50%}.col-md-7{-ms-flex-preferred-size:58.33333333%;flex-basis:58.33333333%;max-width:58.33333333%}.col-md-8{-ms-flex-preferred-size:66.66666667%;flex-basis:66.66666667%;max-width:66.66666667%}.col-md-9{-ms-flex-preferred-size:75%;flex-basis:75%;max-width:75%}.col-md-10{-ms-flex-preferred-size:83.33333333%;flex-basis:83.33333333%;max-width:83.33333333%}.col-md-11{-ms-flex-preferred-size:91.66666667%;flex-basis:91.66666667%;max-width:91.66666667%}.col-md-12{-ms-flex-preferred-size:100%;flex-basis:100%;max-width:100%}.col-md-offset-0{margin-left:0}.col-md-offset-1{margin-left:8.33333333%}.col-md-offset-2{margin-left:16.66666667%}.col-md-offset-3{margin-left:25%}.col-md-offset-4{margin-left:33.33333333%}.col-md-offset-5{margin-left:41.66666667%}.col-md-offset-6{margin-left:50%}.col-md-offset-7{margin-left:58.33333333%}.col-md-offset-8{margin-left:66.66666667%}.col-md-offset-9{margin-left:75%}.col-md-offset-10{margin-left:83.33333333%}.col-md-offset-11{margin-left:91.66666667%}.start-md{-webkit-box-pack:start;-ms-flex-pack:start;justify-content:flex-start;text-align:start}.center-md{-webkit-box-pack:center;-ms-flex-pack:center;justify-content:center;text-align:center}.end-md{-webkit-box-pack:end;-ms-flex-pack:end;justify-content:flex-end;text-align:end}.top-md{-webkit-box-align:start;-ms-flex-align:start;align-items:flex-start}.middle-md{-webkit-box-align:center;-ms-flex-align:center;align-items:center}.bottom-md{-webkit-box-align:end;-ms-flex-align:end;align-items:flex-end}.around-md{-ms-flex-pack:distribute;justify-content:space-around}.between-md{-webkit-box-pack:justify;-ms-flex-pack:justify;justify-content:space-between}.first-md{-webkit-box-ordinal-group:0;-ms-flex-order:-1;order:-1}.last-md{-webkit-box-ordinal-group:2;-ms-flex-order:1;order:1}}@media only screen and (min-width:75em){.container{width:76rem}.col-lg,.col-lg-1,.col-lg-10,.col-lg-11,.col-lg-12,.col-lg-2,.col-lg-3,.col-lg-4,.col-lg-5,.col-lg-6,.col-lg-7,.col-lg-8,.col-lg-9,.col-lg-offset-0,.col-lg-offset-1,.col-lg-offset-10,.col-lg-offset-11,.col-lg-offset-12,.col-lg-offset-2,.col-lg-offset-3,.col-lg-offset-4,.col-lg-offset-5,.col-lg-offset-6,.col-lg-offset-7,.col-lg-offset-8,.col-lg-offset-9{box-sizing:border-box;-webkit-box-flex:0;-ms-flex:0 0 auto;flex:none;padding-right:.5rem;padding-left:.5rem}.col-lg{-webkit-box-flex:1;-ms-flex-positive:1;flex-grow:1;-ms-flex-preferred-size:0;flex-basis:0;max-width:100%}.col-lg-1{-ms-flex-preferred-size:8.33333333%;flex-basis:8.33333333%;max-width:8.33333333%}.col-lg-2{-ms-flex-preferred-size:16.66666667%;flex-basis:16.66666667%;max-width:16.66666667%}.col-lg-3{-ms-flex-preferred-size:25%;flex-basis:25%;max-width:25%}.col-lg-4{-ms-flex-preferred-size:33.33333333%;flex-basis:33.33333333%;max-width:33.33333333%}.col-lg-5{-ms-flex-preferred-size:41.66666667%;flex-basis:41.66666667%;max-width:41.66666667%}.col-lg-6{-ms-flex-preferred-size:50%;flex-basis:50%;max-width:50%}.col-lg-7{-ms-flex-preferred-size:58.33333333%;flex-basis:58.33333333%;max-width:58.33333333%}.col-lg-8{-ms-flex-preferred-size:66.66666667%;flex-basis:66.66666667%;max-width:66.66666667%}.col-lg-9{-ms-flex-preferred-size:75%;flex-basis:75%;max-width:75%}.col-lg-10{-ms-flex-preferred-size:83.33333333%;flex-basis:83.33333333%;max-width:83.33333333%}.col-lg-11{-ms-flex-preferred-size:91.66666667%;flex-basis:91.66666667%;max-width:91.66666667%}.col-lg-12{-ms-flex-preferred-size:100%;flex-basis:100%;max-width:100%}.col-lg-offset-0{margin-left:0}.col-lg-offset-1{margin-left:8.33333333%}.col-lg-offset-2{margin-left:16.66666667%}.col-lg-offset-3{margin-left:25%}.col-lg-offset-4{margin-left:33.33333333%}.col-lg-offset-5{margin-left:41.66666667%}.col-lg-offset-6{margin-left:50%}.col-lg-offset-7{margin-left:58.33333333%}.col-lg-offset-8{margin-left:66.66666667%}.col-lg-offset-9{margin-left:75%}.col-lg-offset-10{margin-left:83.33333333%}.col-lg-offset-11{margin-left:91.66666667%}.start-lg{-webkit-box-pack:start;-ms-flex-pack:start;justify-content:flex-start;text-align:start}.center-lg{-webkit-box-pack:center;-ms-flex-pack:center;justify-content:center;text-align:center}.end-lg{-webkit-box-pack:end;-ms-flex-pack:end;justify-content:flex-end;text-align:end}.top-lg{-webkit-box-align:start;-ms-flex-align:start;align-items:flex-start}.middle-lg{-webkit-box-align:center;-ms-flex-align:center;align-items:center}.bottom-lg{-webkit-box-align:end;-ms-flex-align:end;align-items:flex-end}.around-lg{-ms-flex-pack:distribute;justify-content:space-around}.between-lg{-webkit-box-pack:justify;-ms-flex-pack:justify;justify-content:space-between}.first-lg{-webkit-box-ordinal-group:0;-ms-flex-order:-1;order:-1}.last-lg{-webkit-box-ordinal-group:2;-ms-flex-order:1;order:1}}</style>
-<link href=/index.xml rel=alternate type=application/rss+xml title="简单易懂的现代魔法 - Zhirui Li">
-<link rel=preconnect href=https://fonts.gstatic.com>
-<link href="https://fonts.googleapis.com/css?family=Bree+Serif|Bungee+Shade" rel=stylesheet>
+<meta name=keywords content="编程,计算机图形学,游戏开发">
+<meta name=robots content="noodp">
+<link rel=canonical href=/posts/basic-shading/>
+<link rel=stylesheet href=/assets/style.css>
+<link rel=stylesheet href=/style.css>
+<link rel=apple-touch-icon-precomposed sizes=144x144 href=/img/apple-touch-icon-144-precomposed.png>
+<link rel="shortcut icon" href=/img/favicon.png>
+<link href=/assets/fonts/Inter-Italic.woff2 rel=preload type=font/woff2 as=font crossorigin>
+<link href=/assets/fonts/Inter-Regular.woff2 rel=preload type=font/woff2 as=font crossorigin>
+<link href=/assets/fonts/Inter-Medium.woff2 rel=preload type=font/woff2 as=font crossorigin>
+<link href=/assets/fonts/Inter-MediumItalic.woff2 rel=preload type=font/woff2 as=font crossorigin>
+<link href=/assets/fonts/Inter-Bold.woff2 rel=preload type=font/woff2 as=font crossorigin>
+<link href=/assets/fonts/Inter-BoldItalic.woff2 rel=preload type=font/woff2 as=font crossorigin>
+<meta name=twitter:card content="summary">
+<meta name=twitter:title content="图形学入门（三）：基础着色">
+<meta name=twitter:description content="在掌握了上一篇文章的知识之后，我们现在可以通过逐个绘制三角形面组合出一个模型了。但是我们现在绘制出来的结果看起来是一个色块，效果不太自然。在现实中，我们看到物体是因为这个物体反射了光线，而在这个过程中，根据物体形状以及与光线的相对位置关系，物体的表面总会呈现不同的明暗效果。这种明暗的变化使我们感觉这个物体是「立体的」。也就是说，我们更希望看到下图 1 中右侧的渲染效果而非左侧的渲染效果：
+在计算机图形学中，着色（Shading）1 表示在三维场景中基于模型表面与光源的角度、与光源的距离、与相机的角度等因素，来改变多边形颜色的过程，以此来生成具有真实感的效果。这里说的「真实感」是指类似照片拍摄的效果。
+Phong 反射模型 真实的符合物理规律的光照极其复杂，想要在计算机中正确模拟出这个效果非常困难。为了能在计算机中快速进行渲染，我们需要采用一些方法简化这个计算过程，现在被广泛使用的着色模型叫 Phong 反射模型（Phong Reflection Model）2。这个模型对现实中光照反射规律进行近似模拟，将物体对光线的反射拆成三个分量，分别是：漫反射光（Diffuse）、镜面高光（Specular）和环境光（Ambient）。在后面的讨论中我们会看到，这个模型本身虽然不是一个物理模型而是一个经验模型，但它也符合一些基本的物理规律，并可以很好地模拟相当广泛的视觉场景。
+Phong 反射模型基于这样的观察：
+ 一个物体表面越粗糙，其对光线的反射就越分散，而这部分反射的光构成了物体本身的基础颜色，这部分颜色用漫反射分量 $L_d$ 表示 一个物体表面越光滑，其对光线的反射就越集中，就越会在某些位置上呈现比较集中明亮的高光，这部分颜色用镜面反射分量 $L_s$ 表示 如果场景中有光源，那么即便一个物体没有直接被光源照亮，我们也还是看到这个物体。事实上，这部分表面接收到了来自四面八方的间接光照，这部分颜色用环境光分量 $L_a$ 表示  这个观察基本上也符合我们的认知，而这三个分量叠加的效果看起来还是相当可信的，如下图所示 2：
+需要说明的是，Phong 反射模型是一个局部模型，所谓「局部」是指，在计算某个点（我们称之为着色点）的颜色时我们只考虑这个点本身的属性以及这个点和光线的关系，和其他物体无关。「非局部」的典型例子就是阴影，阴影的计算不仅需要考虑当前着色点，还需要考虑着色点与光源之间的遮挡物。因此 Phong 反射模型的计算中并不会产生阴影。具体来说，我们在计算一个点的颜色时，我们可用的局部信息有如下几部分：
+ 观察方向 $\hat{v}$ 每个光源的方向 $\hat{l}$ 当前点的表面法线方向 $\hat{n}$ 当前点的表面材质参数（例如颜色、光泽度等）  其中，$\hat{v}$、$\hat{l}$、$\hat{n}$ 都是单位向量。
+漫反射分量 我们知道，一个粗糙的物体表面会将入射的光向周围各个方向反射，我们称之为漫反射，如下图 3 所示：
+我们前面提到，漫反射的分量构成了物体的整体颜色，它是 Phong 反射模型中最重要的一部分。我们知道，物体表面呈现不同的颜色是由于不同的表面会吸收不同波长的光并反射其他的光，我们用漫反射系数 $k_d$ 描述这种现象，如果 $k_d = 1$，那么物体本身不吸收对应颜色的光，对其进行完全的反射，如果为 $0$，那么说明完全吸收了对应颜色的光。而这个入射的光，我们则用 $I$ 表示。另外根据我们日常的观察也会发现，如果一个表面正对着光源，那么这个表面看起来就会比较亮，如果背对光源，这个表面看起来就会比较暗。如下图 3 所示，当一个物体表面正对光源时，它能接收到光源的全部能量，当它没有正对光源时，接收到的能量就变少了。这个能量的具体比例可以用平面法线方向 $\hat{n}$ 和光源方向 $\hat{l}$ 的夹角 $\theta$ 的余弦值来确定：
+又由于 $\hat{n}$ 和 $\hat{l}$ 是单位向量，我们可以直接对其进行点乘来获取到这个余弦值，因此，我们的漫反射分量 $L_d$ 表示如下：">
+<meta property="og:title" content="图形学入门（三）：基础着色">
+<meta property="og:description" content="在掌握了上一篇文章的知识之后，我们现在可以通过逐个绘制三角形面组合出一个模型了。但是我们现在绘制出来的结果看起来是一个色块，效果不太自然。在现实中，我们看到物体是因为这个物体反射了光线，而在这个过程中，根据物体形状以及与光线的相对位置关系，物体的表面总会呈现不同的明暗效果。这种明暗的变化使我们感觉这个物体是「立体的」。也就是说，我们更希望看到下图 1 中右侧的渲染效果而非左侧的渲染效果：
+在计算机图形学中，着色（Shading）1 表示在三维场景中基于模型表面与光源的角度、与光源的距离、与相机的角度等因素，来改变多边形颜色的过程，以此来生成具有真实感的效果。这里说的「真实感」是指类似照片拍摄的效果。
+Phong 反射模型 真实的符合物理规律的光照极其复杂，想要在计算机中正确模拟出这个效果非常困难。为了能在计算机中快速进行渲染，我们需要采用一些方法简化这个计算过程，现在被广泛使用的着色模型叫 Phong 反射模型（Phong Reflection Model）2。这个模型对现实中光照反射规律进行近似模拟，将物体对光线的反射拆成三个分量，分别是：漫反射光（Diffuse）、镜面高光（Specular）和环境光（Ambient）。在后面的讨论中我们会看到，这个模型本身虽然不是一个物理模型而是一个经验模型，但它也符合一些基本的物理规律，并可以很好地模拟相当广泛的视觉场景。
+Phong 反射模型基于这样的观察：
+ 一个物体表面越粗糙，其对光线的反射就越分散，而这部分反射的光构成了物体本身的基础颜色，这部分颜色用漫反射分量 $L_d$ 表示 一个物体表面越光滑，其对光线的反射就越集中，就越会在某些位置上呈现比较集中明亮的高光，这部分颜色用镜面反射分量 $L_s$ 表示 如果场景中有光源，那么即便一个物体没有直接被光源照亮，我们也还是看到这个物体。事实上，这部分表面接收到了来自四面八方的间接光照，这部分颜色用环境光分量 $L_a$ 表示  这个观察基本上也符合我们的认知，而这三个分量叠加的效果看起来还是相当可信的，如下图所示 2：
+需要说明的是，Phong 反射模型是一个局部模型，所谓「局部」是指，在计算某个点（我们称之为着色点）的颜色时我们只考虑这个点本身的属性以及这个点和光线的关系，和其他物体无关。「非局部」的典型例子就是阴影，阴影的计算不仅需要考虑当前着色点，还需要考虑着色点与光源之间的遮挡物。因此 Phong 反射模型的计算中并不会产生阴影。具体来说，我们在计算一个点的颜色时，我们可用的局部信息有如下几部分：
+ 观察方向 $\hat{v}$ 每个光源的方向 $\hat{l}$ 当前点的表面法线方向 $\hat{n}$ 当前点的表面材质参数（例如颜色、光泽度等）  其中，$\hat{v}$、$\hat{l}$、$\hat{n}$ 都是单位向量。
+漫反射分量 我们知道，一个粗糙的物体表面会将入射的光向周围各个方向反射，我们称之为漫反射，如下图 3 所示：
+我们前面提到，漫反射的分量构成了物体的整体颜色，它是 Phong 反射模型中最重要的一部分。我们知道，物体表面呈现不同的颜色是由于不同的表面会吸收不同波长的光并反射其他的光，我们用漫反射系数 $k_d$ 描述这种现象，如果 $k_d = 1$，那么物体本身不吸收对应颜色的光，对其进行完全的反射，如果为 $0$，那么说明完全吸收了对应颜色的光。而这个入射的光，我们则用 $I$ 表示。另外根据我们日常的观察也会发现，如果一个表面正对着光源，那么这个表面看起来就会比较亮，如果背对光源，这个表面看起来就会比较暗。如下图 3 所示，当一个物体表面正对光源时，它能接收到光源的全部能量，当它没有正对光源时，接收到的能量就变少了。这个能量的具体比例可以用平面法线方向 $\hat{n}$ 和光源方向 $\hat{l}$ 的夹角 $\theta$ 的余弦值来确定：
+又由于 $\hat{n}$ 和 $\hat{l}$ 是单位向量，我们可以直接对其进行点乘来获取到这个余弦值，因此，我们的漫反射分量 $L_d$ 表示如下：">
+<meta property="og:type" content="article">
+<meta property="og:url" content="/posts/basic-shading/"><meta property="article:section" content="posts">
+<meta property="article:published_time" content="2021-08-01T00:00:00+00:00">
+<meta property="article:modified_time" content="2021-08-01T00:00:00+00:00"><meta property="og:site_name" content="简单易懂的现代魔法">
+<script>var posts=document.getElementById('posts-list');posts&&quicklink({el:posts,priority:!0})</script>
+<script>MathJax={tex:{inlineMath:[['$','$'],['\\(','\\)']]},svg:{fontCache:'global'}}</script>
+<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script id=MathJax-script async src=https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js></script>
 </head>
 <body>
-<article class="post Chinese" id=article>
-<div class=row>
-<div class=col-xs-12>
-<div class=site-header>
-<header>
-<div class=header-title>
-<a href=/>简单易懂的现代魔法</a>
-</div>
-<div class=header-subtitle></div>
+<div class=container>
+<header class=header>
+<span class=header__inner>
+<a href=/ class=logo style=text-decoration:none>
+<span class=logo__mark><svg xmlns="http://www.w3.org/2000/svg" class="greater-icon" viewBox="0 0 44 44"><path fill="none" d="M15 8l14.729 14.382L15 35.367"/></svg>
+</span>
+<span class=logo__text>简单易懂的现代魔法</span>
+<span class=logo__cursor></span>
+</a>
+<span class=header__right>
+<nav class=menu>
+<ul class="menu__inner menu__inner--desktop">
+<li><a href=/archive>Archive</a></li>
+<li><a href=https://www.github.com/zhiruili>Github</a></li>
+<li><a href=/index.xml>RSS</a></li>
+</ul>
+<ul class="menu__inner menu__inner--mobile">
+<li><a href=/archive>Archive</a></li>
+<li><a href=https://www.github.com/zhiruili>Github</a></li>
+<li><a href=/index.xml>RSS</a></li>
+</ul>
+</nav>
+<span class=menu-trigger><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M0 0h24v24H0z" fill="none"/><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></svg>
+</span>
+<span class=theme-toggle><svg class="theme-toggler" width="24" height="24" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M22 41c10.4934.0 19-8.5066 19-19C41 11.5066 32.4934 3 22 3 11.5066 3 3 11.5066 3 22s8.5066 19 19 19zM7 22C7 13.7157 13.7157 7 22 7V37C13.7157 37 7 30.2843 7 22z"/></svg>
+</span>
+</span>
+</span>
 </header>
-<div class="row end-md center-xs header-items">
-<div class=header-item>
-<a href=/index.xml target=_blank>RSS</a>
-</div>
-<div class=header-item>
-<a href=mailto:zr.public@outlook.com target=_blank>E-mail</a>
-</div>
-<div class=header-item>
-<a href=https://www.github.com/ZhiruiLi target=_blank>Github</a>
-</div>
-</div>
-<div class="row end-xs">
-</div>
-<div class=header-line></div>
-</div>
-<header class=post-header>
+<div class=content>
+<div class=post>
 <h1 class=post-title>图形学入门（三）：基础着色</h1>
-<div class="row post-desc">
-<div class=col-xs-6>
-<time class=post-date datetime="2021-08-01 00:00:00 UTC">
-01 Aug 2021
-</time>
+<div class=post-meta>
+<span class=post-date>
+2021-08-01
+</span>
 </div>
-<div class=col-xs-6>
-<div class=post-author>
-<a target=_blank href=https://www.github.com/ZhiruiLi>@Zhirui Li</a>
-</div>
-</div>
-</div>
-</header>
-<div class="post-content markdown-body">
+<span class=post-tags>
+<a href=/tags/computer-graphics/>#Computer Graphics</a>&nbsp;
+</span>
+<div class=post-content>
 <p>在掌握了<a href=/posts/rasterization>上一篇文章</a>的知识之后，我们现在可以通过逐个绘制三角形面组合出一个模型了。但是我们现在绘制出来的结果看起来是一个色块，效果不太自然。在现实中，我们看到物体是因为这个物体反射了光线，而在这个过程中，根据物体形状以及与光线的相对位置关系，物体的表面总会呈现不同的明暗效果。这种明暗的变化使我们感觉这个物体是「立体的」。也就是说，我们更希望看到下图 <sup id=fnref:1><a href=#fn:1 class=footnote-ref role=doc-noteref>1</a></sup> 中右侧的渲染效果而非左侧的渲染效果：</p>
 <p><img src=/images/2021-08-01-12-11-12.png alt="With & Without Lighting"></p>
 <p>在计算机图形学中，着色（Shading）<sup id=fnref:1><a href=#fn:1 class=footnote-ref role=doc-noteref>1</a></sup> 表示在三维场景中基于模型表面与光源的角度、与光源的距离、与相机的角度等因素，来改变多边形颜色的过程，以此来生成具有真实感的效果。这里说的「真实感」是指类似照片拍摄的效果。</p>
@@ -332,44 +355,40 @@ $$</p>
 </ol>
 </section>
 </div>
-<div class="row middle-xs">
-<div class=col-xs-12>
-<div class=post-tags>
-<a href=/tags/computer-graphics/>
-Computer Graphics
+<div class=pagination>
+<div class=pagination__title>
+<span class=pagination__title-h>Read other posts</span>
+<hr>
+</div>
+<div class=pagination__buttons>
+<span class="button previous">
+<a href=/posts/rendering-equation/>
+<span class=button__icon>←</span>
+<span class=button__text>深入理解渲染方程</span>
 </a>
+</span>
+<span class="button next">
+<a href=/posts/rasterization/>
+<span class=button__text>图形学入门（二）：光栅化</span>
+<span class=button__icon>→</span>
+</a>
+</span>
 </div>
 </div>
-</div>
-<div class=row>
-<div class=col-xs-12>
-<br><p>我的博客即将同步至腾讯云+社区，<a target=_blank href="https://cloud.tencent.com/developer/support-plan?invite_code=11dehb9vzutlx">邀请大家一同入驻</a>。</p>
-</div>
-</div>
-<div class=related-content>
-<h3>Related Posts</h3>
-<ul>
-<li><a href=/posts/rasterization/>图形学入门（二）：光栅化</a></li>
-<li><a href=/posts/transformations/>图形学入门（一）：坐标变换</a></li>
-</ul>
-</div>
-<div style=height:50px></div>
-<div class=post-comments>
 <div id=disqus_thread></div>
-<script>window.addEventListener("load",()=>{(function(){var a=document,b=a.createElement("script");b.src="https://ZhiruiLi.disqus.com/embed.js",b.setAttribute("data-timestamp",+new Date),(a.head||a.body).appendChild(b)})()})</script>
-<noscript>Please enable JavaScript to view the
-<a href=https://disqus.com/?ref_noscript>comments powered by Disqus.</a></noscript>
-</div>
-<div class=site-footer>
+<script type=application/javascript>var disqus_config=function(){};(function(){if(["localhost","127.0.0.1"].indexOf(window.location.hostname)!=-1){document.getElementById('disqus_thread').innerHTML='Disqus comments not available by default when the website is previewed locally.';return}var b=document,a=b.createElement('script');a.async=!0,a.src='//ZhiruiLi.disqus.com/embed.js',a.setAttribute('data-timestamp',+new Date),(b.head||b.body).appendChild(a)})()</script>
+<noscript>Please enable JavaScript to view the <a href=https://disqus.com/?ref_noscript>comments powered by Disqus.</a></noscript>
+<a href=https://disqus.com class=dsq-brlink>comments powered by <span class=logo-disqus>Disqus</span></a>
 </div>
 </div>
+<footer class=footer>
+<div class=footer__inner>
+<div class="copyright copyright--user"><p>我的博客即将同步至腾讯云+社区，<a target=_blank href="https://cloud.tencent.com/developer/support-plan?invite_code=11dehb9vzutlx">邀请大家一同入驻</a></p><p>本网站采用 <a href=https://creativecommons.org/licenses/by-sa/4.0/>CC BY-SA 4.0</a> 协议进行授权</p></div>
 </div>
-</article>
-<script src=https://unpkg.com/quicklink@0.1.1/dist/quicklink.umd.js></script>
-<script>var posts=document.getElementById('posts-list');posts&&quicklink({el:posts,priority:!0})</script>
-<script>MathJax={tex:{inlineMath:[['$','$'],['\\(','\\)']]},svg:{fontCache:'global'}}</script>
-<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
-<script id=MathJax-script async src=https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js></script>
-<script async src="https://www.googletagmanager.com/gtag/js?id=UA-80302213-1"></script>
+</footer>
+<script src=/assets/main.js></script>
+<script src=/assets/prism.js></script>
+</div>
+<script type=application/javascript>var doNotTrack=!1;doNotTrack||(function(a,e,f,g,b,c,d){a.GoogleAnalyticsObject=b,a[b]=a[b]||function(){(a[b].q=a[b].q||[]).push(arguments)},a[b].l=1*new Date,c=e.createElement(f),d=e.getElementsByTagName(f)[0],c.async=1,c.src=g,d.parentNode.insertBefore(c,d)}(window,document,'script','https://www.google-analytics.com/analytics.js','ga'),ga('create','UA-80302213-1','auto'),ga('send','pageview'))</script>
 </body>
 </html>

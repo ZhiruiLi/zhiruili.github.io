@@ -1,210 +1,160 @@
-<!doctype html><html lang=en>
+<!doctype html><html lang=cn>
 <head>
+<title>
+错误使用 C++ 模板特化产生的坑 ::
+简单易懂的现代魔法 — Zhirui Li's Blog
+</title>
 <meta charset=utf-8>
-<meta name=generator content="Hugo 0.87.0">
-<meta http-equiv=x-ua-compatible content="IE=edge">
 <meta name=viewport content="width=device-width,initial-scale=1">
-<meta name=author content="Zhirui Li">
-<meta property="og:url" content="https://zhiruili.github.io/posts/cpp-template-specialization/">
-<link rel=canonical href=https://zhiruili.github.io/posts/cpp-template-specialization/><link rel=alternate type=application/atom+xml href=https://zhiruili.github.ioindex.xml title="简单易懂的现代魔法 - Zhirui Li">
-<script type=application/ld+json>{"@context":"http://schema.org","@type":"BlogPosting","mainEntityOfPage":{"@type":"WebPage","@id":"https:\/\/zhiruili.github.io"},"articleSection":"posts","name":"错误使用 C\u002b\u002b 模板特化产生的坑","headline":"错误使用 C\u002b\u002b 模板特化产生的坑","description":"今天在群里看到了一个错误使用 C\u002b\u002b 模板特化产生的坑，有点意思，这里记录一下。\n问题是这样的：\n有一个名为 A 的库，包含如下的头文件 a.h 和代码文件 a.cc\n1 2 3 4 5 6 7 8 9 10 11 12 13  \/\/ a.h #pragma once #include \u0026lt;iostream\u0026gt;template \u0026lt;class T\u0026gt; struct A { void print() { std::cout \u0026lt;\u0026lt; \u0026#34;normal\u0026#34; \u0026lt;\u0026lt; std::endl; } }; \/\/ a.cc #include \u0026#34;a.h\u0026#34;template \u0026lt;\u0026gt; void A\u0026lt;int\u0026gt;::print() { std::cout \u0026lt;\u0026lt; \u0026#34;specialization\u0026#34; \u0026lt;\u0026lt; std::endl; }   有如下代码文件 main.cc 使用了这个库：\n1 2 3 4 5  #include \u0026#34;a.","inLanguage":"en-US","author":"Zhirui Li","creator":"Zhirui Li","publisher":"Zhirui Li","accountablePerson":"Zhirui Li","copyrightHolder":"Zhirui Li","copyrightYear":"2021","datePublished":"2021-08-27 00:00:00 \u002b0000 UTC","dateModified":"2021-08-27 00:00:00 \u002b0000 UTC","url":"https:\/\/zhiruili.github.io\/posts\/cpp-template-specialization\/","keywords":["C\u002b\u002b"]}</script>
-<title>错误使用 C++ 模板特化产生的坑</title>
-<meta property="og:title" content="错误使用 C++ 模板特化产生的坑">
-<meta property="og:type" content="article">
-<meta property="og:description" content="今天在群里看到了一个错误使用 C++ 模板特化产生的坑，有点意思，这里记录一下。
-问题是这样的：
-有一个名为 A 的库，包含如下的头文件 a.h 和代码文件 a.cc
-1 2 3 4 5 6 7 8 9 10 11 12 13  // a.h #pragma once #include &amp;lt;iostream&amp;gt;template &amp;lt;class T&amp;gt; struct A { void print() { std::cout &amp;lt;&amp;lt; &amp;#34;normal&amp;#34; &amp;lt;&amp;lt; std::endl; } }; // a.cc #include &amp;#34;a.h&amp;#34;template &amp;lt;&amp;gt; void A&amp;lt;int&amp;gt;::print() { std::cout &amp;lt;&amp;lt; &amp;#34;specialization&amp;#34; &amp;lt;&amp;lt; std::endl; }   有如下代码文件 main.cc 使用了这个库：
-1 2 3 4 5  #include &amp;#34;a.">
 <meta name=description content="今天在群里看到了一个错误使用 C++ 模板特化产生的坑，有点意思，这里记录一下。
 问题是这样的：
 有一个名为 A 的库，包含如下的头文件 a.h 和代码文件 a.cc
-1 2 3 4 5 6 7 8 9 10 11 12 13  // a.h #pragma once #include &amp;lt;iostream&amp;gt;template &amp;lt;class T&amp;gt; struct A { void print() { std::cout &amp;lt;&amp;lt; &amp;#34;normal&amp;#34; &amp;lt;&amp;lt; std::endl; } }; // a.cc #include &amp;#34;a.h&amp;#34;template &amp;lt;&amp;gt; void A&amp;lt;int&amp;gt;::print() { std::cout &amp;lt;&amp;lt; &amp;#34;specialization&amp;#34; &amp;lt;&amp;lt; std::endl; }   有如下代码文件 main.cc 使用了这个库：
-1 2 3 4 5  #include &amp;#34;a.">
-<meta property="og:locale" content="zh-cn">
-<style>body{font-family:bree serif,sans-serif;-webkit-font-smoothing:antialiased;margin:0 20px}article{max-width:800px;margin-left:auto;margin-right:auto}a{color:#000;text-decoration:none}a:hover{font-weight:600;text-decoration:underline}.post-ads{margin:50px 0}.markdown-body{font-size:18px;max-width:100%}.markdown-body a{text-decoration:underline;text-decoration-color:#000}.markdown-body pre{padding:16px;overflow:auto;border-radius:10px}.markdown-body code{padding:.2em .4em;font-size:85%;background-color:#f6f8fa;border-radius:6px}.markdown-body pre>code{padding:0;font-size:100%;background-color:inherit;border:0}.Chinese .markdown-body{line-height:200%}.site-date-catalog{font-size:2rem}.header-title{font-size:2rem;font-weight:700;margin-top:32px;font-family:bungee shade,sans-serif}.header-title a{text-decoration:none}.header-subtitle{color:#666}.header-items{margin:10px 0}.header-item{margin:0 5px}.header-line{width:100%;border-width:2px;border-color:#482936;border-style:solid none none none}.lang-switch{font-weight:600}#posts-list{min-height:600px}.posts-line{font-size:1.2rem;margin:12px 0}.posts-categories{font-size:.8rem;margin:auto;text-align:center}.posts-category{padding:3px 0;border:#000 2px solid;border-radius:5px}.site-footer{margin-top:50px}.site-footer-item{margin-right:12px}.post-content img{max-width:100%;display:block;margin-right:auto;margin-top:12px}.post-header{margin-bottom:50px}.post-title{font-size:2rem;font-weight:600}.post-tags{display:inline;font-weight:600;padding:2px 5px;margin-right:6px;border:#000 2px solid;border-radius:5px}.post-date{font-weight:800;font-style:italic}.post-author{float:right;font-weight:600}.page-content{min-height:60%}.post-content{margin-bottom:50px}.post-content p{hyphens:auto;line-height:1.8;text-justify:ideographic;margin-bottom:1em}.related-content{border-width:3px;border-style:solid;border-color:#000;padding:0 10px;margin-bottom:50px;margin-top:100px}.related-content li{margin:5px 0}.taxonomy-term{font-size:3rem}.gallery-img{text-align:center}.gallery-img span{text-align:center}.gallery-img-desc{font-size:.8em;font-weight:800}#disqus_thread{position:relative}#disqus_thread:after{content:"";display:block;height:55px;width:100%;position:absolute;bottom:0;background:#fff}@media screen and (max-width:600px){.header-title,.header-subtitle,.header-items{text-align:center}.posts-line{font-size:16px}.markdown-body{font-size:16px}.post-title{font-size:2rem}.post-content p{letter-spacing:.05em}}@media screen and (max-width:48em){.posts-category{display:none}}</style>
-<style>.container,.container-fluid{margin-right:auto;margin-left:auto}.container-fluid{padding-right:2rem;padding-left:2rem}.row{box-sizing:border-box;display:-webkit-box;display:-ms-flexbox;display:flex;-webkit-box-flex:0;-ms-flex:0 1 auto;flex:initial;-webkit-box-orient:horizontal;-webkit-box-direction:normal;-ms-flex-direction:row;flex-direction:row;-ms-flex-wrap:wrap;flex-wrap:wrap;margin-right:-.5rem;margin-left:-.5rem}.row.reverse{-webkit-box-orient:horizontal;-webkit-box-direction:reverse;-ms-flex-direction:row-reverse;flex-direction:row-reverse}.col.reverse{-webkit-box-orient:vertical;-webkit-box-direction:reverse;-ms-flex-direction:column-reverse;flex-direction:column-reverse}.col-xs,.col-xs-1,.col-xs-10,.col-xs-11,.col-xs-12,.col-xs-2,.col-xs-3,.col-xs-4,.col-xs-5,.col-xs-6,.col-xs-7,.col-xs-8,.col-xs-9,.col-xs-offset-0,.col-xs-offset-1,.col-xs-offset-10,.col-xs-offset-11,.col-xs-offset-12,.col-xs-offset-2,.col-xs-offset-3,.col-xs-offset-4,.col-xs-offset-5,.col-xs-offset-6,.col-xs-offset-7,.col-xs-offset-8,.col-xs-offset-9{box-sizing:border-box;-webkit-box-flex:0;-ms-flex:0 0 auto;flex:none;padding-right:.5rem;padding-left:.5rem}.col-xs{-webkit-box-flex:1;-ms-flex-positive:1;flex-grow:1;-ms-flex-preferred-size:0;flex-basis:0;max-width:100%}.col-xs-1{-ms-flex-preferred-size:8.33333333%;flex-basis:8.33333333%;max-width:8.33333333%}.col-xs-2{-ms-flex-preferred-size:16.66666667%;flex-basis:16.66666667%;max-width:16.66666667%}.col-xs-3{-ms-flex-preferred-size:25%;flex-basis:25%;max-width:25%}.col-xs-4{-ms-flex-preferred-size:33.33333333%;flex-basis:33.33333333%;max-width:33.33333333%}.col-xs-5{-ms-flex-preferred-size:41.66666667%;flex-basis:41.66666667%;max-width:41.66666667%}.col-xs-6{-ms-flex-preferred-size:50%;flex-basis:50%;max-width:50%}.col-xs-7{-ms-flex-preferred-size:58.33333333%;flex-basis:58.33333333%;max-width:58.33333333%}.col-xs-8{-ms-flex-preferred-size:66.66666667%;flex-basis:66.66666667%;max-width:66.66666667%}.col-xs-9{-ms-flex-preferred-size:75%;flex-basis:75%;max-width:75%}.col-xs-10{-ms-flex-preferred-size:83.33333333%;flex-basis:83.33333333%;max-width:83.33333333%}.col-xs-11{-ms-flex-preferred-size:91.66666667%;flex-basis:91.66666667%;max-width:91.66666667%}.col-xs-12{-ms-flex-preferred-size:100%;flex-basis:100%;max-width:100%}.col-xs-offset-0{margin-left:0}.col-xs-offset-1{margin-left:8.33333333%}.col-xs-offset-2{margin-left:16.66666667%}.col-xs-offset-3{margin-left:25%}.col-xs-offset-4{margin-left:33.33333333%}.col-xs-offset-5{margin-left:41.66666667%}.col-xs-offset-6{margin-left:50%}.col-xs-offset-7{margin-left:58.33333333%}.col-xs-offset-8{margin-left:66.66666667%}.col-xs-offset-9{margin-left:75%}.col-xs-offset-10{margin-left:83.33333333%}.col-xs-offset-11{margin-left:91.66666667%}.start-xs{-webkit-box-pack:start;-ms-flex-pack:start;justify-content:flex-start;text-align:start}.center-xs{-webkit-box-pack:center;-ms-flex-pack:center;justify-content:center;text-align:center}.end-xs{-webkit-box-pack:end;-ms-flex-pack:end;justify-content:flex-end;text-align:end}.top-xs{-webkit-box-align:start;-ms-flex-align:start;align-items:flex-start}.middle-xs{-webkit-box-align:center;-ms-flex-align:center;align-items:center}.bottom-xs{-webkit-box-align:end;-ms-flex-align:end;align-items:flex-end}.around-xs{-ms-flex-pack:distribute;justify-content:space-around}.between-xs{-webkit-box-pack:justify;-ms-flex-pack:justify;justify-content:space-between}.first-xs{-webkit-box-ordinal-group:0;-ms-flex-order:-1;order:-1}.last-xs{-webkit-box-ordinal-group:2;-ms-flex-order:1;order:1}@media only screen and (min-width:48em){.container{width:49rem}.col-sm,.col-sm-1,.col-sm-10,.col-sm-11,.col-sm-12,.col-sm-2,.col-sm-3,.col-sm-4,.col-sm-5,.col-sm-6,.col-sm-7,.col-sm-8,.col-sm-9,.col-sm-offset-0,.col-sm-offset-1,.col-sm-offset-10,.col-sm-offset-11,.col-sm-offset-12,.col-sm-offset-2,.col-sm-offset-3,.col-sm-offset-4,.col-sm-offset-5,.col-sm-offset-6,.col-sm-offset-7,.col-sm-offset-8,.col-sm-offset-9{box-sizing:border-box;-webkit-box-flex:0;-ms-flex:0 0 auto;flex:none;padding-right:.5rem;padding-left:.5rem}.col-sm{-webkit-box-flex:1;-ms-flex-positive:1;flex-grow:1;-ms-flex-preferred-size:0;flex-basis:0;max-width:100%}.col-sm-1{-ms-flex-preferred-size:8.33333333%;flex-basis:8.33333333%;max-width:8.33333333%}.col-sm-2{-ms-flex-preferred-size:16.66666667%;flex-basis:16.66666667%;max-width:16.66666667%}.col-sm-3{-ms-flex-preferred-size:25%;flex-basis:25%;max-width:25%}.col-sm-4{-ms-flex-preferred-size:33.33333333%;flex-basis:33.33333333%;max-width:33.33333333%}.col-sm-5{-ms-flex-preferred-size:41.66666667%;flex-basis:41.66666667%;max-width:41.66666667%}.col-sm-6{-ms-flex-preferred-size:50%;flex-basis:50%;max-width:50%}.col-sm-7{-ms-flex-preferred-size:58.33333333%;flex-basis:58.33333333%;max-width:58.33333333%}.col-sm-8{-ms-flex-preferred-size:66.66666667%;flex-basis:66.66666667%;max-width:66.66666667%}.col-sm-9{-ms-flex-preferred-size:75%;flex-basis:75%;max-width:75%}.col-sm-10{-ms-flex-preferred-size:83.33333333%;flex-basis:83.33333333%;max-width:83.33333333%}.col-sm-11{-ms-flex-preferred-size:91.66666667%;flex-basis:91.66666667%;max-width:91.66666667%}.col-sm-12{-ms-flex-preferred-size:100%;flex-basis:100%;max-width:100%}.col-sm-offset-0{margin-left:0}.col-sm-offset-1{margin-left:8.33333333%}.col-sm-offset-2{margin-left:16.66666667%}.col-sm-offset-3{margin-left:25%}.col-sm-offset-4{margin-left:33.33333333%}.col-sm-offset-5{margin-left:41.66666667%}.col-sm-offset-6{margin-left:50%}.col-sm-offset-7{margin-left:58.33333333%}.col-sm-offset-8{margin-left:66.66666667%}.col-sm-offset-9{margin-left:75%}.col-sm-offset-10{margin-left:83.33333333%}.col-sm-offset-11{margin-left:91.66666667%}.start-sm{-webkit-box-pack:start;-ms-flex-pack:start;justify-content:flex-start;text-align:start}.center-sm{-webkit-box-pack:center;-ms-flex-pack:center;justify-content:center;text-align:center}.end-sm{-webkit-box-pack:end;-ms-flex-pack:end;justify-content:flex-end;text-align:end}.top-sm{-webkit-box-align:start;-ms-flex-align:start;align-items:flex-start}.middle-sm{-webkit-box-align:center;-ms-flex-align:center;align-items:center}.bottom-sm{-webkit-box-align:end;-ms-flex-align:end;align-items:flex-end}.around-sm{-ms-flex-pack:distribute;justify-content:space-around}.between-sm{-webkit-box-pack:justify;-ms-flex-pack:justify;justify-content:space-between}.first-sm{-webkit-box-ordinal-group:0;-ms-flex-order:-1;order:-1}.last-sm{-webkit-box-ordinal-group:2;-ms-flex-order:1;order:1}}@media only screen and (min-width:64em){.container{width:65rem}.col-md,.col-md-1,.col-md-10,.col-md-11,.col-md-12,.col-md-2,.col-md-3,.col-md-4,.col-md-5,.col-md-6,.col-md-7,.col-md-8,.col-md-9,.col-md-offset-0,.col-md-offset-1,.col-md-offset-10,.col-md-offset-11,.col-md-offset-12,.col-md-offset-2,.col-md-offset-3,.col-md-offset-4,.col-md-offset-5,.col-md-offset-6,.col-md-offset-7,.col-md-offset-8,.col-md-offset-9{box-sizing:border-box;-webkit-box-flex:0;-ms-flex:0 0 auto;flex:none;padding-right:.5rem;padding-left:.5rem}.col-md{-webkit-box-flex:1;-ms-flex-positive:1;flex-grow:1;-ms-flex-preferred-size:0;flex-basis:0;max-width:100%}.col-md-1{-ms-flex-preferred-size:8.33333333%;flex-basis:8.33333333%;max-width:8.33333333%}.col-md-2{-ms-flex-preferred-size:16.66666667%;flex-basis:16.66666667%;max-width:16.66666667%}.col-md-3{-ms-flex-preferred-size:25%;flex-basis:25%;max-width:25%}.col-md-4{-ms-flex-preferred-size:33.33333333%;flex-basis:33.33333333%;max-width:33.33333333%}.col-md-5{-ms-flex-preferred-size:41.66666667%;flex-basis:41.66666667%;max-width:41.66666667%}.col-md-6{-ms-flex-preferred-size:50%;flex-basis:50%;max-width:50%}.col-md-7{-ms-flex-preferred-size:58.33333333%;flex-basis:58.33333333%;max-width:58.33333333%}.col-md-8{-ms-flex-preferred-size:66.66666667%;flex-basis:66.66666667%;max-width:66.66666667%}.col-md-9{-ms-flex-preferred-size:75%;flex-basis:75%;max-width:75%}.col-md-10{-ms-flex-preferred-size:83.33333333%;flex-basis:83.33333333%;max-width:83.33333333%}.col-md-11{-ms-flex-preferred-size:91.66666667%;flex-basis:91.66666667%;max-width:91.66666667%}.col-md-12{-ms-flex-preferred-size:100%;flex-basis:100%;max-width:100%}.col-md-offset-0{margin-left:0}.col-md-offset-1{margin-left:8.33333333%}.col-md-offset-2{margin-left:16.66666667%}.col-md-offset-3{margin-left:25%}.col-md-offset-4{margin-left:33.33333333%}.col-md-offset-5{margin-left:41.66666667%}.col-md-offset-6{margin-left:50%}.col-md-offset-7{margin-left:58.33333333%}.col-md-offset-8{margin-left:66.66666667%}.col-md-offset-9{margin-left:75%}.col-md-offset-10{margin-left:83.33333333%}.col-md-offset-11{margin-left:91.66666667%}.start-md{-webkit-box-pack:start;-ms-flex-pack:start;justify-content:flex-start;text-align:start}.center-md{-webkit-box-pack:center;-ms-flex-pack:center;justify-content:center;text-align:center}.end-md{-webkit-box-pack:end;-ms-flex-pack:end;justify-content:flex-end;text-align:end}.top-md{-webkit-box-align:start;-ms-flex-align:start;align-items:flex-start}.middle-md{-webkit-box-align:center;-ms-flex-align:center;align-items:center}.bottom-md{-webkit-box-align:end;-ms-flex-align:end;align-items:flex-end}.around-md{-ms-flex-pack:distribute;justify-content:space-around}.between-md{-webkit-box-pack:justify;-ms-flex-pack:justify;justify-content:space-between}.first-md{-webkit-box-ordinal-group:0;-ms-flex-order:-1;order:-1}.last-md{-webkit-box-ordinal-group:2;-ms-flex-order:1;order:1}}@media only screen and (min-width:75em){.container{width:76rem}.col-lg,.col-lg-1,.col-lg-10,.col-lg-11,.col-lg-12,.col-lg-2,.col-lg-3,.col-lg-4,.col-lg-5,.col-lg-6,.col-lg-7,.col-lg-8,.col-lg-9,.col-lg-offset-0,.col-lg-offset-1,.col-lg-offset-10,.col-lg-offset-11,.col-lg-offset-12,.col-lg-offset-2,.col-lg-offset-3,.col-lg-offset-4,.col-lg-offset-5,.col-lg-offset-6,.col-lg-offset-7,.col-lg-offset-8,.col-lg-offset-9{box-sizing:border-box;-webkit-box-flex:0;-ms-flex:0 0 auto;flex:none;padding-right:.5rem;padding-left:.5rem}.col-lg{-webkit-box-flex:1;-ms-flex-positive:1;flex-grow:1;-ms-flex-preferred-size:0;flex-basis:0;max-width:100%}.col-lg-1{-ms-flex-preferred-size:8.33333333%;flex-basis:8.33333333%;max-width:8.33333333%}.col-lg-2{-ms-flex-preferred-size:16.66666667%;flex-basis:16.66666667%;max-width:16.66666667%}.col-lg-3{-ms-flex-preferred-size:25%;flex-basis:25%;max-width:25%}.col-lg-4{-ms-flex-preferred-size:33.33333333%;flex-basis:33.33333333%;max-width:33.33333333%}.col-lg-5{-ms-flex-preferred-size:41.66666667%;flex-basis:41.66666667%;max-width:41.66666667%}.col-lg-6{-ms-flex-preferred-size:50%;flex-basis:50%;max-width:50%}.col-lg-7{-ms-flex-preferred-size:58.33333333%;flex-basis:58.33333333%;max-width:58.33333333%}.col-lg-8{-ms-flex-preferred-size:66.66666667%;flex-basis:66.66666667%;max-width:66.66666667%}.col-lg-9{-ms-flex-preferred-size:75%;flex-basis:75%;max-width:75%}.col-lg-10{-ms-flex-preferred-size:83.33333333%;flex-basis:83.33333333%;max-width:83.33333333%}.col-lg-11{-ms-flex-preferred-size:91.66666667%;flex-basis:91.66666667%;max-width:91.66666667%}.col-lg-12{-ms-flex-preferred-size:100%;flex-basis:100%;max-width:100%}.col-lg-offset-0{margin-left:0}.col-lg-offset-1{margin-left:8.33333333%}.col-lg-offset-2{margin-left:16.66666667%}.col-lg-offset-3{margin-left:25%}.col-lg-offset-4{margin-left:33.33333333%}.col-lg-offset-5{margin-left:41.66666667%}.col-lg-offset-6{margin-left:50%}.col-lg-offset-7{margin-left:58.33333333%}.col-lg-offset-8{margin-left:66.66666667%}.col-lg-offset-9{margin-left:75%}.col-lg-offset-10{margin-left:83.33333333%}.col-lg-offset-11{margin-left:91.66666667%}.start-lg{-webkit-box-pack:start;-ms-flex-pack:start;justify-content:flex-start;text-align:start}.center-lg{-webkit-box-pack:center;-ms-flex-pack:center;justify-content:center;text-align:center}.end-lg{-webkit-box-pack:end;-ms-flex-pack:end;justify-content:flex-end;text-align:end}.top-lg{-webkit-box-align:start;-ms-flex-align:start;align-items:flex-start}.middle-lg{-webkit-box-align:center;-ms-flex-align:center;align-items:center}.bottom-lg{-webkit-box-align:end;-ms-flex-align:end;align-items:flex-end}.around-lg{-ms-flex-pack:distribute;justify-content:space-around}.between-lg{-webkit-box-pack:justify;-ms-flex-pack:justify;justify-content:space-between}.first-lg{-webkit-box-ordinal-group:0;-ms-flex-order:-1;order:-1}.last-lg{-webkit-box-ordinal-group:2;-ms-flex-order:1;order:1}}</style>
-<link href=/index.xml rel=alternate type=application/rss+xml title="简单易懂的现代魔法 - Zhirui Li">
-<link rel=preconnect href=https://fonts.gstatic.com>
-<link href="https://fonts.googleapis.com/css?family=Bree+Serif|Bungee+Shade" rel=stylesheet>
+// a.h #pragma once #include &amp;lt;iostream&amp;gt;template &amp;lt;class T&amp;gt; struct A { void print() { std::cout &amp;lt;&amp;lt; &amp;#34;normal&amp;#34; &amp;lt;&amp;lt; std::endl; } }; // a.cc #include &amp;#34;a.h&amp;#34;template &amp;lt;&amp;gt; void A&amp;lt;int&amp;gt;::print() { std::cout &amp;lt;&amp;lt; &amp;#34;specialization&amp;#34; &amp;lt;&amp;lt; std::endl; } 有如下代码文件 main.cc 使用了这个库：
+#include &amp;#34;a.h&amp;#34;int main() { A&amp;lt;int&amp;gt; a{}; a.print(); } 那么请问，我们编译这个库和这个代码文件之后，输出结果会是什么呢？
+答案是……不一定。这要看你是怎么链接的。这听起来很奇怪是吧，不过确实是这样：
+链接方式 1：
+g++ -c a.cc g++ -o main main.cc a.o 链接方式 2：">
+<meta name=keywords content="编程,计算机图形学,游戏开发">
+<meta name=robots content="noodp">
+<link rel=canonical href=/posts/cpp-template-specialization/>
+<link rel=stylesheet href=/assets/style.css>
+<link rel=stylesheet href=/style.css>
+<link rel=apple-touch-icon-precomposed sizes=144x144 href=/img/apple-touch-icon-144-precomposed.png>
+<link rel="shortcut icon" href=/img/favicon.png>
+<link href=/assets/fonts/Inter-Italic.woff2 rel=preload type=font/woff2 as=font crossorigin>
+<link href=/assets/fonts/Inter-Regular.woff2 rel=preload type=font/woff2 as=font crossorigin>
+<link href=/assets/fonts/Inter-Medium.woff2 rel=preload type=font/woff2 as=font crossorigin>
+<link href=/assets/fonts/Inter-MediumItalic.woff2 rel=preload type=font/woff2 as=font crossorigin>
+<link href=/assets/fonts/Inter-Bold.woff2 rel=preload type=font/woff2 as=font crossorigin>
+<link href=/assets/fonts/Inter-BoldItalic.woff2 rel=preload type=font/woff2 as=font crossorigin>
+<meta name=twitter:card content="summary">
+<meta name=twitter:title content="错误使用 C++ 模板特化产生的坑">
+<meta name=twitter:description content="今天在群里看到了一个错误使用 C++ 模板特化产生的坑，有点意思，这里记录一下。
+问题是这样的：
+有一个名为 A 的库，包含如下的头文件 a.h 和代码文件 a.cc
+// a.h #pragma once #include <iostream>template <class T> struct A { void print() { std::cout << &#34;normal&#34; << std::endl; } }; // a.cc #include &#34;a.h&#34;template <> void A<int>::print() { std::cout << &#34;specialization&#34; << std::endl; } 有如下代码文件 main.cc 使用了这个库：
+#include &#34;a.h&#34;int main() { A<int> a{}; a.print(); } 那么请问，我们编译这个库和这个代码文件之后，输出结果会是什么呢？
+答案是……不一定。这要看你是怎么链接的。这听起来很奇怪是吧，不过确实是这样：
+链接方式 1：
+g++ -c a.cc g++ -o main main.cc a.o 链接方式 2：">
+<meta property="og:title" content="错误使用 C++ 模板特化产生的坑">
+<meta property="og:description" content="今天在群里看到了一个错误使用 C++ 模板特化产生的坑，有点意思，这里记录一下。
+问题是这样的：
+有一个名为 A 的库，包含如下的头文件 a.h 和代码文件 a.cc
+// a.h #pragma once #include <iostream>template <class T> struct A { void print() { std::cout << &#34;normal&#34; << std::endl; } }; // a.cc #include &#34;a.h&#34;template <> void A<int>::print() { std::cout << &#34;specialization&#34; << std::endl; } 有如下代码文件 main.cc 使用了这个库：
+#include &#34;a.h&#34;int main() { A<int> a{}; a.print(); } 那么请问，我们编译这个库和这个代码文件之后，输出结果会是什么呢？
+答案是……不一定。这要看你是怎么链接的。这听起来很奇怪是吧，不过确实是这样：
+链接方式 1：
+g++ -c a.cc g++ -o main main.cc a.o 链接方式 2：">
+<meta property="og:type" content="article">
+<meta property="og:url" content="/posts/cpp-template-specialization/"><meta property="article:section" content="posts">
+<meta property="article:published_time" content="2021-08-27T00:00:00+00:00">
+<meta property="article:modified_time" content="2021-08-27T00:00:00+00:00"><meta property="og:site_name" content="简单易懂的现代魔法">
+<script>var posts=document.getElementById('posts-list');posts&&quicklink({el:posts,priority:!0})</script>
+<script>MathJax={tex:{inlineMath:[['$','$'],['\\(','\\)']]},svg:{fontCache:'global'}}</script>
+<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script id=MathJax-script async src=https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js></script>
 </head>
 <body>
-<article class="post Chinese" id=article>
-<div class=row>
-<div class=col-xs-12>
-<div class=site-header>
-<header>
-<div class=header-title>
-<a href=/>简单易懂的现代魔法</a>
-</div>
-<div class=header-subtitle></div>
+<div class=container>
+<header class=header>
+<span class=header__inner>
+<a href=/ class=logo style=text-decoration:none>
+<span class=logo__mark><svg xmlns="http://www.w3.org/2000/svg" class="greater-icon" viewBox="0 0 44 44"><path fill="none" d="M15 8l14.729 14.382L15 35.367"/></svg>
+</span>
+<span class=logo__text>简单易懂的现代魔法</span>
+<span class=logo__cursor></span>
+</a>
+<span class=header__right>
+<nav class=menu>
+<ul class="menu__inner menu__inner--desktop">
+<li><a href=/archive>Archive</a></li>
+<li><a href=https://www.github.com/zhiruili>Github</a></li>
+<li><a href=/index.xml>RSS</a></li>
+</ul>
+<ul class="menu__inner menu__inner--mobile">
+<li><a href=/archive>Archive</a></li>
+<li><a href=https://www.github.com/zhiruili>Github</a></li>
+<li><a href=/index.xml>RSS</a></li>
+</ul>
+</nav>
+<span class=menu-trigger><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M0 0h24v24H0z" fill="none"/><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></svg>
+</span>
+<span class=theme-toggle><svg class="theme-toggler" width="24" height="24" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M22 41c10.4934.0 19-8.5066 19-19C41 11.5066 32.4934 3 22 3 11.5066 3 3 11.5066 3 22s8.5066 19 19 19zM7 22C7 13.7157 13.7157 7 22 7V37C13.7157 37 7 30.2843 7 22z"/></svg>
+</span>
+</span>
+</span>
 </header>
-<div class="row end-md center-xs header-items">
-<div class=header-item>
-<a href=/index.xml target=_blank>RSS</a>
-</div>
-<div class=header-item>
-<a href=mailto:zr.public@outlook.com target=_blank>E-mail</a>
-</div>
-<div class=header-item>
-<a href=https://www.github.com/ZhiruiLi target=_blank>Github</a>
-</div>
-</div>
-<div class="row end-xs">
-</div>
-<div class=header-line></div>
-</div>
-<header class=post-header>
+<div class=content>
+<div class=post>
 <h1 class=post-title>错误使用 C++ 模板特化产生的坑</h1>
-<div class="row post-desc">
-<div class=col-xs-6>
-<time class=post-date datetime="2021-08-27 00:00:00 UTC">
-27 Aug 2021
-</time>
+<div class=post-meta>
+<span class=post-date>
+2021-08-27
+</span>
 </div>
-<div class=col-xs-6>
-<div class=post-author>
-<a target=_blank href=https://www.github.com/ZhiruiLi>@Zhirui Li</a>
-</div>
-</div>
-</div>
-</header>
-<div class="post-content markdown-body">
+<span class=post-tags>
+<a href=/tags/c++/>#C++</a>&nbsp;
+</span>
+<div class=post-content>
 <p>今天在群里看到了一个错误使用 C++ 模板特化产生的坑，有点意思，这里记录一下。</p>
 <p>问题是这样的：</p>
 <p>有一个名为 <code>A</code> 的库，包含如下的头文件 <code>a.h</code> 和代码文件 <code>a.cc</code></p>
-<div class=highlight><div style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4>
-<table style=border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block><tr><td style=vertical-align:top;padding:0;margin:0;border:0>
-<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 4
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 5
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 6
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 7
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 8
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 9
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">10
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">11
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">12
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">13
-</span></code></pre></td>
-<td style=vertical-align:top;padding:0;margin:0;border:0;width:100%>
-<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-cpp data-lang=cpp><span style=color:#8f5902;font-style:italic>// a.h
-</span><span style=color:#8f5902;font-style:italic></span><span style=color:#8f5902;font-style:italic>#pragma once
-</span><span style=color:#8f5902;font-style:italic>#include</span> <span style=color:#8f5902;font-style:italic>&lt;iostream&gt;</span><span style=color:#8f5902;font-style:italic>
-</span><span style=color:#8f5902;font-style:italic></span><span style=color:#204a87;font-weight:700>template</span> <span style=color:#ce5c00;font-weight:700>&lt;</span><span style=color:#204a87;font-weight:700>class</span> <span style=color:#000>T</span><span style=color:#ce5c00;font-weight:700>&gt;</span>
-<span style=color:#204a87;font-weight:700>struct</span> <span style=color:#000>A</span> <span style=color:#000;font-weight:700>{</span>
-    <span style=color:#204a87;font-weight:700>void</span> <span style=color:#000>print</span><span style=color:#000;font-weight:700>()</span> <span style=color:#000;font-weight:700>{</span> <span style=color:#000>std</span><span style=color:#ce5c00;font-weight:700>::</span><span style=color:#000>cout</span> <span style=color:#ce5c00;font-weight:700>&lt;&lt;</span> <span style=color:#4e9a06>&#34;normal&#34;</span> <span style=color:#ce5c00;font-weight:700>&lt;&lt;</span> <span style=color:#000>std</span><span style=color:#ce5c00;font-weight:700>::</span><span style=color:#000>endl</span><span style=color:#000;font-weight:700>;</span> <span style=color:#000;font-weight:700>}</span>
-<span style=color:#000;font-weight:700>};</span>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-cpp data-lang=cpp><span style=color:#75715e>// a.h
+</span><span style=color:#75715e></span><span style=color:#75715e>#pragma once
+</span><span style=color:#75715e>#include</span> <span style=color:#75715e>&lt;iostream&gt;</span><span style=color:#75715e>
+</span><span style=color:#75715e></span><span style=color:#66d9ef>template</span> <span style=color:#f92672>&lt;</span><span style=color:#66d9ef>class</span> <span style=color:#a6e22e>T</span><span style=color:#f92672>&gt;</span>
+<span style=color:#66d9ef>struct</span> <span style=color:#a6e22e>A</span> {
+    <span style=color:#66d9ef>void</span> <span style=color:#a6e22e>print</span>() { std<span style=color:#f92672>::</span>cout <span style=color:#f92672>&lt;&lt;</span> <span style=color:#e6db74>&#34;normal&#34;</span> <span style=color:#f92672>&lt;&lt;</span> std<span style=color:#f92672>::</span>endl; }
+};
 
-<span style=color:#8f5902;font-style:italic>// a.cc
-</span><span style=color:#8f5902;font-style:italic></span><span style=color:#8f5902;font-style:italic>#include</span> <span style=color:#8f5902;font-style:italic>&#34;a.h&#34;</span><span style=color:#8f5902;font-style:italic>
-</span><span style=color:#8f5902;font-style:italic></span><span style=color:#204a87;font-weight:700>template</span> <span style=color:#ce5c00;font-weight:700>&lt;&gt;</span> <span style=color:#204a87;font-weight:700>void</span> <span style=color:#000>A</span><span style=color:#ce5c00;font-weight:700>&lt;</span><span style=color:#204a87;font-weight:700>int</span><span style=color:#ce5c00;font-weight:700>&gt;::</span><span style=color:#000>print</span><span style=color:#000;font-weight:700>()</span> <span style=color:#000;font-weight:700>{</span>
-    <span style=color:#000>std</span><span style=color:#ce5c00;font-weight:700>::</span><span style=color:#000>cout</span> <span style=color:#ce5c00;font-weight:700>&lt;&lt;</span> <span style=color:#4e9a06>&#34;specialization&#34;</span> <span style=color:#ce5c00;font-weight:700>&lt;&lt;</span> <span style=color:#000>std</span><span style=color:#ce5c00;font-weight:700>::</span><span style=color:#000>endl</span><span style=color:#000;font-weight:700>;</span>
-<span style=color:#000;font-weight:700>}</span>
-</code></pre></td></tr></table>
-</div>
-</div><p>有如下代码文件 <code>main.cc</code> 使用了这个库：</p>
-<div class=highlight><div style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4>
-<table style=border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block><tr><td style=vertical-align:top;padding:0;margin:0;border:0>
-<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">4
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">5
-</span></code></pre></td>
-<td style=vertical-align:top;padding:0;margin:0;border:0;width:100%>
-<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style=color:#8f5902;font-style:italic>#include</span> <span style=color:#8f5902;font-style:italic>&#34;a.h&#34;</span><span style=color:#8f5902;font-style:italic>
-</span><span style=color:#8f5902;font-style:italic></span><span style=color:#204a87;font-weight:700>int</span> <span style=color:#000>main</span><span style=color:#000;font-weight:700>()</span> <span style=color:#000;font-weight:700>{</span>
-    <span style=color:#000>A</span><span style=color:#ce5c00;font-weight:700>&lt;</span><span style=color:#204a87;font-weight:700>int</span><span style=color:#ce5c00;font-weight:700>&gt;</span> <span style=color:#000>a</span><span style=color:#000;font-weight:700>{};</span>
-    <span style=color:#000>a</span><span style=color:#000;font-weight:700>.</span><span style=color:#000>print</span><span style=color:#000;font-weight:700>();</span>
-<span style=color:#000;font-weight:700>}</span>
-</code></pre></td></tr></table>
-</div>
-</div><p>那么请问，我们编译这个库和这个代码文件之后，输出结果会是什么呢？</p>
+<span style=color:#75715e>// a.cc
+</span><span style=color:#75715e></span><span style=color:#75715e>#include</span> <span style=color:#75715e>&#34;a.h&#34;</span><span style=color:#75715e>
+</span><span style=color:#75715e></span><span style=color:#66d9ef>template</span> <span style=color:#f92672>&lt;&gt;</span> <span style=color:#66d9ef>void</span> A<span style=color:#f92672>&lt;</span><span style=color:#66d9ef>int</span><span style=color:#f92672>&gt;::</span>print() {
+    std<span style=color:#f92672>::</span>cout <span style=color:#f92672>&lt;&lt;</span> <span style=color:#e6db74>&#34;specialization&#34;</span> <span style=color:#f92672>&lt;&lt;</span> std<span style=color:#f92672>::</span>endl;
+}
+</code></pre></div><p>有如下代码文件 <code>main.cc</code> 使用了这个库：</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style=color:#75715e>#include</span> <span style=color:#75715e>&#34;a.h&#34;</span><span style=color:#75715e>
+</span><span style=color:#75715e></span><span style=color:#66d9ef>int</span> <span style=color:#a6e22e>main</span>() {
+    A<span style=color:#f92672>&lt;</span><span style=color:#66d9ef>int</span><span style=color:#f92672>&gt;</span> a{};
+    a.print();
+}
+</code></pre></div><p>那么请问，我们编译这个库和这个代码文件之后，输出结果会是什么呢？</p>
 <p>答案是……不一定。这要看你是怎么链接的。这听起来很奇怪是吧，不过确实是这样：</p>
 <p>链接方式 1：</p>
-<div class=highlight><div style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4>
-<table style=border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block><tr><td style=vertical-align:top;padding:0;margin:0;border:0>
-<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
-</span></code></pre></td>
-<td style=vertical-align:top;padding:0;margin:0;border:0;width:100%>
-<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash>g++ -c a.cc
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash>g++ -c a.cc
 g++ -o main main.cc a.o
-</code></pre></td></tr></table>
-</div>
-</div><p>链接方式 2：</p>
-<div class=highlight><div style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4>
-<table style=border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block><tr><td style=vertical-align:top;padding:0;margin:0;border:0>
-<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
-</span></code></pre></td>
-<td style=vertical-align:top;padding:0;margin:0;border:0;width:100%>
-<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash>g++ -c a.cc
+</code></pre></div><p>链接方式 2：</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash>g++ -c a.cc
 ar -r a.a a.o
 g++ -o main main.cc a.a
-</code></pre></td></tr></table>
-</div>
-</div><p>已经知道两个链接方式会产生区别了，那执行 <code>./main</code> 后的输出分别是什么呢？</p>
+</code></pre></div><p>已经知道两个链接方式会产生区别了，那执行 <code>./main</code> 后的输出分别是什么呢？</p>
 <p>答案是：链接方式 1 产生的 <code>main</code> 输出 <code>specialization</code>，链接方式 2 产生的 <code>main</code> 输出 <code>normal</code>。</p>
 <p>这看起来完全不讲道理啊，凭什么同样一个库，链接 <code>.a</code> 和链接 <code>.o</code> 的结果不一样？这就要说到，编译器在链接 <code>.a</code> 和 <code>.o</code> 时的行为差别了。当编译器链接 <code>.o</code> 的时候，它会将 <code>.o</code> 中的符号全部链接进最终文件中，而当链接 <code>.a</code> 的时候，编译器则是会看当前链接结果是否存在未定义的符号，如果没有，那就不链接这个 <code>.a</code> 文件里面的内容。而如果有需要链接的符号，则尝试在 <code>.a</code> 文件中查找，如果找到了，就链接这个 <code>.a</code> 里面的内容，否则就跳过。</p>
 <p>仔细看一下代码就会发现，这里的特化声明没有声明在头文件里，因此在编译 <code>main.cc</code> 的时候，编译器会实例化 <code>A&lt;int>::print()</code>，这会导致后续链接的时候产生问题。在链接 <code>.a</code> 的时候，编译器发现我已经有 <code>A&lt;int>::print()</code> 了，不需要去链接 <code>.a</code>，因此就跳过了这个库，这就导致了最终输出的是编译器实例化出来的版本，而不是我们定义的特化版本。而在链接 <code>.o</code> 的时候，编译器无论如何都会去进行链接，因此就还是用了特化的版本。</p>
 <p>简单来说，正确的模板特化写法应该是将特化声明写在头文件里，必须在使用该模板之前出现对应声明，否则编译器就会进行自动实例化：</p>
-<div class=highlight><div style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4>
-<table style=border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block><tr><td style=vertical-align:top;padding:0;margin:0;border:0>
-<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 4
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 5
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 6
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 7
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 8
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 9
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">10
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">11
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">12
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">13
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">14
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">15
-</span></code></pre></td>
-<td style=vertical-align:top;padding:0;margin:0;border:0;width:100%>
-<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-cpp data-lang=cpp><span style=color:#8f5902;font-style:italic>// a.h
-</span><span style=color:#8f5902;font-style:italic></span><span style=color:#8f5902;font-style:italic>#pragma once
-</span><span style=color:#8f5902;font-style:italic>#include</span> <span style=color:#8f5902;font-style:italic>&lt;iostream&gt;</span><span style=color:#8f5902;font-style:italic>
-</span><span style=color:#8f5902;font-style:italic></span><span style=color:#204a87;font-weight:700>template</span> <span style=color:#ce5c00;font-weight:700>&lt;</span><span style=color:#204a87;font-weight:700>class</span> <span style=color:#000>T</span><span style=color:#ce5c00;font-weight:700>&gt;</span>
-<span style=color:#204a87;font-weight:700>struct</span> <span style=color:#000>A</span> <span style=color:#000;font-weight:700>{</span>
-    <span style=color:#204a87;font-weight:700>void</span> <span style=color:#000>print</span><span style=color:#000;font-weight:700>()</span> <span style=color:#000;font-weight:700>{</span> <span style=color:#000>std</span><span style=color:#ce5c00;font-weight:700>::</span><span style=color:#000>cout</span> <span style=color:#ce5c00;font-weight:700>&lt;&lt;</span> <span style=color:#4e9a06>&#34;normal&#34;</span> <span style=color:#ce5c00;font-weight:700>&lt;&lt;</span> <span style=color:#000>std</span><span style=color:#ce5c00;font-weight:700>::</span><span style=color:#000>endl</span><span style=color:#000;font-weight:700>;</span> <span style=color:#000;font-weight:700>}</span>
-<span style=color:#000;font-weight:700>};</span>
-<span style=color:#8f5902;font-style:italic>// 注意这里声明了一个特化版本
-</span><span style=color:#8f5902;font-style:italic></span><span style=color:#204a87;font-weight:700>template</span> <span style=color:#ce5c00;font-weight:700>&lt;&gt;</span> <span style=color:#204a87;font-weight:700>void</span> <span style=color:#000>A</span><span style=color:#ce5c00;font-weight:700>&lt;</span><span style=color:#204a87;font-weight:700>int</span><span style=color:#ce5c00;font-weight:700>&gt;::</span><span style=color:#000>print</span><span style=color:#000;font-weight:700>();</span>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-cpp data-lang=cpp><span style=color:#75715e>// a.h
+</span><span style=color:#75715e></span><span style=color:#75715e>#pragma once
+</span><span style=color:#75715e>#include</span> <span style=color:#75715e>&lt;iostream&gt;</span><span style=color:#75715e>
+</span><span style=color:#75715e></span><span style=color:#66d9ef>template</span> <span style=color:#f92672>&lt;</span><span style=color:#66d9ef>class</span> <span style=color:#a6e22e>T</span><span style=color:#f92672>&gt;</span>
+<span style=color:#66d9ef>struct</span> <span style=color:#a6e22e>A</span> {
+    <span style=color:#66d9ef>void</span> <span style=color:#a6e22e>print</span>() { std<span style=color:#f92672>::</span>cout <span style=color:#f92672>&lt;&lt;</span> <span style=color:#e6db74>&#34;normal&#34;</span> <span style=color:#f92672>&lt;&lt;</span> std<span style=color:#f92672>::</span>endl; }
+};
+<span style=color:#75715e>// 注意这里声明了一个特化版本
+</span><span style=color:#75715e></span><span style=color:#66d9ef>template</span> <span style=color:#f92672>&lt;&gt;</span> <span style=color:#66d9ef>void</span> A<span style=color:#f92672>&lt;</span><span style=color:#66d9ef>int</span><span style=color:#f92672>&gt;::</span>print();
 
-<span style=color:#8f5902;font-style:italic>// a.cc
-</span><span style=color:#8f5902;font-style:italic></span><span style=color:#8f5902;font-style:italic>#include</span> <span style=color:#8f5902;font-style:italic>&#34;a.h&#34;</span><span style=color:#8f5902;font-style:italic>
-</span><span style=color:#8f5902;font-style:italic></span><span style=color:#204a87;font-weight:700>template</span> <span style=color:#ce5c00;font-weight:700>&lt;&gt;</span> <span style=color:#204a87;font-weight:700>void</span> <span style=color:#000>A</span><span style=color:#ce5c00;font-weight:700>&lt;</span><span style=color:#204a87;font-weight:700>int</span><span style=color:#ce5c00;font-weight:700>&gt;::</span><span style=color:#000>print</span><span style=color:#000;font-weight:700>()</span> <span style=color:#000;font-weight:700>{</span>
-    <span style=color:#000>std</span><span style=color:#ce5c00;font-weight:700>::</span><span style=color:#000>cout</span> <span style=color:#ce5c00;font-weight:700>&lt;&lt;</span> <span style=color:#4e9a06>&#34;specialization&#34;</span> <span style=color:#ce5c00;font-weight:700>&lt;&lt;</span> <span style=color:#000>std</span><span style=color:#ce5c00;font-weight:700>::</span><span style=color:#000>endl</span><span style=color:#000;font-weight:700>;</span>
-<span style=color:#000;font-weight:700>}</span>
-</code></pre></td></tr></table>
-</div>
-</div><p>这样一来，无论是链接 <code>.o</code> 还是链接 <code>.a</code>，结果都是输出 <code>specialization</code> 了。</p>
+<span style=color:#75715e>// a.cc
+</span><span style=color:#75715e></span><span style=color:#75715e>#include</span> <span style=color:#75715e>&#34;a.h&#34;</span><span style=color:#75715e>
+</span><span style=color:#75715e></span><span style=color:#66d9ef>template</span> <span style=color:#f92672>&lt;&gt;</span> <span style=color:#66d9ef>void</span> A<span style=color:#f92672>&lt;</span><span style=color:#66d9ef>int</span><span style=color:#f92672>&gt;::</span>print() {
+    std<span style=color:#f92672>::</span>cout <span style=color:#f92672>&lt;&lt;</span> <span style=color:#e6db74>&#34;specialization&#34;</span> <span style=color:#f92672>&lt;&lt;</span> std<span style=color:#f92672>::</span>endl;
+}
+</code></pre></div><p>这样一来，无论是链接 <code>.o</code> 还是链接 <code>.a</code>，结果都是输出 <code>specialization</code> 了。</p>
 <p>问题虽然就这样解决了，但是刚刚的描述好像有点不对劲。我们说之前错误的写法会导致编译器自动实例化模板，而链接 <code>.o</code> 文件的时候，又会将 <code>.o</code> 中的符号链接进最终结果里，那这个时候怎么就没产生符号冲突呢？理论上 <code>A&lt;int>::print()</code> 被定义了两次，链接不应该通过才对，这又是为什么？为了解决这个问题，我们将编译过程再改一下，变成这样：</p>
-<div class=highlight><div style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4>
-<table style=border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block><tr><td style=vertical-align:top;padding:0;margin:0;border:0>
-<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
-</span></code></pre></td>
-<td style=vertical-align:top;padding:0;margin:0;border:0;width:100%>
-<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash>g++ -c a.cc
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash>g++ -c a.cc
 g++ -c main.cc
 g++ -o main main.o a.o
-</code></pre></td></tr></table>
-</div>
-</div><p>此时，编译过程会产生 <code>main.o</code> 和 <code>a.o</code> 两个 object 文件，我们可以用 <code>nm</code> 命令查看其中的内容，我们可以先看看之前错误的版本中，<code>main.o</code> 和 <code>a.o</code> 二者的符号情况：</p>
-<pre><code>&gt; nm main.o
+</code></pre></div><p>此时，编译过程会产生 <code>main.o</code> 和 <code>a.o</code> 两个 object 文件，我们可以用 <code>nm</code> 命令查看其中的内容，我们可以先看看之前错误的版本中，<code>main.o</code> 和 <code>a.o</code> 二者的符号情况：</p>
+<pre tabindex=0><code>&gt; nm main.o
 #                  U __cxa_atexit
 #                  U __dso_handle
 #                  U _GLOBAL_OFFSET_TABLE_
@@ -239,7 +189,7 @@ g++ -o main main.o a.o
 #                  U _ZStlsISt11char_traitsIcEERSt13basic_ostreamIcT_ES5_PKc
 </code></pre><p>其中，<code>_ZN1AIiE5printEv</code> 就是我们要找的符号，可以看到，确实在 <code>main.o</code> 和 <code>a.o</code> 中都存在这个符号，不过再仔细看一下，会发现这两个符号前面的类型不同，<code>main.o</code> 前面的标记是 <code>W</code>，这意味着这个符号是一个弱符号，当强符号和弱符号同时链接的时候，并不会产生冲突，编译器会优先使用强符号。如果两个都是强符号，那么就会出现冲突了。</p>
 <p>那么，后续正确版本的 <code>main.o</code> 的符号又是怎样的呢？我们可以编译一下然后再调用 <code>nm</code> 命令看看：</p>
-<pre><code>&gt; nm main.o
+<pre tabindex=0><code>&gt; nm main.o
 #                  U __cxa_atexit
 #                  U __dso_handle
 #                  U _GLOBAL_OFFSET_TABLE_
@@ -265,45 +215,40 @@ g++ -o main main.o a.o
 <li>模板特化声明必须写在头文件中，在使用之前必须让编译器看到这个特化声明，否则会出问题</li>
 </ol>
 </div>
-<div class="row middle-xs">
-<div class=col-xs-12>
-<div class=post-tags>
-<a href=/tags/c++/>
-C++
+<div class=pagination>
+<div class=pagination__title>
+<span class=pagination__title-h>Read other posts</span>
+<hr>
+</div>
+<div class=pagination__buttons>
+<span class="button previous">
+<a href=/posts/unity-with-android/>
+<span class=button__icon>←</span>
+<span class=button__text>Unity 和 Android 的工程集成</span>
 </a>
+</span>
+<span class="button next">
+<a href=/posts/rendering-equation/>
+<span class=button__text>深入理解渲染方程</span>
+<span class=button__icon>→</span>
+</a>
+</span>
 </div>
 </div>
-</div>
-<div class=row>
-<div class=col-xs-12>
-<br><p>我的博客即将同步至腾讯云+社区，<a target=_blank href="https://cloud.tencent.com/developer/support-plan?invite_code=11dehb9vzutlx">邀请大家一同入驻</a>。</p>
-</div>
-</div>
-<div class=related-content>
-<h3>Related Posts</h3>
-<ul>
-<li><a href=/posts/cpp-error-handling/>另一种 C++ 程序错误处理方式</a></li>
-<li><a href=/posts/real-world-cpp-template/>实际工程中的 C++ 模板</a></li>
-<li><a href=/posts/dynamic-scope/>静态作用域和动态作用域</a></li>
-</ul>
-</div>
-<div style=height:50px></div>
-<div class=post-comments>
 <div id=disqus_thread></div>
-<script>window.addEventListener("load",()=>{(function(){var a=document,b=a.createElement("script");b.src="https://ZhiruiLi.disqus.com/embed.js",b.setAttribute("data-timestamp",+new Date),(a.head||a.body).appendChild(b)})()})</script>
-<noscript>Please enable JavaScript to view the
-<a href=https://disqus.com/?ref_noscript>comments powered by Disqus.</a></noscript>
-</div>
-<div class=site-footer>
+<script type=application/javascript>var disqus_config=function(){};(function(){if(["localhost","127.0.0.1"].indexOf(window.location.hostname)!=-1){document.getElementById('disqus_thread').innerHTML='Disqus comments not available by default when the website is previewed locally.';return}var b=document,a=b.createElement('script');a.async=!0,a.src='//ZhiruiLi.disqus.com/embed.js',a.setAttribute('data-timestamp',+new Date),(b.head||b.body).appendChild(a)})()</script>
+<noscript>Please enable JavaScript to view the <a href=https://disqus.com/?ref_noscript>comments powered by Disqus.</a></noscript>
+<a href=https://disqus.com class=dsq-brlink>comments powered by <span class=logo-disqus>Disqus</span></a>
 </div>
 </div>
+<footer class=footer>
+<div class=footer__inner>
+<div class="copyright copyright--user"><p>我的博客即将同步至腾讯云+社区，<a target=_blank href="https://cloud.tencent.com/developer/support-plan?invite_code=11dehb9vzutlx">邀请大家一同入驻</a></p><p>本网站采用 <a href=https://creativecommons.org/licenses/by-sa/4.0/>CC BY-SA 4.0</a> 协议进行授权</p></div>
 </div>
-</article>
-<script src=https://unpkg.com/quicklink@0.1.1/dist/quicklink.umd.js></script>
-<script>var posts=document.getElementById('posts-list');posts&&quicklink({el:posts,priority:!0})</script>
-<script>MathJax={tex:{inlineMath:[['$','$'],['\\(','\\)']]},svg:{fontCache:'global'}}</script>
-<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
-<script id=MathJax-script async src=https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js></script>
-<script async src="https://www.googletagmanager.com/gtag/js?id=UA-80302213-1"></script>
+</footer>
+<script src=/assets/main.js></script>
+<script src=/assets/prism.js></script>
+</div>
+<script type=application/javascript>var doNotTrack=!1;doNotTrack||(function(a,e,f,g,b,c,d){a.GoogleAnalyticsObject=b,a[b]=a[b]||function(){(a[b].q=a[b].q||[]).push(arguments)},a[b].l=1*new Date,c=e.createElement(f),d=e.getElementsByTagName(f)[0],c.async=1,c.src=g,d.parentNode.insertBefore(c,d)}(window,document,'script','https://www.google-analytics.com/analytics.js','ga'),ga('create','UA-80302213-1','auto'),ga('send','pageview'))</script>
 </body>
 </html>

@@ -1,260 +1,166 @@
-<!doctype html><html lang=en>
+<!doctype html><html lang=cn>
 <head>
+<title>
+协变、逆变与不变 ::
+简单易懂的现代魔法 — Zhirui Li's Blog
+</title>
 <meta charset=utf-8>
-<meta name=generator content="Hugo 0.87.0">
-<meta http-equiv=x-ua-compatible content="IE=edge">
 <meta name=viewport content="width=device-width,initial-scale=1">
-<meta name=author content="Zhirui Li">
-<meta property="og:url" content="https://zhiruili.github.io/posts/covariant-and-contravariant/">
-<link rel=canonical href=https://zhiruili.github.io/posts/covariant-and-contravariant/><link rel=alternate type=application/atom+xml href=https://zhiruili.github.ioindex.xml title="简单易懂的现代魔法 - Zhirui Li">
-<script type=application/ld+json>{"@context":"http://schema.org","@type":"BlogPosting","mainEntityOfPage":{"@type":"WebPage","@id":"https:\/\/zhiruili.github.io"},"articleSection":"posts","name":"协变、逆变与不变","headline":"协变、逆变与不变","description":"型变（variance）是类型系统里的概念，包括协变（covariance）、逆变（contravariance）和不变（invariance）。这组术语的目的是描述泛型情况下类型参数的父子类关系如何影响参数化类型的父子类关系。也就是说，假设有一个接收一个类型参数的参数化类型 T 和两个类 A，B，且 B 是 A 的子类，那么 T[A] 与 T[B] 的关系是什么？如果 T[B] 是 T[A] 的子类，那么这种型变就是「协变」，因为参数化类型 T 的父子类关系与其类型参数的父子类关系是「同一个方向的」。如果 T[A] 是 T[B] 的子类，则这种关系是「逆变」，因为参数化类型 T 的父子类关系与类型参数的父子类关系是「相反方向的」。类似地，如果 T[A] 和 T[B] 之间不存在父子类关系，那么这种型变就是「不变」1。\n协变 在 Java 中，数组是协变的，也就是说，假设有一个基类 Person 和一个 Person 的子类 Student。因为 Student 类型是 Person 类型的子类，所以 Student[] 类型是 Person[] 类型的子类，这个设计似乎相当符合直觉，一个学生（Student）是一个人（Person），那一个存放着学生的数组当然也应该是一个存放着人的数组了。\n然而这是错误的。\n假设 Person 有另一个子类 Teacher，考虑如下代码：\n1 2 3 4 5  Student[] students = { new Student() } students[0].study(); Person[] persons = students; persons[0] = new Teacher(); students[0].","inLanguage":"en-US","author":"Zhirui Li","creator":"Zhirui Li","publisher":"Zhirui Li","accountablePerson":"Zhirui Li","copyrightHolder":"Zhirui Li","copyrightYear":"2016","datePublished":"2016-07-14 00:00:00 \u002b0000 UTC","dateModified":"2016-07-14 00:00:00 \u002b0000 UTC","url":"https:\/\/zhiruili.github.io\/posts\/covariant-and-contravariant\/","keywords":["Type System","Scala","Java"]}</script>
-<title>协变、逆变与不变</title>
-<meta property="og:title" content="协变、逆变与不变">
-<meta property="og:type" content="article">
-<meta property="og:description" content="型变（variance）是类型系统里的概念，包括协变（covariance）、逆变（contravariance）和不变（invariance）。这组术语的目的是描述泛型情况下类型参数的父子类关系如何影响参数化类型的父子类关系。也就是说，假设有一个接收一个类型参数的参数化类型 T 和两个类 A，B，且 B 是 A 的子类，那么 T[A] 与 T[B] 的关系是什么？如果 T[B] 是 T[A] 的子类，那么这种型变就是「协变」，因为参数化类型 T 的父子类关系与其类型参数的父子类关系是「同一个方向的」。如果 T[A] 是 T[B] 的子类，则这种关系是「逆变」，因为参数化类型 T 的父子类关系与类型参数的父子类关系是「相反方向的」。类似地，如果 T[A] 和 T[B] 之间不存在父子类关系，那么这种型变就是「不变」1。
-协变 在 Java 中，数组是协变的，也就是说，假设有一个基类 Person 和一个 Person 的子类 Student。因为 Student 类型是 Person 类型的子类，所以 Student[] 类型是 Person[] 类型的子类，这个设计似乎相当符合直觉，一个学生（Student）是一个人（Person），那一个存放着学生的数组当然也应该是一个存放着人的数组了。
-然而这是错误的。
-假设 Person 有另一个子类 Teacher，考虑如下代码：
-1 2 3 4 5  Student[] students = { new Student() } students[0].study(); Person[] persons = students; persons[0] = new Teacher(); students[0].">
 <meta name=description content="型变（variance）是类型系统里的概念，包括协变（covariance）、逆变（contravariance）和不变（invariance）。这组术语的目的是描述泛型情况下类型参数的父子类关系如何影响参数化类型的父子类关系。也就是说，假设有一个接收一个类型参数的参数化类型 T 和两个类 A，B，且 B 是 A 的子类，那么 T[A] 与 T[B] 的关系是什么？如果 T[B] 是 T[A] 的子类，那么这种型变就是「协变」，因为参数化类型 T 的父子类关系与其类型参数的父子类关系是「同一个方向的」。如果 T[A] 是 T[B] 的子类，则这种关系是「逆变」，因为参数化类型 T 的父子类关系与类型参数的父子类关系是「相反方向的」。类似地，如果 T[A] 和 T[B] 之间不存在父子类关系，那么这种型变就是「不变」1。
 协变 在 Java 中，数组是协变的，也就是说，假设有一个基类 Person 和一个 Person 的子类 Student。因为 Student 类型是 Person 类型的子类，所以 Student[] 类型是 Person[] 类型的子类，这个设计似乎相当符合直觉，一个学生（Student）是一个人（Person），那一个存放着学生的数组当然也应该是一个存放着人的数组了。
 然而这是错误的。
 假设 Person 有另一个子类 Teacher，考虑如下代码：
-1 2 3 4 5  Student[] students = { new Student() } students[0].study(); Person[] persons = students; persons[0] = new Teacher(); students[0].">
-<meta property="og:locale" content="zh-cn">
-<style>body{font-family:bree serif,sans-serif;-webkit-font-smoothing:antialiased;margin:0 20px}article{max-width:800px;margin-left:auto;margin-right:auto}a{color:#000;text-decoration:none}a:hover{font-weight:600;text-decoration:underline}.post-ads{margin:50px 0}.markdown-body{font-size:18px;max-width:100%}.markdown-body a{text-decoration:underline;text-decoration-color:#000}.markdown-body pre{padding:16px;overflow:auto;border-radius:10px}.markdown-body code{padding:.2em .4em;font-size:85%;background-color:#f6f8fa;border-radius:6px}.markdown-body pre>code{padding:0;font-size:100%;background-color:inherit;border:0}.Chinese .markdown-body{line-height:200%}.site-date-catalog{font-size:2rem}.header-title{font-size:2rem;font-weight:700;margin-top:32px;font-family:bungee shade,sans-serif}.header-title a{text-decoration:none}.header-subtitle{color:#666}.header-items{margin:10px 0}.header-item{margin:0 5px}.header-line{width:100%;border-width:2px;border-color:#482936;border-style:solid none none none}.lang-switch{font-weight:600}#posts-list{min-height:600px}.posts-line{font-size:1.2rem;margin:12px 0}.posts-categories{font-size:.8rem;margin:auto;text-align:center}.posts-category{padding:3px 0;border:#000 2px solid;border-radius:5px}.site-footer{margin-top:50px}.site-footer-item{margin-right:12px}.post-content img{max-width:100%;display:block;margin-right:auto;margin-top:12px}.post-header{margin-bottom:50px}.post-title{font-size:2rem;font-weight:600}.post-tags{display:inline;font-weight:600;padding:2px 5px;margin-right:6px;border:#000 2px solid;border-radius:5px}.post-date{font-weight:800;font-style:italic}.post-author{float:right;font-weight:600}.page-content{min-height:60%}.post-content{margin-bottom:50px}.post-content p{hyphens:auto;line-height:1.8;text-justify:ideographic;margin-bottom:1em}.related-content{border-width:3px;border-style:solid;border-color:#000;padding:0 10px;margin-bottom:50px;margin-top:100px}.related-content li{margin:5px 0}.taxonomy-term{font-size:3rem}.gallery-img{text-align:center}.gallery-img span{text-align:center}.gallery-img-desc{font-size:.8em;font-weight:800}#disqus_thread{position:relative}#disqus_thread:after{content:"";display:block;height:55px;width:100%;position:absolute;bottom:0;background:#fff}@media screen and (max-width:600px){.header-title,.header-subtitle,.header-items{text-align:center}.posts-line{font-size:16px}.markdown-body{font-size:16px}.post-title{font-size:2rem}.post-content p{letter-spacing:.05em}}@media screen and (max-width:48em){.posts-category{display:none}}</style>
-<style>.container,.container-fluid{margin-right:auto;margin-left:auto}.container-fluid{padding-right:2rem;padding-left:2rem}.row{box-sizing:border-box;display:-webkit-box;display:-ms-flexbox;display:flex;-webkit-box-flex:0;-ms-flex:0 1 auto;flex:initial;-webkit-box-orient:horizontal;-webkit-box-direction:normal;-ms-flex-direction:row;flex-direction:row;-ms-flex-wrap:wrap;flex-wrap:wrap;margin-right:-.5rem;margin-left:-.5rem}.row.reverse{-webkit-box-orient:horizontal;-webkit-box-direction:reverse;-ms-flex-direction:row-reverse;flex-direction:row-reverse}.col.reverse{-webkit-box-orient:vertical;-webkit-box-direction:reverse;-ms-flex-direction:column-reverse;flex-direction:column-reverse}.col-xs,.col-xs-1,.col-xs-10,.col-xs-11,.col-xs-12,.col-xs-2,.col-xs-3,.col-xs-4,.col-xs-5,.col-xs-6,.col-xs-7,.col-xs-8,.col-xs-9,.col-xs-offset-0,.col-xs-offset-1,.col-xs-offset-10,.col-xs-offset-11,.col-xs-offset-12,.col-xs-offset-2,.col-xs-offset-3,.col-xs-offset-4,.col-xs-offset-5,.col-xs-offset-6,.col-xs-offset-7,.col-xs-offset-8,.col-xs-offset-9{box-sizing:border-box;-webkit-box-flex:0;-ms-flex:0 0 auto;flex:none;padding-right:.5rem;padding-left:.5rem}.col-xs{-webkit-box-flex:1;-ms-flex-positive:1;flex-grow:1;-ms-flex-preferred-size:0;flex-basis:0;max-width:100%}.col-xs-1{-ms-flex-preferred-size:8.33333333%;flex-basis:8.33333333%;max-width:8.33333333%}.col-xs-2{-ms-flex-preferred-size:16.66666667%;flex-basis:16.66666667%;max-width:16.66666667%}.col-xs-3{-ms-flex-preferred-size:25%;flex-basis:25%;max-width:25%}.col-xs-4{-ms-flex-preferred-size:33.33333333%;flex-basis:33.33333333%;max-width:33.33333333%}.col-xs-5{-ms-flex-preferred-size:41.66666667%;flex-basis:41.66666667%;max-width:41.66666667%}.col-xs-6{-ms-flex-preferred-size:50%;flex-basis:50%;max-width:50%}.col-xs-7{-ms-flex-preferred-size:58.33333333%;flex-basis:58.33333333%;max-width:58.33333333%}.col-xs-8{-ms-flex-preferred-size:66.66666667%;flex-basis:66.66666667%;max-width:66.66666667%}.col-xs-9{-ms-flex-preferred-size:75%;flex-basis:75%;max-width:75%}.col-xs-10{-ms-flex-preferred-size:83.33333333%;flex-basis:83.33333333%;max-width:83.33333333%}.col-xs-11{-ms-flex-preferred-size:91.66666667%;flex-basis:91.66666667%;max-width:91.66666667%}.col-xs-12{-ms-flex-preferred-size:100%;flex-basis:100%;max-width:100%}.col-xs-offset-0{margin-left:0}.col-xs-offset-1{margin-left:8.33333333%}.col-xs-offset-2{margin-left:16.66666667%}.col-xs-offset-3{margin-left:25%}.col-xs-offset-4{margin-left:33.33333333%}.col-xs-offset-5{margin-left:41.66666667%}.col-xs-offset-6{margin-left:50%}.col-xs-offset-7{margin-left:58.33333333%}.col-xs-offset-8{margin-left:66.66666667%}.col-xs-offset-9{margin-left:75%}.col-xs-offset-10{margin-left:83.33333333%}.col-xs-offset-11{margin-left:91.66666667%}.start-xs{-webkit-box-pack:start;-ms-flex-pack:start;justify-content:flex-start;text-align:start}.center-xs{-webkit-box-pack:center;-ms-flex-pack:center;justify-content:center;text-align:center}.end-xs{-webkit-box-pack:end;-ms-flex-pack:end;justify-content:flex-end;text-align:end}.top-xs{-webkit-box-align:start;-ms-flex-align:start;align-items:flex-start}.middle-xs{-webkit-box-align:center;-ms-flex-align:center;align-items:center}.bottom-xs{-webkit-box-align:end;-ms-flex-align:end;align-items:flex-end}.around-xs{-ms-flex-pack:distribute;justify-content:space-around}.between-xs{-webkit-box-pack:justify;-ms-flex-pack:justify;justify-content:space-between}.first-xs{-webkit-box-ordinal-group:0;-ms-flex-order:-1;order:-1}.last-xs{-webkit-box-ordinal-group:2;-ms-flex-order:1;order:1}@media only screen and (min-width:48em){.container{width:49rem}.col-sm,.col-sm-1,.col-sm-10,.col-sm-11,.col-sm-12,.col-sm-2,.col-sm-3,.col-sm-4,.col-sm-5,.col-sm-6,.col-sm-7,.col-sm-8,.col-sm-9,.col-sm-offset-0,.col-sm-offset-1,.col-sm-offset-10,.col-sm-offset-11,.col-sm-offset-12,.col-sm-offset-2,.col-sm-offset-3,.col-sm-offset-4,.col-sm-offset-5,.col-sm-offset-6,.col-sm-offset-7,.col-sm-offset-8,.col-sm-offset-9{box-sizing:border-box;-webkit-box-flex:0;-ms-flex:0 0 auto;flex:none;padding-right:.5rem;padding-left:.5rem}.col-sm{-webkit-box-flex:1;-ms-flex-positive:1;flex-grow:1;-ms-flex-preferred-size:0;flex-basis:0;max-width:100%}.col-sm-1{-ms-flex-preferred-size:8.33333333%;flex-basis:8.33333333%;max-width:8.33333333%}.col-sm-2{-ms-flex-preferred-size:16.66666667%;flex-basis:16.66666667%;max-width:16.66666667%}.col-sm-3{-ms-flex-preferred-size:25%;flex-basis:25%;max-width:25%}.col-sm-4{-ms-flex-preferred-size:33.33333333%;flex-basis:33.33333333%;max-width:33.33333333%}.col-sm-5{-ms-flex-preferred-size:41.66666667%;flex-basis:41.66666667%;max-width:41.66666667%}.col-sm-6{-ms-flex-preferred-size:50%;flex-basis:50%;max-width:50%}.col-sm-7{-ms-flex-preferred-size:58.33333333%;flex-basis:58.33333333%;max-width:58.33333333%}.col-sm-8{-ms-flex-preferred-size:66.66666667%;flex-basis:66.66666667%;max-width:66.66666667%}.col-sm-9{-ms-flex-preferred-size:75%;flex-basis:75%;max-width:75%}.col-sm-10{-ms-flex-preferred-size:83.33333333%;flex-basis:83.33333333%;max-width:83.33333333%}.col-sm-11{-ms-flex-preferred-size:91.66666667%;flex-basis:91.66666667%;max-width:91.66666667%}.col-sm-12{-ms-flex-preferred-size:100%;flex-basis:100%;max-width:100%}.col-sm-offset-0{margin-left:0}.col-sm-offset-1{margin-left:8.33333333%}.col-sm-offset-2{margin-left:16.66666667%}.col-sm-offset-3{margin-left:25%}.col-sm-offset-4{margin-left:33.33333333%}.col-sm-offset-5{margin-left:41.66666667%}.col-sm-offset-6{margin-left:50%}.col-sm-offset-7{margin-left:58.33333333%}.col-sm-offset-8{margin-left:66.66666667%}.col-sm-offset-9{margin-left:75%}.col-sm-offset-10{margin-left:83.33333333%}.col-sm-offset-11{margin-left:91.66666667%}.start-sm{-webkit-box-pack:start;-ms-flex-pack:start;justify-content:flex-start;text-align:start}.center-sm{-webkit-box-pack:center;-ms-flex-pack:center;justify-content:center;text-align:center}.end-sm{-webkit-box-pack:end;-ms-flex-pack:end;justify-content:flex-end;text-align:end}.top-sm{-webkit-box-align:start;-ms-flex-align:start;align-items:flex-start}.middle-sm{-webkit-box-align:center;-ms-flex-align:center;align-items:center}.bottom-sm{-webkit-box-align:end;-ms-flex-align:end;align-items:flex-end}.around-sm{-ms-flex-pack:distribute;justify-content:space-around}.between-sm{-webkit-box-pack:justify;-ms-flex-pack:justify;justify-content:space-between}.first-sm{-webkit-box-ordinal-group:0;-ms-flex-order:-1;order:-1}.last-sm{-webkit-box-ordinal-group:2;-ms-flex-order:1;order:1}}@media only screen and (min-width:64em){.container{width:65rem}.col-md,.col-md-1,.col-md-10,.col-md-11,.col-md-12,.col-md-2,.col-md-3,.col-md-4,.col-md-5,.col-md-6,.col-md-7,.col-md-8,.col-md-9,.col-md-offset-0,.col-md-offset-1,.col-md-offset-10,.col-md-offset-11,.col-md-offset-12,.col-md-offset-2,.col-md-offset-3,.col-md-offset-4,.col-md-offset-5,.col-md-offset-6,.col-md-offset-7,.col-md-offset-8,.col-md-offset-9{box-sizing:border-box;-webkit-box-flex:0;-ms-flex:0 0 auto;flex:none;padding-right:.5rem;padding-left:.5rem}.col-md{-webkit-box-flex:1;-ms-flex-positive:1;flex-grow:1;-ms-flex-preferred-size:0;flex-basis:0;max-width:100%}.col-md-1{-ms-flex-preferred-size:8.33333333%;flex-basis:8.33333333%;max-width:8.33333333%}.col-md-2{-ms-flex-preferred-size:16.66666667%;flex-basis:16.66666667%;max-width:16.66666667%}.col-md-3{-ms-flex-preferred-size:25%;flex-basis:25%;max-width:25%}.col-md-4{-ms-flex-preferred-size:33.33333333%;flex-basis:33.33333333%;max-width:33.33333333%}.col-md-5{-ms-flex-preferred-size:41.66666667%;flex-basis:41.66666667%;max-width:41.66666667%}.col-md-6{-ms-flex-preferred-size:50%;flex-basis:50%;max-width:50%}.col-md-7{-ms-flex-preferred-size:58.33333333%;flex-basis:58.33333333%;max-width:58.33333333%}.col-md-8{-ms-flex-preferred-size:66.66666667%;flex-basis:66.66666667%;max-width:66.66666667%}.col-md-9{-ms-flex-preferred-size:75%;flex-basis:75%;max-width:75%}.col-md-10{-ms-flex-preferred-size:83.33333333%;flex-basis:83.33333333%;max-width:83.33333333%}.col-md-11{-ms-flex-preferred-size:91.66666667%;flex-basis:91.66666667%;max-width:91.66666667%}.col-md-12{-ms-flex-preferred-size:100%;flex-basis:100%;max-width:100%}.col-md-offset-0{margin-left:0}.col-md-offset-1{margin-left:8.33333333%}.col-md-offset-2{margin-left:16.66666667%}.col-md-offset-3{margin-left:25%}.col-md-offset-4{margin-left:33.33333333%}.col-md-offset-5{margin-left:41.66666667%}.col-md-offset-6{margin-left:50%}.col-md-offset-7{margin-left:58.33333333%}.col-md-offset-8{margin-left:66.66666667%}.col-md-offset-9{margin-left:75%}.col-md-offset-10{margin-left:83.33333333%}.col-md-offset-11{margin-left:91.66666667%}.start-md{-webkit-box-pack:start;-ms-flex-pack:start;justify-content:flex-start;text-align:start}.center-md{-webkit-box-pack:center;-ms-flex-pack:center;justify-content:center;text-align:center}.end-md{-webkit-box-pack:end;-ms-flex-pack:end;justify-content:flex-end;text-align:end}.top-md{-webkit-box-align:start;-ms-flex-align:start;align-items:flex-start}.middle-md{-webkit-box-align:center;-ms-flex-align:center;align-items:center}.bottom-md{-webkit-box-align:end;-ms-flex-align:end;align-items:flex-end}.around-md{-ms-flex-pack:distribute;justify-content:space-around}.between-md{-webkit-box-pack:justify;-ms-flex-pack:justify;justify-content:space-between}.first-md{-webkit-box-ordinal-group:0;-ms-flex-order:-1;order:-1}.last-md{-webkit-box-ordinal-group:2;-ms-flex-order:1;order:1}}@media only screen and (min-width:75em){.container{width:76rem}.col-lg,.col-lg-1,.col-lg-10,.col-lg-11,.col-lg-12,.col-lg-2,.col-lg-3,.col-lg-4,.col-lg-5,.col-lg-6,.col-lg-7,.col-lg-8,.col-lg-9,.col-lg-offset-0,.col-lg-offset-1,.col-lg-offset-10,.col-lg-offset-11,.col-lg-offset-12,.col-lg-offset-2,.col-lg-offset-3,.col-lg-offset-4,.col-lg-offset-5,.col-lg-offset-6,.col-lg-offset-7,.col-lg-offset-8,.col-lg-offset-9{box-sizing:border-box;-webkit-box-flex:0;-ms-flex:0 0 auto;flex:none;padding-right:.5rem;padding-left:.5rem}.col-lg{-webkit-box-flex:1;-ms-flex-positive:1;flex-grow:1;-ms-flex-preferred-size:0;flex-basis:0;max-width:100%}.col-lg-1{-ms-flex-preferred-size:8.33333333%;flex-basis:8.33333333%;max-width:8.33333333%}.col-lg-2{-ms-flex-preferred-size:16.66666667%;flex-basis:16.66666667%;max-width:16.66666667%}.col-lg-3{-ms-flex-preferred-size:25%;flex-basis:25%;max-width:25%}.col-lg-4{-ms-flex-preferred-size:33.33333333%;flex-basis:33.33333333%;max-width:33.33333333%}.col-lg-5{-ms-flex-preferred-size:41.66666667%;flex-basis:41.66666667%;max-width:41.66666667%}.col-lg-6{-ms-flex-preferred-size:50%;flex-basis:50%;max-width:50%}.col-lg-7{-ms-flex-preferred-size:58.33333333%;flex-basis:58.33333333%;max-width:58.33333333%}.col-lg-8{-ms-flex-preferred-size:66.66666667%;flex-basis:66.66666667%;max-width:66.66666667%}.col-lg-9{-ms-flex-preferred-size:75%;flex-basis:75%;max-width:75%}.col-lg-10{-ms-flex-preferred-size:83.33333333%;flex-basis:83.33333333%;max-width:83.33333333%}.col-lg-11{-ms-flex-preferred-size:91.66666667%;flex-basis:91.66666667%;max-width:91.66666667%}.col-lg-12{-ms-flex-preferred-size:100%;flex-basis:100%;max-width:100%}.col-lg-offset-0{margin-left:0}.col-lg-offset-1{margin-left:8.33333333%}.col-lg-offset-2{margin-left:16.66666667%}.col-lg-offset-3{margin-left:25%}.col-lg-offset-4{margin-left:33.33333333%}.col-lg-offset-5{margin-left:41.66666667%}.col-lg-offset-6{margin-left:50%}.col-lg-offset-7{margin-left:58.33333333%}.col-lg-offset-8{margin-left:66.66666667%}.col-lg-offset-9{margin-left:75%}.col-lg-offset-10{margin-left:83.33333333%}.col-lg-offset-11{margin-left:91.66666667%}.start-lg{-webkit-box-pack:start;-ms-flex-pack:start;justify-content:flex-start;text-align:start}.center-lg{-webkit-box-pack:center;-ms-flex-pack:center;justify-content:center;text-align:center}.end-lg{-webkit-box-pack:end;-ms-flex-pack:end;justify-content:flex-end;text-align:end}.top-lg{-webkit-box-align:start;-ms-flex-align:start;align-items:flex-start}.middle-lg{-webkit-box-align:center;-ms-flex-align:center;align-items:center}.bottom-lg{-webkit-box-align:end;-ms-flex-align:end;align-items:flex-end}.around-lg{-ms-flex-pack:distribute;justify-content:space-around}.between-lg{-webkit-box-pack:justify;-ms-flex-pack:justify;justify-content:space-between}.first-lg{-webkit-box-ordinal-group:0;-ms-flex-order:-1;order:-1}.last-lg{-webkit-box-ordinal-group:2;-ms-flex-order:1;order:1}}</style>
-<link href=/index.xml rel=alternate type=application/rss+xml title="简单易懂的现代魔法 - Zhirui Li">
-<link rel=preconnect href=https://fonts.gstatic.com>
-<link href="https://fonts.googleapis.com/css?family=Bree+Serif|Bungee+Shade" rel=stylesheet>
+Student[] students = { new Student() } students[0].study(); Person[] persons = students; persons[0] = new Teacher(); students[0].study(); // Oops! 这段代码显然错了，看一下刚刚做了什么。我们在 Student 数组里存放了一个 Student 实例，紧接着调用了这个对象的 study 方法，这个显然没错；然后将这个数组赋值给一个 Person 数组，由于数组是协变的，所以这步没问题；然后，向 Person 数组里添加一个 Teacher 的实例，这步也没问题，因为一个 Teacher 是一个 Person；接下来是获取 Student 数组里的对象，调用 Student 类的 study 方法，这似乎也是合理的。那问题在哪呢？">
+<meta name=keywords content="编程,计算机图形学,游戏开发">
+<meta name=robots content="noodp">
+<link rel=canonical href=/posts/covariant-and-contravariant/>
+<link rel=stylesheet href=/assets/style.css>
+<link rel=stylesheet href=/style.css>
+<link rel=apple-touch-icon-precomposed sizes=144x144 href=/img/apple-touch-icon-144-precomposed.png>
+<link rel="shortcut icon" href=/img/favicon.png>
+<link href=/assets/fonts/Inter-Italic.woff2 rel=preload type=font/woff2 as=font crossorigin>
+<link href=/assets/fonts/Inter-Regular.woff2 rel=preload type=font/woff2 as=font crossorigin>
+<link href=/assets/fonts/Inter-Medium.woff2 rel=preload type=font/woff2 as=font crossorigin>
+<link href=/assets/fonts/Inter-MediumItalic.woff2 rel=preload type=font/woff2 as=font crossorigin>
+<link href=/assets/fonts/Inter-Bold.woff2 rel=preload type=font/woff2 as=font crossorigin>
+<link href=/assets/fonts/Inter-BoldItalic.woff2 rel=preload type=font/woff2 as=font crossorigin>
+<meta name=twitter:card content="summary">
+<meta name=twitter:title content="协变、逆变与不变">
+<meta name=twitter:description content="型变（variance）是类型系统里的概念，包括协变（covariance）、逆变（contravariance）和不变（invariance）。这组术语的目的是描述泛型情况下类型参数的父子类关系如何影响参数化类型的父子类关系。也就是说，假设有一个接收一个类型参数的参数化类型 T 和两个类 A，B，且 B 是 A 的子类，那么 T[A] 与 T[B] 的关系是什么？如果 T[B] 是 T[A] 的子类，那么这种型变就是「协变」，因为参数化类型 T 的父子类关系与其类型参数的父子类关系是「同一个方向的」。如果 T[A] 是 T[B] 的子类，则这种关系是「逆变」，因为参数化类型 T 的父子类关系与类型参数的父子类关系是「相反方向的」。类似地，如果 T[A] 和 T[B] 之间不存在父子类关系，那么这种型变就是「不变」1。
+协变 在 Java 中，数组是协变的，也就是说，假设有一个基类 Person 和一个 Person 的子类 Student。因为 Student 类型是 Person 类型的子类，所以 Student[] 类型是 Person[] 类型的子类，这个设计似乎相当符合直觉，一个学生（Student）是一个人（Person），那一个存放着学生的数组当然也应该是一个存放着人的数组了。
+然而这是错误的。
+假设 Person 有另一个子类 Teacher，考虑如下代码：
+Student[] students = { new Student() } students[0].study(); Person[] persons = students; persons[0] = new Teacher(); students[0].study(); // Oops! 这段代码显然错了，看一下刚刚做了什么。我们在 Student 数组里存放了一个 Student 实例，紧接着调用了这个对象的 study 方法，这个显然没错；然后将这个数组赋值给一个 Person 数组，由于数组是协变的，所以这步没问题；然后，向 Person 数组里添加一个 Teacher 的实例，这步也没问题，因为一个 Teacher 是一个 Person；接下来是获取 Student 数组里的对象，调用 Student 类的 study 方法，这似乎也是合理的。那问题在哪呢？">
+<meta property="og:title" content="协变、逆变与不变">
+<meta property="og:description" content="型变（variance）是类型系统里的概念，包括协变（covariance）、逆变（contravariance）和不变（invariance）。这组术语的目的是描述泛型情况下类型参数的父子类关系如何影响参数化类型的父子类关系。也就是说，假设有一个接收一个类型参数的参数化类型 T 和两个类 A，B，且 B 是 A 的子类，那么 T[A] 与 T[B] 的关系是什么？如果 T[B] 是 T[A] 的子类，那么这种型变就是「协变」，因为参数化类型 T 的父子类关系与其类型参数的父子类关系是「同一个方向的」。如果 T[A] 是 T[B] 的子类，则这种关系是「逆变」，因为参数化类型 T 的父子类关系与类型参数的父子类关系是「相反方向的」。类似地，如果 T[A] 和 T[B] 之间不存在父子类关系，那么这种型变就是「不变」1。
+协变 在 Java 中，数组是协变的，也就是说，假设有一个基类 Person 和一个 Person 的子类 Student。因为 Student 类型是 Person 类型的子类，所以 Student[] 类型是 Person[] 类型的子类，这个设计似乎相当符合直觉，一个学生（Student）是一个人（Person），那一个存放着学生的数组当然也应该是一个存放着人的数组了。
+然而这是错误的。
+假设 Person 有另一个子类 Teacher，考虑如下代码：
+Student[] students = { new Student() } students[0].study(); Person[] persons = students; persons[0] = new Teacher(); students[0].study(); // Oops! 这段代码显然错了，看一下刚刚做了什么。我们在 Student 数组里存放了一个 Student 实例，紧接着调用了这个对象的 study 方法，这个显然没错；然后将这个数组赋值给一个 Person 数组，由于数组是协变的，所以这步没问题；然后，向 Person 数组里添加一个 Teacher 的实例，这步也没问题，因为一个 Teacher 是一个 Person；接下来是获取 Student 数组里的对象，调用 Student 类的 study 方法，这似乎也是合理的。那问题在哪呢？">
+<meta property="og:type" content="article">
+<meta property="og:url" content="/posts/covariant-and-contravariant/"><meta property="article:section" content="posts">
+<meta property="article:published_time" content="2016-07-14T00:00:00+00:00">
+<meta property="article:modified_time" content="2016-07-20T00:00:00+00:00"><meta property="og:site_name" content="简单易懂的现代魔法">
+<script>var posts=document.getElementById('posts-list');posts&&quicklink({el:posts,priority:!0})</script>
+<script>MathJax={tex:{inlineMath:[['$','$'],['\\(','\\)']]},svg:{fontCache:'global'}}</script>
+<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script id=MathJax-script async src=https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js></script>
 </head>
 <body>
-<article class="post Chinese" id=article>
-<div class=row>
-<div class=col-xs-12>
-<div class=site-header>
-<header>
-<div class=header-title>
-<a href=/>简单易懂的现代魔法</a>
-</div>
-<div class=header-subtitle></div>
+<div class=container>
+<header class=header>
+<span class=header__inner>
+<a href=/ class=logo style=text-decoration:none>
+<span class=logo__mark><svg xmlns="http://www.w3.org/2000/svg" class="greater-icon" viewBox="0 0 44 44"><path fill="none" d="M15 8l14.729 14.382L15 35.367"/></svg>
+</span>
+<span class=logo__text>简单易懂的现代魔法</span>
+<span class=logo__cursor></span>
+</a>
+<span class=header__right>
+<nav class=menu>
+<ul class="menu__inner menu__inner--desktop">
+<li><a href=/archive>Archive</a></li>
+<li><a href=https://www.github.com/zhiruili>Github</a></li>
+<li><a href=/index.xml>RSS</a></li>
+</ul>
+<ul class="menu__inner menu__inner--mobile">
+<li><a href=/archive>Archive</a></li>
+<li><a href=https://www.github.com/zhiruili>Github</a></li>
+<li><a href=/index.xml>RSS</a></li>
+</ul>
+</nav>
+<span class=menu-trigger><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M0 0h24v24H0z" fill="none"/><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></svg>
+</span>
+<span class=theme-toggle><svg class="theme-toggler" width="24" height="24" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M22 41c10.4934.0 19-8.5066 19-19C41 11.5066 32.4934 3 22 3 11.5066 3 3 11.5066 3 22s8.5066 19 19 19zM7 22C7 13.7157 13.7157 7 22 7V37C13.7157 37 7 30.2843 7 22z"/></svg>
+</span>
+</span>
+</span>
 </header>
-<div class="row end-md center-xs header-items">
-<div class=header-item>
-<a href=/index.xml target=_blank>RSS</a>
-</div>
-<div class=header-item>
-<a href=mailto:zr.public@outlook.com target=_blank>E-mail</a>
-</div>
-<div class=header-item>
-<a href=https://www.github.com/ZhiruiLi target=_blank>Github</a>
-</div>
-</div>
-<div class="row end-xs">
-</div>
-<div class=header-line></div>
-</div>
-<header class=post-header>
+<div class=content>
+<div class=post>
 <h1 class=post-title>协变、逆变与不变</h1>
-<div class="row post-desc">
-<div class=col-xs-6>
-<time class=post-date datetime="2016-07-14 00:00:00 UTC">
-14 Jul 2016
-</time>
+<div class=post-meta>
+<span class=post-date>
+2016-07-14
+</span>
 </div>
-<div class=col-xs-6>
-<div class=post-author>
-<a target=_blank href=https://www.github.com/ZhiruiLi>@Zhirui Li</a>
-</div>
-</div>
-</div>
-</header>
-<div class="post-content markdown-body">
+<span class=post-tags>
+<a href=/tags/type-system/>#Type System</a>&nbsp;
+<a href=/tags/scala/>#Scala</a>&nbsp;
+<a href=/tags/java/>#Java</a>&nbsp;
+</span>
+<div class=post-content>
 <p>型变（variance）是类型系统里的概念，包括协变（covariance）、逆变（contravariance）和不变（invariance）。这组术语的目的是描述泛型情况下类型参数的父子类关系如何影响参数化类型的父子类关系。也就是说，假设有一个接收一个类型参数的参数化类型 <code>T</code> 和两个类 <code>A</code>，<code>B</code>，且 <code>B</code> 是 <code>A</code> 的子类，那么 <code>T[A]</code> 与 <code>T[B]</code> 的关系是什么？如果 <code>T[B]</code> 是 <code>T[A]</code> 的子类，那么这种型变就是「协变」，因为参数化类型 <code>T</code> 的父子类关系与其类型参数的父子类关系是「同一个方向的」。如果 <code>T[A]</code> 是 <code>T[B]</code> 的子类，则这种关系是「逆变」，因为参数化类型 <code>T</code> 的父子类关系与类型参数的父子类关系是「相反方向的」。类似地，如果 <code>T[A]</code> 和 <code>T[B]</code> 之间不存在父子类关系，那么这种型变就是「不变」<sup id=fnref:1><a href=#fn:1 class=footnote-ref role=doc-noteref>1</a></sup>。</p>
 <h1 id=协变>协变</h1>
 <p>在 Java 中，数组是协变的，也就是说，假设有一个基类 <code>Person</code> 和一个 <code>Person</code> 的子类 <code>Student</code>。因为 <code>Student</code> 类型是 <code>Person</code> 类型的子类，所以 <code>Student[]</code> 类型是 <code>Person[]</code> 类型的子类，这个设计似乎相当符合直觉，一个学生（<code>Student</code>）是一个人（<code>Person</code>），那一个存放着学生的数组当然也应该是一个存放着人的数组了。</p>
 <p>然而这是错误的。</p>
 <p>假设 <code>Person</code> 有另一个子类 <code>Teacher</code>，考虑如下代码：</p>
-<div class=highlight><div style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4>
-<table style=border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block><tr><td style=vertical-align:top;padding:0;margin:0;border:0>
-<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">4
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">5
-</span></code></pre></td>
-<td style=vertical-align:top;padding:0;margin:0;border:0;width:100%>
-<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=color:#000>Student</span><span style=color:#ce5c00;font-weight:700>[]</span> <span style=color:#000>students</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#ce5c00;font-weight:700>{</span> <span style=color:#204a87;font-weight:700>new</span> <span style=color:#000>Student</span><span style=color:#ce5c00;font-weight:700>()</span> <span style=color:#ce5c00;font-weight:700>}</span>
-<span style=color:#000>students</span><span style=color:#ce5c00;font-weight:700>[</span><span style=color:#000>0</span><span style=color:#ce5c00;font-weight:700>].</span><span style=color:#c4a000>study</span><span style=color:#ce5c00;font-weight:700>();</span>
-<span style=color:#000>Person</span><span style=color:#ce5c00;font-weight:700>[]</span> <span style=color:#000>persons</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>students</span><span style=color:#ce5c00;font-weight:700>;</span>
-<span style=color:#000>persons</span><span style=color:#ce5c00;font-weight:700>[</span><span style=color:#000>0</span><span style=color:#ce5c00;font-weight:700>]</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#204a87;font-weight:700>new</span> <span style=color:#000>Teacher</span><span style=color:#ce5c00;font-weight:700>();</span>
-<span style=color:#000>students</span><span style=color:#ce5c00;font-weight:700>[</span><span style=color:#000>0</span><span style=color:#ce5c00;font-weight:700>].</span><span style=color:#c4a000>study</span><span style=color:#ce5c00;font-weight:700>();</span>  <span style=color:#8f5902;font-style:italic>// Oops!
-</span></code></pre></td></tr></table>
-</div>
-</div><p>这段代码显然错了，看一下刚刚做了什么。我们在 <code>Student</code> 数组里存放了一个 <code>Student</code> 实例，紧接着调用了这个对象的 <code>study</code> 方法，这个显然没错；然后将这个数组赋值给一个 <code>Person</code> 数组，由于数组是协变的，所以这步没问题；然后，向 <code>Person</code> 数组里添加一个 <code>Teacher</code> 的实例，这步也没问题，因为一个 <code>Teacher</code> 是一个 <code>Person</code>；接下来是获取 <code>Student</code> 数组里的对象，调用 <code>Student</code> 类的 <code>study</code> 方法，这似乎也是合理的。那问题在哪呢？</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java>Student<span style=color:#f92672>[]</span> students <span style=color:#f92672>=</span> <span style=color:#f92672>{</span> <span style=color:#66d9ef>new</span> Student<span style=color:#f92672>()</span> <span style=color:#f92672>}</span>
+students<span style=color:#f92672>[</span>0<span style=color:#f92672>].</span><span style=color:#a6e22e>study</span><span style=color:#f92672>();</span>
+Person<span style=color:#f92672>[]</span> persons <span style=color:#f92672>=</span> students<span style=color:#f92672>;</span>
+persons<span style=color:#f92672>[</span>0<span style=color:#f92672>]</span> <span style=color:#f92672>=</span> <span style=color:#66d9ef>new</span> Teacher<span style=color:#f92672>();</span>
+students<span style=color:#f92672>[</span>0<span style=color:#f92672>].</span><span style=color:#a6e22e>study</span><span style=color:#f92672>();</span>  <span style=color:#75715e>// Oops!
+</span></code></pre></div><p>这段代码显然错了，看一下刚刚做了什么。我们在 <code>Student</code> 数组里存放了一个 <code>Student</code> 实例，紧接着调用了这个对象的 <code>study</code> 方法，这个显然没错；然后将这个数组赋值给一个 <code>Person</code> 数组，由于数组是协变的，所以这步没问题；然后，向 <code>Person</code> 数组里添加一个 <code>Teacher</code> 的实例，这步也没问题，因为一个 <code>Teacher</code> 是一个 <code>Person</code>；接下来是获取 <code>Student</code> 数组里的对象，调用 <code>Student</code> 类的 <code>study</code> 方法，这似乎也是合理的。那问题在哪呢？</p>
 <p>事实上，这段代码可以编译通过，Java 并不会因此报编译错误，而是在运行 <code>persons[0] = new Teacher();</code> 时抛出一个 <code>java.lang.ArrayStoreException</code>。也就是说，给协变的数组的单元赋值的时候出错了。这个错误本来应该由编译器发现并指出，但 Java 将对这一错误的防止延后到了运行时期，错过了编译期的检查。编译器没有做正确的事情，这显然是一个设计错误，但这个错误是有其历史原因的 <sup id=fnref:2><a href=#fn:2 class=footnote-ref role=doc-noteref>2</a></sup>。</p>
 <p>在 Java 的早期版本中，工程师们因为时间紧迫而选择暂时不添加泛型在 Java 的语法中，这导致 Java 的数组没法使用泛型，在这种情况下，如果数组的型变是不变，那么要写一些通用的数组操作方法就变得困难，解决方案就是将数组设计为协变的，这样，就可以用操作 <code>Object[]</code> 的方法来操作所有引用类型的数组了。比如你可以写类似这样的方法来对数组里的对象进行排序：</p>
-<div class=highlight><div style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4>
-<table style=border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block><tr><td style=vertical-align:top;padding:0;margin:0;border:0>
-<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
-</span></code></pre></td>
-<td style=vertical-align:top;padding:0;margin:0;border:0;width:100%>
-<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=color:#204a87;font-weight:700>public</span> <span style=color:#204a87;font-weight:700>static</span> <span style=color:#204a87;font-weight:700>void</span> <span style=color:#000>sort</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>Object</span><span style=color:#ce5c00;font-weight:700>[]</span> <span style=color:#000>objs</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>Comparator</span> <span style=color:#000>cmp</span><span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#ce5c00;font-weight:700>{</span> <span style=color:#ce5c00;font-weight:700>...</span> <span style=color:#ce5c00;font-weight:700>}</span>
-</code></pre></td></tr></table>
-</div>
-</div><p>这显然是一个妥协，后来又因为兼容性的考量，不得不维持了这个设计，这是 Java 的一个原罪。而 Scala 做了正确的事，在 Scala 中，数组的声明和别的类没有什么不同：</p>
-<div class=highlight><div style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4>
-<table style=border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block><tr><td style=vertical-align:top;padding:0;margin:0;border:0>
-<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
-</span></code></pre></td>
-<td style=vertical-align:top;padding:0;margin:0;border:0;width:100%>
-<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-scala data-lang=scala><span style=color:#204a87;font-weight:700>final</span> <span style=color:#204a87;font-weight:700>class</span> <span style=color:#000>Array</span><span style=color:#ce5c00;font-weight:700>[</span><span style=color:#204a87;font-weight:700>T</span><span style=color:#ce5c00;font-weight:700>]</span> <span style=color:#000>extends</span> <span style=color:#000>java</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#000>io</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#000>Serializable</span> <span style=color:#204a87;font-weight:700>with</span> <span style=color:#000>java</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#000>lang</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#000>Cloneable</span>
-</code></pre></td></tr></table>
-</div>
-</div><p>Scala 中的 Array 的实现就是 Java 的数组。在 Scala 中在类型参数前添加 <code>+</code> 代表参数化类型在该类型参数上协变，添加 <code>-</code> 则代表逆变，什么都不加就是不变。从 <code>Array</code> 的声明中可以看出，Scala 的 <code>Array</code> 是不变的，所以，以下代码是非法的：</p>
-<div class=highlight><div style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4>
-<table style=border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block><tr><td style=vertical-align:top;padding:0;margin:0;border:0>
-<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">4
-</span></code></pre></td>
-<td style=vertical-align:top;padding:0;margin:0;border:0;width:100%>
-<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-scala data-lang=scala><span style=color:#204a87;font-weight:700>val</span> <span style=color:#000>students</span><span style=color:#204a87;font-weight:700>:</span> <span style=color:#204a87;font-weight:700>Array</span><span style=color:#ce5c00;font-weight:700>[</span><span style=color:#204a87;font-weight:700>Student</span><span style=color:#ce5c00;font-weight:700>]</span> <span style=color:#204a87;font-weight:700>=</span> <span style=color:#000>Array</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#204a87;font-weight:700>new</span> <span style=color:#000>Student</span><span style=color:#ce5c00;font-weight:700>)</span>
-<span style=color:#8f5902;font-style:italic>// Compiler error:
-</span><span style=color:#8f5902;font-style:italic>// Expression of type Array[Student] doesn&#39;t conform to expected type Array[Person]
-</span><span style=color:#8f5902;font-style:italic></span><span style=color:#204a87;font-weight:700>val</span> <span style=color:#000>persons</span><span style=color:#204a87;font-weight:700>:</span> <span style=color:#204a87;font-weight:700>Array</span><span style=color:#ce5c00;font-weight:700>[</span><span style=color:#204a87;font-weight:700>Person</span><span style=color:#ce5c00;font-weight:700>]</span> <span style=color:#204a87;font-weight:700>=</span> <span style=color:#000>students</span>
-</code></pre></td></tr></table>
-</div>
-</div><p>那么，怎样集合类型才是协变的呢？考虑刚刚的数组的例子，将 <code>Student[]</code> 类型的实例赋值给 <code>Person[]</code> 类型的对象是没错的，当我们去修改 <code>Person[]</code> 对象的元素时，错误才产生。也就是说，不可变的集合才是协变的。</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=color:#66d9ef>public</span> <span style=color:#66d9ef>static</span> <span style=color:#66d9ef>void</span> <span style=color:#a6e22e>sort</span><span style=color:#f92672>(</span>Object<span style=color:#f92672>[]</span> objs<span style=color:#f92672>,</span> Comparator cmp<span style=color:#f92672>)</span> <span style=color:#f92672>{</span> <span style=color:#f92672>...</span> <span style=color:#f92672>}</span>
+</code></pre></div><p>这显然是一个妥协，后来又因为兼容性的考量，不得不维持了这个设计，这是 Java 的一个原罪。而 Scala 做了正确的事，在 Scala 中，数组的声明和别的类没有什么不同：</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-scala data-lang=scala><span style=color:#66d9ef>final</span> <span style=color:#66d9ef>class</span> <span style=color:#a6e22e>Array</span><span style=color:#f92672>[</span><span style=color:#66d9ef>T</span><span style=color:#f92672>]</span> <span style=color:#a6e22e>extends</span> java<span style=color:#f92672>.</span>io<span style=color:#f92672>.</span><span style=color:#a6e22e>Serializable</span> <span style=color:#66d9ef>with</span> java<span style=color:#f92672>.</span>lang<span style=color:#f92672>.</span><span style=color:#a6e22e>Cloneable</span>
+</code></pre></div><p>Scala 中的 Array 的实现就是 Java 的数组。在 Scala 中在类型参数前添加 <code>+</code> 代表参数化类型在该类型参数上协变，添加 <code>-</code> 则代表逆变，什么都不加就是不变。从 <code>Array</code> 的声明中可以看出，Scala 的 <code>Array</code> 是不变的，所以，以下代码是非法的：</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-scala data-lang=scala><span style=color:#66d9ef>val</span> students<span style=color:#66d9ef>:</span> <span style=color:#66d9ef>Array</span><span style=color:#f92672>[</span><span style=color:#66d9ef>Student</span><span style=color:#f92672>]</span> <span style=color:#66d9ef>=</span> <span style=color:#a6e22e>Array</span><span style=color:#f92672>(</span><span style=color:#66d9ef>new</span> <span style=color:#a6e22e>Student</span><span style=color:#f92672>)</span>
+<span style=color:#75715e>// Compiler error:
+</span><span style=color:#75715e>// Expression of type Array[Student] doesn&#39;t conform to expected type Array[Person]
+</span><span style=color:#75715e></span><span style=color:#66d9ef>val</span> persons<span style=color:#66d9ef>:</span> <span style=color:#66d9ef>Array</span><span style=color:#f92672>[</span><span style=color:#66d9ef>Person</span><span style=color:#f92672>]</span> <span style=color:#66d9ef>=</span> students
+</code></pre></div><p>那么，怎样集合类型才是协变的呢？考虑刚刚的数组的例子，将 <code>Student[]</code> 类型的实例赋值给 <code>Person[]</code> 类型的对象是没错的，当我们去修改 <code>Person[]</code> 对象的元素时，错误才产生。也就是说，不可变的集合才是协变的。</p>
 <p>在 Scala 的 <code>scala.collection.immutable</code> 包中有许多不可变的集合，例如不可变的链表 <code>List</code>，它的声明大概如下（原声明很长，此处有所省略）：</p>
-<div class=highlight><div style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4>
-<table style=border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block><tr><td style=vertical-align:top;padding:0;margin:0;border:0>
-<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
-</span></code></pre></td>
-<td style=vertical-align:top;padding:0;margin:0;border:0;width:100%>
-<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-scala data-lang=scala><span style=color:#204a87;font-weight:700>abstract</span> <span style=color:#204a87;font-weight:700>class</span> <span style=color:#000>List</span><span style=color:#ce5c00;font-weight:700>[</span><span style=color:#204a87;font-weight:700>+A</span><span style=color:#ce5c00;font-weight:700>]</span> <span style=color:#000>extends</span> <span style=color:#000>AbstractSeq</span><span style=color:#ce5c00;font-weight:700>[</span><span style=color:#204a87;font-weight:700>A</span><span style=color:#ce5c00;font-weight:700>]</span> <span style=color:#204a87;font-weight:700>with</span> <span style=color:#000>LinearSeq</span><span style=color:#ce5c00;font-weight:700>[</span><span style=color:#204a87;font-weight:700>A</span><span style=color:#ce5c00;font-weight:700>]</span>
-</code></pre></td></tr></table>
-</div>
-</div><p>这个声明表明 <code>List</code> 在其类型参数 <code>A</code> 上是协变的。也就是说，如下代码是合法的：</p>
-<div class=highlight><div style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4>
-<table style=border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block><tr><td style=vertical-align:top;padding:0;margin:0;border:0>
-<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
-</span></code></pre></td>
-<td style=vertical-align:top;padding:0;margin:0;border:0;width:100%>
-<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-scala data-lang=scala><span style=color:#204a87;font-weight:700>val</span> <span style=color:#000>students</span><span style=color:#204a87;font-weight:700>:</span> <span style=color:#204a87;font-weight:700>List</span><span style=color:#ce5c00;font-weight:700>[</span><span style=color:#204a87;font-weight:700>Student</span><span style=color:#ce5c00;font-weight:700>]</span> <span style=color:#204a87;font-weight:700>=</span> <span style=color:#000>List</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#204a87;font-weight:700>new</span> <span style=color:#000>Student</span><span style=color:#ce5c00;font-weight:700>)</span>
-<span style=color:#204a87;font-weight:700>val</span> <span style=color:#000>persons</span><span style=color:#204a87;font-weight:700>:</span> <span style=color:#204a87;font-weight:700>List</span><span style=color:#ce5c00;font-weight:700>[</span><span style=color:#204a87;font-weight:700>Person</span><span style=color:#ce5c00;font-weight:700>]</span> <span style=color:#204a87;font-weight:700>=</span> <span style=color:#000>students</span>
-</code></pre></td></tr></table>
-</div>
-</div><p>类似于 Scala 的不变语义，在 Java 中，如下的代码也是错误的：</p>
-<div class=highlight><div style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4>
-<table style=border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block><tr><td style=vertical-align:top;padding:0;margin:0;border:0>
-<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">4
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">5
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">6
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">7
-</span></code></pre></td>
-<td style=vertical-align:top;padding:0;margin:0;border:0;width:100%>
-<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=color:#000>List</span><span style=color:#ce5c00;font-weight:700>&lt;</span><span style=color:#000>Student</span><span style=color:#ce5c00;font-weight:700>&gt;</span> <span style=color:#000>students</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#204a87;font-weight:700>new</span> <span style=color:#000>ArrayList</span><span style=color:#ce5c00;font-weight:700>&lt;&gt;();</span>
-<span style=color:#000>students</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>add</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#204a87;font-weight:700>new</span> <span style=color:#000>Student</span><span style=color:#ce5c00;font-weight:700>());</span>
-<span style=color:#8f5902;font-style:italic>// Compiler error:
-</span><span style=color:#8f5902;font-style:italic>// Incompatible types,
-</span><span style=color:#8f5902;font-style:italic>//   Required: List &lt;test.Person&gt;
-</span><span style=color:#8f5902;font-style:italic>//   Found:    List &lt;test.Student&gt;
-</span><span style=color:#8f5902;font-style:italic></span><span style=color:#000>List</span><span style=color:#ce5c00;font-weight:700>&lt;</span><span style=color:#000>Person</span><span style=color:#ce5c00;font-weight:700>&gt;</span> <span style=color:#000>persons</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>students</span><span style=color:#ce5c00;font-weight:700>;</span>
-</code></pre></td></tr></table>
-</div>
-</div><p>这次 Java 的类型系统做了正确的事情，防止了出现刚刚数组那样的问题。那么在 Java 中又该如何表示协变这样的语义呢？</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-scala data-lang=scala><span style=color:#66d9ef>abstract</span> <span style=color:#66d9ef>class</span> <span style=color:#a6e22e>List</span><span style=color:#f92672>[</span><span style=color:#66d9ef>+A</span><span style=color:#f92672>]</span> <span style=color:#a6e22e>extends</span> <span style=color:#a6e22e>AbstractSeq</span><span style=color:#f92672>[</span><span style=color:#66d9ef>A</span><span style=color:#f92672>]</span> <span style=color:#66d9ef>with</span> <span style=color:#a6e22e>LinearSeq</span><span style=color:#f92672>[</span><span style=color:#66d9ef>A</span><span style=color:#f92672>]</span>
+</code></pre></div><p>这个声明表明 <code>List</code> 在其类型参数 <code>A</code> 上是协变的。也就是说，如下代码是合法的：</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-scala data-lang=scala><span style=color:#66d9ef>val</span> students<span style=color:#66d9ef>:</span> <span style=color:#66d9ef>List</span><span style=color:#f92672>[</span><span style=color:#66d9ef>Student</span><span style=color:#f92672>]</span> <span style=color:#66d9ef>=</span> <span style=color:#a6e22e>List</span><span style=color:#f92672>(</span><span style=color:#66d9ef>new</span> <span style=color:#a6e22e>Student</span><span style=color:#f92672>)</span>
+<span style=color:#66d9ef>val</span> persons<span style=color:#66d9ef>:</span> <span style=color:#66d9ef>List</span><span style=color:#f92672>[</span><span style=color:#66d9ef>Person</span><span style=color:#f92672>]</span> <span style=color:#66d9ef>=</span> students
+</code></pre></div><p>类似于 Scala 的不变语义，在 Java 中，如下的代码也是错误的：</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java>List<span style=color:#f92672>&lt;</span>Student<span style=color:#f92672>&gt;</span> students <span style=color:#f92672>=</span> <span style=color:#66d9ef>new</span> ArrayList<span style=color:#f92672>&lt;&gt;();</span>
+students<span style=color:#f92672>.</span><span style=color:#a6e22e>add</span><span style=color:#f92672>(</span><span style=color:#66d9ef>new</span> Student<span style=color:#f92672>());</span>
+<span style=color:#75715e>// Compiler error:
+</span><span style=color:#75715e>// Incompatible types,
+</span><span style=color:#75715e>//   Required: List &lt;test.Person&gt;
+</span><span style=color:#75715e>//   Found:    List &lt;test.Student&gt;
+</span><span style=color:#75715e></span>List<span style=color:#f92672>&lt;</span>Person<span style=color:#f92672>&gt;</span> persons <span style=color:#f92672>=</span> students<span style=color:#f92672>;</span>
+</code></pre></div><p>这次 Java 的类型系统做了正确的事情，防止了出现刚刚数组那样的问题。那么在 Java 中又该如何表示协变这样的语义呢？</p>
 <p>Java 并没有提供类型的协变声明，取而代之的是在使用时的类型限制，形式大概是这样：</p>
-<div class=highlight><div style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4>
-<table style=border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block><tr><td style=vertical-align:top;padding:0;margin:0;border:0>
-<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">4
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">5
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">6
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">7
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">8
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">9
-</span></code></pre></td>
-<td style=vertical-align:top;padding:0;margin:0;border:0;width:100%>
-<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=color:#000>List</span><span style=color:#ce5c00;font-weight:700>&lt;</span><span style=color:#000>Student</span><span style=color:#ce5c00;font-weight:700>&gt;</span> <span style=color:#000>students</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#204a87;font-weight:700>new</span> <span style=color:#000>ArrayList</span><span style=color:#ce5c00;font-weight:700>&lt;&gt;();</span>
-<span style=color:#000>students</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>add</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#204a87;font-weight:700>new</span> <span style=color:#000>Student</span><span style=color:#ce5c00;font-weight:700>());</span>
-<span style=color:#000>List</span><span style=color:#ce5c00;font-weight:700>&lt;?</span> <span style=color:#204a87;font-weight:700>extends</span> <span style=color:#000>Person</span><span style=color:#ce5c00;font-weight:700>&gt;</span> <span style=color:#000>persons</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>students</span><span style=color:#ce5c00;font-weight:700>;</span>
-<span style=color:#000>Person</span> <span style=color:#000>person</span> <span style=color:#ce5c00;font-weight:700>=</span>  <span style=color:#000>persons</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>get</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>0</span><span style=color:#ce5c00;font-weight:700>);</span>
-<span style=color:#8f5902;font-style:italic>// Compiler error:
-</span><span style=color:#8f5902;font-style:italic>// Wrong 2nd argument type. Found: &#39;test.Teacher&#39;, required: &#39;? extends test.Person&#39;
-</span><span style=color:#8f5902;font-style:italic>// set(int, capture&lt;? extends test.Person&gt;) in List cannot be applied
-</span><span style=color:#8f5902;font-style:italic>// to (int, test.Teacher)
-</span><span style=color:#8f5902;font-style:italic></span><span style=color:#000>persons</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>set</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>0</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#204a87;font-weight:700>new</span> <span style=color:#000>Teacher</span><span style=color:#ce5c00;font-weight:700>());</span>
-</code></pre></td></tr></table>
-</div>
-</div><p>这段代码无法编译通过，<code>List&lt;? extends Person> persons</code> 是 Java 的协变声明，它大概表达了这样的语义： <code>List</code> 的类型参数是 <code>Person</code> 的「某个」子类，而具体是什么类型并不知道，既然不知道是什么类型，也就自然无法将其中的元素替换为其他值了。但由于已经知道了其元素类型是 <code>Person</code> 的「某个」子类，所以可以将其元素当作 <code>Person</code> 类型的对象取出。这就保证了协变集合的要求。也就是说，Java 选择不在参数化类型声明的时候去声明该类型的型变关系，而是选择在这个类型被使用的时候去进行限定。从语义上也可以看出，这个方式掩盖了协变本身的概念，是一个较为工程化的思路。但是，型变应该是一个类型本身的特性，Scala 的处理方式能在类型声明上更加清晰地表意，个人更偏向于 Scala 的处理方式。</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java>List<span style=color:#f92672>&lt;</span>Student<span style=color:#f92672>&gt;</span> students <span style=color:#f92672>=</span> <span style=color:#66d9ef>new</span> ArrayList<span style=color:#f92672>&lt;&gt;();</span>
+students<span style=color:#f92672>.</span><span style=color:#a6e22e>add</span><span style=color:#f92672>(</span><span style=color:#66d9ef>new</span> Student<span style=color:#f92672>());</span>
+List<span style=color:#f92672>&lt;?</span> <span style=color:#66d9ef>extends</span> Person<span style=color:#f92672>&gt;</span> persons <span style=color:#f92672>=</span> students<span style=color:#f92672>;</span>
+Person person <span style=color:#f92672>=</span>  persons<span style=color:#f92672>.</span><span style=color:#a6e22e>get</span><span style=color:#f92672>(</span>0<span style=color:#f92672>);</span>
+<span style=color:#75715e>// Compiler error:
+</span><span style=color:#75715e>// Wrong 2nd argument type. Found: &#39;test.Teacher&#39;, required: &#39;? extends test.Person&#39;
+</span><span style=color:#75715e>// set(int, capture&lt;? extends test.Person&gt;) in List cannot be applied
+</span><span style=color:#75715e>// to (int, test.Teacher)
+</span><span style=color:#75715e></span>persons<span style=color:#f92672>.</span><span style=color:#a6e22e>set</span><span style=color:#f92672>(</span>0<span style=color:#f92672>,</span> <span style=color:#66d9ef>new</span> Teacher<span style=color:#f92672>());</span>
+</code></pre></div><p>这段代码无法编译通过，<code>List&lt;? extends Person> persons</code> 是 Java 的协变声明，它大概表达了这样的语义： <code>List</code> 的类型参数是 <code>Person</code> 的「某个」子类，而具体是什么类型并不知道，既然不知道是什么类型，也就自然无法将其中的元素替换为其他值了。但由于已经知道了其元素类型是 <code>Person</code> 的「某个」子类，所以可以将其元素当作 <code>Person</code> 类型的对象取出。这就保证了协变集合的要求。也就是说，Java 选择不在参数化类型声明的时候去声明该类型的型变关系，而是选择在这个类型被使用的时候去进行限定。从语义上也可以看出，这个方式掩盖了协变本身的概念，是一个较为工程化的思路。但是，型变应该是一个类型本身的特性，Scala 的处理方式能在类型声明上更加清晰地表意，个人更偏向于 Scala 的处理方式。</p>
 <h1 id=逆变>逆变</h1>
 <p>相对于协变，逆变显得非常不符合直觉，它表明，如果 <code>B</code> 是 <code>A</code> 的子类，那么 <code>T[B]</code> 反而是 <code>T[A]</code> 的父类。很难想象什么地方会出现逆变的情况，而事实上，函数类型相对于其参数类型就是逆变的，Scala 中接受一个参数的函数类型声明如下：</p>
-<div class=highlight><div style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4>
-<table style=border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block><tr><td style=vertical-align:top;padding:0;margin:0;border:0>
-<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
-</span></code></pre></td>
-<td style=vertical-align:top;padding:0;margin:0;border:0;width:100%>
-<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-scala data-lang=scala><span style=color:#204a87;font-weight:700>trait</span> <span style=color:#000>Function1</span><span style=color:#ce5c00;font-weight:700>[</span><span style=color:#204a87;font-weight:700>-T1</span>, <span style=color:#204a87;font-weight:700>+R</span><span style=color:#ce5c00;font-weight:700>]</span> <span style=color:#000>extends</span> <span style=color:#000>AnyRef</span>
-</code></pre></td></tr></table>
-</div>
-</div><p>其中，<code>T1</code> 是其参数类型，<code>R</code> 是其返回值类型，可以看出，函数在其参数类型上是逆变的。这件事仔细想想就会明白这是合理的，考虑如下代码：</p>
-<div class=highlight><div style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4>
-<table style=border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block><tr><td style=vertical-align:top;padding:0;margin:0;border:0>
-<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">4
-</span></code></pre></td>
-<td style=vertical-align:top;padding:0;margin:0;border:0;width:100%>
-<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-scala data-lang=scala><span style=color:#204a87;font-weight:700>val</span> <span style=color:#000>student</span> <span style=color:#204a87;font-weight:700>=</span> <span style=color:#204a87;font-weight:700>new</span> <span style=color:#000>Student</span>
-<span style=color:#204a87;font-weight:700>val</span> <span style=color:#000>getStudentName</span><span style=color:#204a87;font-weight:700>:</span> <span style=color:#ce5c00;font-weight:700>(</span><span style=color:#204a87;font-weight:700>Student</span> <span style=color:#ce5c00;font-weight:700>=&gt;</span> <span style=color:#204a87;font-weight:700>String</span><span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#204a87;font-weight:700>=&gt;</span> <span style=color:#000>String</span> <span style=color:#204a87;font-weight:700>=</span> <span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>f</span><span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#204a87;font-weight:700>=&gt;</span> <span style=color:#000>f</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>student</span><span style=color:#ce5c00;font-weight:700>)</span>
-<span style=color:#204a87;font-weight:700>val</span> <span style=color:#000>personNameReader</span><span style=color:#204a87;font-weight:700>:</span> <span style=color:#204a87;font-weight:700>Person</span> <span style=color:#ce5c00;font-weight:700>=&gt;</span> <span style=color:#000>String</span> <span style=color:#204a87;font-weight:700>=</span> <span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>p</span><span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#204a87;font-weight:700>=&gt;</span> <span style=color:#000>p</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#000>name</span>
-<span style=color:#000>getStudentName</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>personNameReader</span><span style=color:#ce5c00;font-weight:700>)</span>
-</code></pre></td></tr></table>
-</div>
-</div><p>在 Scala 中 <code>A => B</code> 表示一个接受一个 <code>A</code> 类型参数的对象，返回一个 <code>B</code> 类型的对象的函数类型。这段代码中 <code>getStudentName</code> 要求一个 <code>Student => String</code> 类型的函数作为参数，而 <code>personNameReader</code> 函数的类型是 <code>Person => String</code>。由于函数相对于其参数的类型是逆变的，所以可以将 <code>getStudentName</code> 应用于 <code>personNameReader</code> 上。从这个例子来说，<code>personNameReader</code> 要求一个 <code>Person</code> 类型的对象作为参数，而当 <code>getStudentName</code> 对其进行调用时，传入了一个类型更为「详细」的 <code>Student</code> 自然是合法的，由此就能理解为什么函数类型相对于其参数的类型是逆变的了。</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-scala data-lang=scala><span style=color:#66d9ef>trait</span> <span style=color:#a6e22e>Function1</span><span style=color:#f92672>[</span><span style=color:#66d9ef>-T1</span>, <span style=color:#66d9ef>+R</span><span style=color:#f92672>]</span> <span style=color:#a6e22e>extends</span> <span style=color:#a6e22e>AnyRef</span>
+</code></pre></div><p>其中，<code>T1</code> 是其参数类型，<code>R</code> 是其返回值类型，可以看出，函数在其参数类型上是逆变的。这件事仔细想想就会明白这是合理的，考虑如下代码：</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-scala data-lang=scala><span style=color:#66d9ef>val</span> student <span style=color:#66d9ef>=</span> <span style=color:#66d9ef>new</span> <span style=color:#a6e22e>Student</span>
+<span style=color:#66d9ef>val</span> getStudentName<span style=color:#66d9ef>:</span> <span style=color:#f92672>(</span><span style=color:#66d9ef>Student</span> <span style=color:#f92672>=&gt;</span> <span style=color:#66d9ef>String</span><span style=color:#f92672>)</span> <span style=color:#66d9ef>=&gt;</span> <span style=color:#a6e22e>String</span> <span style=color:#66d9ef>=</span> <span style=color:#f92672>(</span>f<span style=color:#f92672>)</span> <span style=color:#66d9ef>=&gt;</span> f<span style=color:#f92672>(</span>student<span style=color:#f92672>)</span>
+<span style=color:#66d9ef>val</span> personNameReader<span style=color:#66d9ef>:</span> <span style=color:#66d9ef>Person</span> <span style=color:#f92672>=&gt;</span> <span style=color:#a6e22e>String</span> <span style=color:#66d9ef>=</span> <span style=color:#f92672>(</span>p<span style=color:#f92672>)</span> <span style=color:#66d9ef>=&gt;</span> p<span style=color:#f92672>.</span>name
+getStudentName<span style=color:#f92672>(</span>personNameReader<span style=color:#f92672>)</span>
+</code></pre></div><p>在 Scala 中 <code>A => B</code> 表示一个接受一个 <code>A</code> 类型参数的对象，返回一个 <code>B</code> 类型的对象的函数类型。这段代码中 <code>getStudentName</code> 要求一个 <code>Student => String</code> 类型的函数作为参数，而 <code>personNameReader</code> 函数的类型是 <code>Person => String</code>。由于函数相对于其参数的类型是逆变的，所以可以将 <code>getStudentName</code> 应用于 <code>personNameReader</code> 上。从这个例子来说，<code>personNameReader</code> 要求一个 <code>Person</code> 类型的对象作为参数，而当 <code>getStudentName</code> 对其进行调用时，传入了一个类型更为「详细」的 <code>Student</code> 自然是合法的，由此就能理解为什么函数类型相对于其参数的类型是逆变的了。</p>
 <p>在 Java 中，类似于协变，逆变也是在应用的时候才去对其进行约束，例如：</p>
-<div class=highlight><div style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4>
-<table style=border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block><tr><td style=vertical-align:top;padding:0;margin:0;border:0>
-<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 4
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 5
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 6
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 7
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 8
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 9
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">10
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">11
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">12
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">13
-</span></code></pre></td>
-<td style=vertical-align:top;padding:0;margin:0;border:0;width:100%>
-<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=color:#000>List</span><span style=color:#ce5c00;font-weight:700>&lt;</span><span style=color:#000>Person</span><span style=color:#ce5c00;font-weight:700>&gt;</span> <span style=color:#000>persons</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#204a87;font-weight:700>new</span> <span style=color:#000>ArrayList</span><span style=color:#ce5c00;font-weight:700>&lt;&gt;();</span>
-<span style=color:#000>List</span><span style=color:#ce5c00;font-weight:700>&lt;?</span> <span style=color:#204a87;font-weight:700>super</span> <span style=color:#000>Student</span><span style=color:#ce5c00;font-weight:700>&gt;</span> <span style=color:#000>students</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>persons</span><span style=color:#ce5c00;font-weight:700>;</span>
-<span style=color:#000>students</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>add</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#204a87;font-weight:700>new</span> <span style=color:#000>Student</span><span style=color:#ce5c00;font-weight:700>());</span>
-<span style=color:#8f5902;font-style:italic>// Compiler error:
-</span><span style=color:#8f5902;font-style:italic>// Incompatible types:
-</span><span style=color:#8f5902;font-style:italic>//   Required: test.Person
-</span><span style=color:#8f5902;font-style:italic>//   Found:    capture&lt;? super test.Student&gt;
-</span><span style=color:#8f5902;font-style:italic></span><span style=color:#000>Person</span> <span style=color:#000>p</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>students</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>get</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>0</span><span style=color:#ce5c00;font-weight:700>);</span>
-<span style=color:#8f5902;font-style:italic>// Compiler error:
-</span><span style=color:#8f5902;font-style:italic>// Incompatible types:
-</span><span style=color:#8f5902;font-style:italic>//   Required: test.Student
-</span><span style=color:#8f5902;font-style:italic>//   Found:    capture&lt;? super test.Student&gt;
-</span><span style=color:#8f5902;font-style:italic></span><span style=color:#000>Student</span> <span style=color:#000>student</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>students</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>get</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>0</span><span style=color:#ce5c00;font-weight:700>);</span>
-</code></pre></td></tr></table>
-</div>
-</div><p>也就是说，如果你进行了逆变的约束，那么 Java 将要求你只能向 <code>List</code> 里添加元素而不能将其取出来。语义与协变的情况是类似的。</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java>List<span style=color:#f92672>&lt;</span>Person<span style=color:#f92672>&gt;</span> persons <span style=color:#f92672>=</span> <span style=color:#66d9ef>new</span> ArrayList<span style=color:#f92672>&lt;&gt;();</span>
+List<span style=color:#f92672>&lt;?</span> <span style=color:#66d9ef>super</span> Student<span style=color:#f92672>&gt;</span> students <span style=color:#f92672>=</span> persons<span style=color:#f92672>;</span>
+students<span style=color:#f92672>.</span><span style=color:#a6e22e>add</span><span style=color:#f92672>(</span><span style=color:#66d9ef>new</span> Student<span style=color:#f92672>());</span>
+<span style=color:#75715e>// Compiler error:
+</span><span style=color:#75715e>// Incompatible types:
+</span><span style=color:#75715e>//   Required: test.Person
+</span><span style=color:#75715e>//   Found:    capture&lt;? super test.Student&gt;
+</span><span style=color:#75715e></span>Person p <span style=color:#f92672>=</span> students<span style=color:#f92672>.</span><span style=color:#a6e22e>get</span><span style=color:#f92672>(</span>0<span style=color:#f92672>);</span>
+<span style=color:#75715e>// Compiler error:
+</span><span style=color:#75715e>// Incompatible types:
+</span><span style=color:#75715e>//   Required: test.Student
+</span><span style=color:#75715e>//   Found:    capture&lt;? super test.Student&gt;
+</span><span style=color:#75715e></span>Student student <span style=color:#f92672>=</span> students<span style=color:#f92672>.</span><span style=color:#a6e22e>get</span><span style=color:#f92672>(</span>0<span style=color:#f92672>);</span>
+</code></pre></div><p>也就是说，如果你进行了逆变的约束，那么 Java 将要求你只能向 <code>List</code> 里添加元素而不能将其取出来。语义与协变的情况是类似的。</p>
 <p>于是，Scala 和 Java 的型变标记可以进行如下总结 <sup id=fnref:3><a href=#fn:3 class=footnote-ref role=doc-noteref>3</a></sup>：</p>
 <table>
 <thead>
@@ -287,25 +193,13 @@
 <p>为什么数组是不变的？因为数组上的每个单元都相当于包含了两个方法，当写下 <code>T value = arr[3]</code> 这样的代码时，概念上可以理解为 <code>T value = arr3.get()</code>。而 <code>get</code> 方法的类型显然是 <code>() => T</code>。所以从单元中获取元素这个操作上来看，数组在其元素的类型上协变。而当写下 <code>arr[3] = value</code> 的时候，概念上则可以理解为 <code>arr3.set(value)</code>。而 <code>set</code> 方法的类型则为 <code>T => Unit</code>（<code>Unit</code> 相当于 Java 的 <code>void</code>）。所以从给数组单元赋值这个操作上看，数组又在其元素的类型上逆变。因此，数组在其元素类型上不变。</p>
 <p>为什么可以写 <code>val person: Person = new Student</code> 呢？因为每个对象都可以看作是一个只带有一个方法的对象，相当于 <code>value.get()</code>。而 <code>get</code> 方法的类型是 <code>() => T</code>。所以我们可以写这样的代码，它是协变的。这么说感觉有点怪，但是，在 Scala 的语法糖加持下，这么说其实挺自然的，因为 Scala 允许在函数不需要参数的情况下省略括号，且如果调用的方法是 <code>apply</code> 的话，不需要写 <code>value.apply()</code> 直接写成 <code>value()</code> 即可。也就是 <code>def t() = new T</code> 和 <code>val t = new T</code> 相比，虽然前者每次都会创建一个新的实例，但是在使用者看来，都可以写为 <code>t</code>，并不会有区别。</p>
 <p>在 Scala 中，如果进行了协变或者逆变的标记，编译器就会对这个类型参数的使用进行检查，如果它出现在了错误的位置上，编译器就会提示错误，防止了开发者因此而犯错。例如：</p>
-<div class=highlight><div style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4>
-<table style=border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block><tr><td style=vertical-align:top;padding:0;margin:0;border:0>
-<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">4
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">5
-</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">6
-</span></code></pre></td>
-<td style=vertical-align:top;padding:0;margin:0;border:0;width:100%>
-<pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-scala data-lang=scala><span style=color:#204a87;font-weight:700>trait</span> <span style=color:#000>Test</span><span style=color:#ce5c00;font-weight:700>[</span><span style=color:#204a87;font-weight:700>+T</span><span style=color:#ce5c00;font-weight:700>]</span> <span style=color:#ce5c00;font-weight:700>{</span>
-  <span style=color:#204a87;font-weight:700>def</span> <span style=color:#000>get</span><span style=color:#ce5c00;font-weight:700>()</span><span style=color:#204a87;font-weight:700>:</span> <span style=color:#204a87;font-weight:700>T</span>
-  <span style=color:#8f5902;font-style:italic>// Compiler error:
-</span><span style=color:#8f5902;font-style:italic></span>  <span style=color:#8f5902;font-style:italic>// Covariant type T occurs in contravariant position in type T of value v
-</span><span style=color:#8f5902;font-style:italic></span>  <span style=color:#204a87;font-weight:700>def</span> <span style=color:#000>set</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>v</span><span style=color:#204a87;font-weight:700>:</span> <span style=color:#204a87;font-weight:700>T</span><span style=color:#ce5c00;font-weight:700>)</span><span style=color:#204a87;font-weight:700>:</span> <span style=color:#204a87;font-weight:700>Unit</span>
-<span style=color:#ce5c00;font-weight:700>}</span>
-</code></pre></td></tr></table>
-</div>
-</div><p>类型声明是很好的文档，更精确的类型声明就是更清晰的文档，Scala 的设计在这方面可以说是更胜一筹。</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-scala data-lang=scala><span style=color:#66d9ef>trait</span> <span style=color:#a6e22e>Test</span><span style=color:#f92672>[</span><span style=color:#66d9ef>+T</span><span style=color:#f92672>]</span> <span style=color:#f92672>{</span>
+  <span style=color:#66d9ef>def</span> get<span style=color:#f92672>()</span><span style=color:#66d9ef>:</span> <span style=color:#66d9ef>T</span>
+  <span style=color:#75715e>// Compiler error:
+</span><span style=color:#75715e></span>  <span style=color:#75715e>// Covariant type T occurs in contravariant position in type T of value v
+</span><span style=color:#75715e></span>  <span style=color:#66d9ef>def</span> set<span style=color:#f92672>(</span>v<span style=color:#66d9ef>:</span> <span style=color:#66d9ef>T</span><span style=color:#f92672>)</span><span style=color:#66d9ef>:</span> <span style=color:#66d9ef>Unit</span>
+<span style=color:#f92672>}</span>
+</code></pre></div><p>类型声明是很好的文档，更精确的类型声明就是更清晰的文档，Scala 的设计在这方面可以说是更胜一筹。</p>
 <section class=footnotes role=doc-endnotes>
 <hr>
 <ol>
@@ -321,47 +215,40 @@
 </ol>
 </section>
 </div>
-<div class="row middle-xs">
-<div class=col-xs-12>
-<div class=post-tags>
-<a href=/tags/type-system/>
-Type System
+<div class=pagination>
+<div class=pagination__title>
+<span class=pagination__title-h>Read other posts</span>
+<hr>
+</div>
+<div class=pagination__buttons>
+<span class="button previous">
+<a href=/posts/null-value-and-handling/>
+<span class=button__icon>←</span>
+<span class=button__text>Null 值及其处理方式</span>
 </a>
-</div>
-<div class=post-tags>
-<a href=/tags/scala/>
-Scala
+</span>
+<span class="button next">
+<a href=/posts/representation-of-calculation/>
+<span class=button__text>计算的表示</span>
+<span class=button__icon>→</span>
 </a>
-</div>
-<div class=post-tags>
-<a href=/tags/java/>
-Java
-</a>
+</span>
 </div>
 </div>
-</div>
-<div class=row>
-<div class=col-xs-12>
-<br><p>我的博客即将同步至腾讯云+社区，<a target=_blank href="https://cloud.tencent.com/developer/support-plan?invite_code=11dehb9vzutlx">邀请大家一同入驻</a>。</p>
-</div>
-</div>
-<div style=height:50px></div>
-<div class=post-comments>
 <div id=disqus_thread></div>
-<script>window.addEventListener("load",()=>{(function(){var a=document,b=a.createElement("script");b.src="https://ZhiruiLi.disqus.com/embed.js",b.setAttribute("data-timestamp",+new Date),(a.head||a.body).appendChild(b)})()})</script>
-<noscript>Please enable JavaScript to view the
-<a href=https://disqus.com/?ref_noscript>comments powered by Disqus.</a></noscript>
-</div>
-<div class=site-footer>
+<script type=application/javascript>var disqus_config=function(){};(function(){if(["localhost","127.0.0.1"].indexOf(window.location.hostname)!=-1){document.getElementById('disqus_thread').innerHTML='Disqus comments not available by default when the website is previewed locally.';return}var b=document,a=b.createElement('script');a.async=!0,a.src='//ZhiruiLi.disqus.com/embed.js',a.setAttribute('data-timestamp',+new Date),(b.head||b.body).appendChild(a)})()</script>
+<noscript>Please enable JavaScript to view the <a href=https://disqus.com/?ref_noscript>comments powered by Disqus.</a></noscript>
+<a href=https://disqus.com class=dsq-brlink>comments powered by <span class=logo-disqus>Disqus</span></a>
 </div>
 </div>
+<footer class=footer>
+<div class=footer__inner>
+<div class="copyright copyright--user"><p>我的博客即将同步至腾讯云+社区，<a target=_blank href="https://cloud.tencent.com/developer/support-plan?invite_code=11dehb9vzutlx">邀请大家一同入驻</a></p><p>本网站采用 <a href=https://creativecommons.org/licenses/by-sa/4.0/>CC BY-SA 4.0</a> 协议进行授权</p></div>
 </div>
-</article>
-<script src=https://unpkg.com/quicklink@0.1.1/dist/quicklink.umd.js></script>
-<script>var posts=document.getElementById('posts-list');posts&&quicklink({el:posts,priority:!0})</script>
-<script>MathJax={tex:{inlineMath:[['$','$'],['\\(','\\)']]},svg:{fontCache:'global'}}</script>
-<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
-<script id=MathJax-script async src=https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js></script>
-<script async src="https://www.googletagmanager.com/gtag/js?id=UA-80302213-1"></script>
+</footer>
+<script src=/assets/main.js></script>
+<script src=/assets/prism.js></script>
+</div>
+<script type=application/javascript>var doNotTrack=!1;doNotTrack||(function(a,e,f,g,b,c,d){a.GoogleAnalyticsObject=b,a[b]=a[b]||function(){(a[b].q=a[b].q||[]).push(arguments)},a[b].l=1*new Date,c=e.createElement(f),d=e.getElementsByTagName(f)[0],c.async=1,c.src=g,d.parentNode.insertBefore(c,d)}(window,document,'script','https://www.google-analytics.com/analytics.js','ga'),ga('create','UA-80302213-1','auto'),ga('send','pageview'))</script>
 </body>
 </html>

@@ -1,0 +1,435 @@
+<!doctype html><html lang=cn>
+<head>
+<title>
+Articles ::
+简单易懂的现代魔法 — Zhirui Li's Blog
+</title>
+<meta charset=utf-8>
+<meta name=viewport content="width=device-width,initial-scale=1">
+<meta name=description content>
+<meta name=keywords content="编程,计算机图形学,游戏开发">
+<meta name=robots content="noodp">
+<link rel=canonical href=/categories/articles/>
+<link rel=stylesheet href=/assets/style.css>
+<link rel=stylesheet href=/style.css>
+<link rel=apple-touch-icon-precomposed sizes=144x144 href=/img/apple-touch-icon-144-precomposed.png>
+<link rel="shortcut icon" href=/img/favicon.png>
+<link href=/assets/fonts/Inter-Italic.woff2 rel=preload type=font/woff2 as=font crossorigin>
+<link href=/assets/fonts/Inter-Regular.woff2 rel=preload type=font/woff2 as=font crossorigin>
+<link href=/assets/fonts/Inter-Medium.woff2 rel=preload type=font/woff2 as=font crossorigin>
+<link href=/assets/fonts/Inter-MediumItalic.woff2 rel=preload type=font/woff2 as=font crossorigin>
+<link href=/assets/fonts/Inter-Bold.woff2 rel=preload type=font/woff2 as=font crossorigin>
+<link href=/assets/fonts/Inter-BoldItalic.woff2 rel=preload type=font/woff2 as=font crossorigin>
+<meta name=twitter:card content="summary">
+<meta name=twitter:title content="Articles">
+<meta name=twitter:description content>
+<meta property="og:title" content="Articles">
+<meta property="og:description" content>
+<meta property="og:type" content="website">
+<meta property="og:url" content="/categories/articles/"><meta property="og:site_name" content="简单易懂的现代魔法">
+<link rel=alternate type=application/rss+xml href=/categories/articles/index.xml title=简单易懂的现代魔法>
+<script>var posts=document.getElementById('posts-list');posts&&quicklink({el:posts,priority:!0})</script>
+<script>MathJax={tex:{inlineMath:[['$','$'],['\\(','\\)']]},svg:{fontCache:'global'}}</script>
+<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script id=MathJax-script async src=https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js></script>
+</head>
+<body>
+<div class=container>
+<header class=header>
+<span class=header__inner>
+<a href=/ class=logo style=text-decoration:none>
+<span class=logo__mark><svg xmlns="http://www.w3.org/2000/svg" class="greater-icon" viewBox="0 0 44 44"><path fill="none" d="M15 8l14.729 14.382L15 35.367"/></svg>
+</span>
+<span class=logo__text>简单易懂的现代魔法</span>
+<span class=logo__cursor></span>
+</a>
+<span class=header__right>
+<nav class=menu>
+<ul class="menu__inner menu__inner--desktop">
+<li><a href=/archive>Archive</a></li>
+<li><a href=https://www.github.com/zhiruili>Github</a></li>
+<li><a href=/index.xml>RSS</a></li>
+</ul>
+<ul class="menu__inner menu__inner--mobile">
+<li><a href=/archive>Archive</a></li>
+<li><a href=https://www.github.com/zhiruili>Github</a></li>
+<li><a href=/index.xml>RSS</a></li>
+</ul>
+</nav>
+<span class=menu-trigger><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M0 0h24v24H0z" fill="none"/><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></svg>
+</span>
+<span class=theme-toggle><svg class="theme-toggler" width="24" height="24" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M22 41c10.4934.0 19-8.5066 19-19C41 11.5066 32.4934 3 22 3 11.5066 3 3 11.5066 3 22s8.5066 19 19 19zM7 22C7 13.7157 13.7157 7 22 7V37C13.7157 37 7 30.2843 7 22z"/></svg>
+</span>
+</span>
+</span>
+</header>
+<div class=content>
+<div class=posts>
+<div class="post on-list">
+<h1 class=post-title><a href=/posts/rendering-equation/>深入理解渲染方程</a></h1>
+<div class=post-meta>
+<span class=post-date>
+2021-08-07
+</span>
+</div>
+<span class=post-tags>
+<a href=/tags/computer-graphics/>#Computer Graphics</a>&nbsp;
+</span>
+<div class=post-content>
+在图形学入门（三）：基础着色中，我们讨论了 Phong 反射模型，当时我们提到过 Phong 反射模型不是一个物理模型，而是一个经验模型，这意味着这个模型对光照效果的模拟是不准确的。即便在简单情况下它能近似出一些不错的效果，但随着场景的复杂度提升（例如复杂的光照、复杂的材质等），要想继续用 Phong 反射模型达到很强的真实感就变得越来越困难。例如下面的这幅图 1 中，士兵和长官的铠甲上都投影出了电梯里非常复杂的灯光，在后面的长官的铠甲上还能看到前面两个士兵的投影：
+要想在计算机中模拟出这样真实的效果，我们首先要知道真实世界中的光线和物体是如何作用的，例如一束光线照射到物体表面，这束光线的量有多少，光线照射到物体表面后发生了什么，最后光线反射的方向和量又有多少，我们用什么物理单位来衡量这些量等等。这些准确定义的信息是计算出正确的结果的前提，只有先理解这些内容，我们才能更好地模拟光与物体相互作用的过程。
+接下来我们会讨论关于辐射度量学（Radiometry）2 的内容，这是一个研究各种电磁辐射强弱的学科。在本文后面我们将会看到，基于辐射度量学构建的渲染方程（Rendering Equation）3 可以准确描述光如何在场景中流动，并在理论上给出了一个完美的结果。而各种各样的渲染技术，就是这个理想结果的一个近似。事实上，只要涉足高质量的实时渲染，渲染方程几乎是绕不开的前置知识。深入理解渲染方程包含的物理意义可以使我们更好地学习高质量真实感渲染的进阶内容。
+在正式开始讨论前，我们首先明确要讨论的对象，也就是光的性质。我们知道，光其实有波粒二象性 4，但我们后面的讨论会基于几何光学 5，既不考虑其波动性，也不考虑其粒子性，仍然认为光沿直线传播。
+辐射度量学 辐射通量（Radiant Flux） 让我们从最简单的物理量开始讨论，辐射能（Radiant Energy）6 $Q$ 是指电磁辐射具有的能量，它的单位是焦耳 $\mathrm{J}$。能量这个概念我们很熟悉，但是它在我们的讨论中几乎用不上，我们更关心的是单位时间的能量，也就是功率（Power）。在辐射度量学中，我们一般称其为辐射通量（Radiant Flux）7 $\Phi$，单位是瓦特 $\mathrm{W}$。
+$$ \Phi \equiv \frac{\mathrm{d} Q}{\mathrm{d} t} $$
+我们更关心单位时间的能量而不是总能量是很符合常理的，例如一个电灯打开的时间越长肯定辐射出的光的总能量越多，但我们关心的主要还是这个灯有多亮，这也就是单位时间的光的能量。
+辐射通量是辐射度量学中最基本的物理量。一个表面的辐射通量可以用「通过」该表面的坡印廷向量（Poynting Vector）8 $S$ 表示（这也是为什么要叫「通量」）。所谓坡印廷向量其实就是有向的能量流，它的方向为电磁能的传递方向，大小为能量密度（单位面积的能量传输速率）。在我们的讨论里，我们认为它是光线就可以了。设所求表面的表面法线为 $\hat{n}$，表面面积为 $A$，$\hat{n}$ 和 $S$ 的夹角为 $\theta$，那么表面 $\sigma$ 的辐射通量可以表示为：
+$$ \Phi = \int_{\sigma} S \cdot \hat{n} \ \mathrm{d} A = \int_{\sigma} \left| S \right| \cos{} \theta \ \mathrm{d} A $$
+有没有觉得这个说法听起来很熟悉？没错，这正是我们在图形学入门（三）：基础着色中计算漫反射分量时提到的内容。当时我们通过下图 9 直观了解入射光和表面法线存在 $\theta$ 夹角时，漫反射能量的减少情况：
+</div>
+<div>
+<a class="read-more button" href=/posts/rendering-equation/>Read more →</a>
+</div>
+</div>
+<div class="post on-list">
+<h1 class=post-title><a href=/posts/basic-shading/>图形学入门（三）：基础着色</a></h1>
+<div class=post-meta>
+<span class=post-date>
+2021-08-01
+</span>
+</div>
+<span class=post-tags>
+<a href=/tags/computer-graphics/>#Computer Graphics</a>&nbsp;
+</span>
+<div class=post-content>
+在掌握了上一篇文章的知识之后，我们现在可以通过逐个绘制三角形面组合出一个模型了。但是我们现在绘制出来的结果看起来是一个色块，效果不太自然。在现实中，我们看到物体是因为这个物体反射了光线，而在这个过程中，根据物体形状以及与光线的相对位置关系，物体的表面总会呈现不同的明暗效果。这种明暗的变化使我们感觉这个物体是「立体的」。也就是说，我们更希望看到下图 1 中右侧的渲染效果而非左侧的渲染效果：
+在计算机图形学中，着色（Shading）1 表示在三维场景中基于模型表面与光源的角度、与光源的距离、与相机的角度等因素，来改变多边形颜色的过程，以此来生成具有真实感的效果。这里说的「真实感」是指类似照片拍摄的效果。
+Phong 反射模型 真实的符合物理规律的光照极其复杂，想要在计算机中正确模拟出这个效果非常困难。为了能在计算机中快速进行渲染，我们需要采用一些方法简化这个计算过程，现在被广泛使用的着色模型叫 Phong 反射模型（Phong Reflection Model）2。这个模型对现实中光照反射规律进行近似模拟，将物体对光线的反射拆成三个分量，分别是：漫反射光（Diffuse）、镜面高光（Specular）和环境光（Ambient）。在后面的讨论中我们会看到，这个模型本身虽然不是一个物理模型而是一个经验模型，但它也符合一些基本的物理规律，并可以很好地模拟相当广泛的视觉场景。
+Phong 反射模型基于这样的观察：
+一个物体表面越粗糙，其对光线的反射就越分散，而这部分反射的光构成了物体本身的基础颜色，这部分颜色用漫反射分量 $L_d$ 表示 一个物体表面越光滑，其对光线的反射就越集中，就越会在某些位置上呈现比较集中明亮的高光，这部分颜色用镜面反射分量 $L_s$ 表示 如果场景中有光源，那么即便一个物体没有直接被光源照亮，我们也还是看到这个物体。事实上，这部分表面接收到了来自四面八方的间接光照，这部分颜色用环境光分量 $L_a$ 表示 这个观察基本上也符合我们的认知，而这三个分量叠加的效果看起来还是相当可信的，如下图所示 2：
+需要说明的是，Phong 反射模型是一个局部模型，所谓「局部」是指，在计算某个点（我们称之为着色点）的颜色时我们只考虑这个点本身的属性以及这个点和光线的关系，和其他物体无关。「非局部」的典型例子就是阴影，阴影的计算不仅需要考虑当前着色点，还需要考虑着色点与光源之间的遮挡物。因此 Phong 反射模型的计算中并不会产生阴影。具体来说，我们在计算一个点的颜色时，我们可用的局部信息有如下几部分：
+观察方向 $\hat{v}$ 每个光源的方向 $\hat{l}$ 当前点的表面法线方向 $\hat{n}$ 当前点的表面材质参数（例如颜色、光泽度等） 其中，$\hat{v}$、$\hat{l}$、$\hat{n}$ 都是单位向量。
+漫反射分量 我们知道，一个粗糙的物体表面会将入射的光向周围各个方向反射，我们称之为漫反射，如下图 3 所示：
+我们前面提到，漫反射的分量构成了物体的整体颜色，它是 Phong 反射模型中最重要的一部分。我们知道，物体表面呈现不同的颜色是由于不同的表面会吸收不同波长的光并反射其他的光，我们用漫反射系数 $k_d$ 描述这种现象，如果 $k_d = 1$，那么物体本身不吸收对应颜色的光，对其进行完全的反射，如果为 $0$，那么说明完全吸收了对应颜色的光。而这个入射的光，我们则用 $I$ 表示。另外根据我们日常的观察也会发现，如果一个表面正对着光源，那么这个表面看起来就会比较亮，如果背对光源，这个表面看起来就会比较暗。如下图 3 所示，当一个物体表面正对光源时，它能接收到光源的全部能量，当它没有正对光源时，接收到的能量就变少了。这个能量的具体比例可以用平面法线方向 $\hat{n}$ 和光源方向 $\hat{l}$ 的夹角 $\theta$ 的余弦值来确定：
+又由于 $\hat{n}$ 和 $\hat{l}$ 是单位向量，我们可以直接对其进行点乘来获取到这个余弦值，因此，我们的漫反射分量 $L_d$ 表示如下：
+</div>
+<div>
+<a class="read-more button" href=/posts/basic-shading/>Read more →</a>
+</div>
+</div>
+<div class="post on-list">
+<h1 class=post-title><a href=/posts/rasterization/>图形学入门（二）：光栅化</a></h1>
+<div class=post-meta>
+<span class=post-date>
+2021-07-25
+</span>
+</div>
+<span class=post-tags>
+<a href=/tags/computer-graphics/>#Computer Graphics</a>&nbsp;
+</span>
+<div class=post-content>
+光栅化（Rasterize）就是将一些矢量形状转换为位图（Raster Image）形式。经过这样的变换后，这些形状才可以在屏幕上进行显示，也可以被打印机打印出来。
+之所以需要这么做，是因为我们的屏幕其实可以被看做一个像素（Pixel）的点阵，程序通过设置每个像素点展示的颜色来展示整体的图像。而我们在计算机中描述一个模型的时候，往往使用了这些模型的顶点坐标来进行描述，例如一个三角形的三个顶点是：$(0,\ 0,\ 0)$、$(0,\ 1,\ 0)$ 和 $(1,\ 0,\ 0)$。那么，在一个 $1920 \times 1080$ 的屏幕上，应该把哪些像素点亮来展示这个三角形呢？这个信息模型本身并没有告诉我们，这就存在一个信息的不匹配，因此我们需要光栅化这一步来将这个图形展示出来。
+可以顺便一提的是，「Pixel」是 Picture Element 的缩写，翻译成「像素」相当准确，而「Raster」其实是德语的「屏幕」，所谓「Rasterize」直译过来就是「在屏幕上绘制」。本来非常简单清晰的原意被翻译作「光栅化」，导致这个名字听起来有点吓人。
+为了方便后续的讨论，在正式开始之前，我们还需要先声明一些前提条件。一般来说，屏幕上的每个像素并不是一个不可分割的点，但是在我们后续讨论的过程中，认为像素就是屏幕显示的最小单位，一个像素中只能展示一个完整的颜色。而我们认为屏幕就是一个二维的像素数据的数组，大小为 $width \times height$，左下角的坐标为 $(0,\ 0)$，每个像素的宽度为 $1$，任意的一个像素 $(x,\ y)$ 的中心位置在 $(x + 0.5,\ y + 0.5)$ 上，如下图 1 中蓝色的像素的坐标就是 $(2,\ 1)$，其中心点的位置就是 $(2.5,\ 1.5)$。我们要做的，就是将上一篇文章中压缩到标准正方体中的图形绘制到这样的目标上：
+为了操作屏幕上的像素点，我们需要申请一个长度为 $width \times height$ 的数组，数组中的每一个元素都是一个色彩值，一一对应于屏幕上的像素点。然后，我们将绘制的数据记录在这个缓冲区域中，待设置好后再将数据绘制到屏幕上。这块缓冲区域被称为帧缓冲（Frame Buffer）2。
+绘制线段 让我们先从绘制图形的线框开始，线框的绘制其实就是分别绘制模型的每一条边对应的线段。为了在屏幕上绘制一条线段，我们首先需要计算出线段两个端点坐标在屏幕的位置。在标准正方体内的顶点的 $x$、$y$ 坐标的范围都是 $[-1,\ 1]$，假设我们有一个 $width \times height$ 分辨率的屏幕，我们就需要将其分别变为 $[0,\ width]$ 和 $[0,\ height]$。根据上一篇文章的知识，我们可以很容易知道，我们只需要对顶点坐标应用如下的矩阵变换，就能得到顶点在屏幕空间下的坐标了：
+$$ M_{viewport} = \begin{bmatrix} \frac{width}{2} & 0 & 0 & \frac{width}{2} \newline 0 & \frac{height}{2} & 0 & \frac{height}{2} \newline 0 & 0 & 1 & 0 \newline 0 & 0 & 0 & 1 \end{bmatrix} $$
+</div>
+<div>
+<a class="read-more button" href=/posts/rasterization/>Read more →</a>
+</div>
+</div>
+<div class="post on-list">
+<h1 class=post-title><a href=/posts/transformations/>图形学入门（一）：坐标变换</a></h1>
+<div class=post-meta>
+<span class=post-date>
+2021-07-17
+</span>
+</div>
+<span class=post-tags>
+<a href=/tags/computer-graphics/>#Computer Graphics</a>&nbsp;
+</span>
+<div class=post-content>
+将一个物体显示到屏幕上，这个事情似乎非常简单，以至于我们基本上认为它已经天经地义到直接告诉计算机我们要显示什么物体它就会自动显示出来，毕竟我们拍照的时候就是举起相机按下快门就会出现一张图片了。但事实上，相机是基于物理感光元件实现了从三维世界到二维图片的投影，在计算机的程序世界中一切都需要被计算出来，也就是说，我们只有一堆图形的描述信息，我们需要自己将这些图形在二维的平面上绘制的方式告诉操作系统，操作系统才能最终在屏幕上绘制出我们想要的图形。
+那么，我们究竟要进行怎样的一些计算呢？我们可以将这个过程和拍照进行类比，物体的位置、角度，相机的位置、角度以及相机本身设置的一些参数都会对拍照的结果产生影响，相机离物体近，物体就显得大一些，相机往左偏，物体在最终相片上的位置就会往右。显然，光有场景中物体本身的模型信息还不足以让我们知道最终呈现在屏幕上的图像的样子，我们还需要考虑上述的种种信息才能最终得出在二维的平面上这个场景最终的形态，这些计算主要分为三部分：
+模型空间到世界空间的变换
+这个过程将物体的每个顶点坐标从自己模型空间移动到世界空间，也就是将物体移动到世界的对应位置摆放好。
+世界空间到观察空间的变换
+这个过程将物体的每个顶点坐标从世界空间移动到相机的观察空间，由于位置的移动是相对的，这也就相当于把相机移动到对应位置摆放好。只不过为了计算方便，我们一般假设相机的位置就在原点的位置，看向 $z$ 轴负方向。
+观察空间到裁剪空间的变换
+这个过程就是将物体的每个顶点坐标从三维空间投影到相机的二维成像平面上，这也就相当于相机拍照时在胶片上记录下当时的画面。
+数学基础 为了说明这三种变换在计算机中是如何进行的，这里需要先补充一点相关的基础知识。在计算机中，为了进行快速的计算，采用了矩阵（Matrix）这一数学工具。下面是一个 $3 \times 2$ 的矩阵（即 $3$ 行 $2$ 列的矩阵）：
+$$ A = \begin{bmatrix} 1 & 2 \newline 3 & 4 \newline 5 & 6 \end{bmatrix} $$
+矩阵有一个操作叫转置（Transpose），矩阵 $A$ 的转置写作 $A^\mathrm{T}$，这个过程其实就是将矩阵沿着左上到右下的对角线翻转，即把 $A$ 的每一行写 $A^\mathrm{T}$ 的列，把 $A$ 的每一列写 $A^\mathrm{T}$ 的行，对于上面的矩阵 $A$ 来说，我们有：
+$$ A^\mathrm{T} = \begin{bmatrix} 1 & 3 & 5 \newline 2 & 4 & 6 \end{bmatrix} $$
+</div>
+<div>
+<a class="read-more button" href=/posts/transformations/>Read more →</a>
+</div>
+</div>
+<div class="post on-list">
+<h1 class=post-title><a href=/posts/cpp-error-handling/>另一种 C++ 程序错误处理方式</a></h1>
+<div class=post-meta>
+<span class=post-date>
+2020-03-22
+</span>
+</div>
+<span class=post-tags>
+<a href=/tags/c++/>#C++</a>&nbsp;
+<a href=/tags/go/>#Go</a>&nbsp;
+</span>
+<div class=post-content>
+C++ 是一个很灵活的语言，这把双刃剑一方面使得 C++ 有很强大的表达能力，但也使得其编程风格相当混乱，就连错误处理到底是使用错误码还是异常都常常争论不休。例如在 C 中我们默认用错误码处理错误，而在 Python、Java 中，则默认用异常来处理错误。而在 C++ 中，使用这两种形式的错误处理形式都有，而目前来看，在我所在的团队中，除非是外部库，否则基本都是使用错误码。在这篇文章中，我将聊一下 C++ 错误处理的方式优劣，以及我们团队是如何进行 C++ 错误处理的。
+错误码的问题 在我们的工程实践中，错误码首先带来的问题是代码中充斥着大量的 -1、-2、-10000 这样的错误码，这样错误码在日志中出现总是让人头痛，在代码中一搜就出来数不清的匹配项，根本无法定位问题。当然，你可能会说，这个主要是开发者水平参差不齐和开发规范不够严明的问题，我们可以通过全局统一错误码来解决问题。这当然是一个合理的反对意见，但问题是，即便确定要全局统一错误码，但这个全局统一错误码应该做到什么层级呢？
+例如，在我们的后台采用了微服务架构，那么一个很显然的处理方案就是全局统一错误码是在服务级别的，A 服务调用 B 服务的时候，通过错误码来获知调用过程中出了什么错误。但是，这事实上并没有解决问题，例如我们现在发现 B 服务给 A 服务返回了 12345 这个错误码，然后我们尝试查看 B 服务的代码，看看为什么会导致这样的错误：
+enum Errors { kErrFailToCallSomeFunction = 12345, }; int Handle(Req const &req, Rsp *rsp) { int ret = SomeFunction(); if (ret) { ERRORLOG("call SomeFunction fail: %d\n", ret); return kErrFailToCallSomeFunction; } // ... } 因为错误码统一，我们很快就发现了是调用 SomeFunction 失败导致了这个错误，然后我们知道了应该找 call SomeFunction fail: 这条日志，可以我们一查阅这条日志就发现，call SomeFunction fail: -1，结果我们又回到了之前的问题，尤其是我们可能在 SomeFunction 中看到这样的实现：
+</div>
+<div>
+<a class="read-more button" href=/posts/cpp-error-handling/>Read more →</a>
+</div>
+</div>
+<div class="post on-list">
+<h1 class=post-title><a href=/posts/real-world-cpp-template/>实际工程中的 C++ 模板</a></h1>
+<div class=post-meta>
+<span class=post-date>
+2019-09-17
+</span>
+</div>
+<span class=post-tags>
+<a href=/tags/c++/>#C++</a>&nbsp;
+</span>
+<div class=post-content>
+C++ 的模板是 C++ 的一个重要的语言特性，我们使用的 STL 就是 Standard Template Library 的缩写，但是在很多情况下，开发者都对其敬而远之，有些团队甚至是直接在工程中禁用模板。模板常被当作洪水猛兽的一个原因是许多人提起模板就要提 C++ 模板图灵完备，甚至还要再秀一段编译期排序，这种表现模板强大的方式不仅不会让人觉得模板有用，反而让人觉得模板难以理解而且不应该使用。在这篇文章里，我将聊一下最近实际工程中的一些模板的应用，希望可以让更多人了解到模板并不是一个可怕的存在，以及一些常见的使用方式。
+按版本号过滤配置 我所在的项目组前后台的复杂配置现在都用 protobuf 进行承载，然后生成 Excel 进行配置，生成 C++ 代码进行加载。例如这样的 message：
+message ConfigItem1 { int32 id = 1; string text = 2;}message Config { repeated ConfigItem1 items1 = 1;}这里的 Config 会被映射为一个 Excel，里面有一个表 items1，其中，这个表有两列，一列 id，一列 text。这个表的每一行都是一个具体的配置项。也就是我们可以这样获取配置：
+cout &lt;&lt; cfg.items1(0).id() &lt;&lt; ": " &lt;&lt; cfg.items1(0).text(); 现在有个需求是这样的，在加载某些配置的时候，前台需要根据版本号进行配置的过滤，部分配置项只会在某些版本中可见，例如这样：
+message VersionRange { int32 lo = 1; int32 hi = 2;}message ConfigItem2 { repeated VersionRange version_ranges = 1; int32 id = 2; int32 value = 3;}message Config { repeated ConfigItem1 items1 = 1; repeated ConfigItem2 items2 = 2;}加载的时候大概有这样的代码：
+</div>
+<div>
+<a class="read-more button" href=/posts/real-world-cpp-template/>Read more →</a>
+</div>
+</div>
+<div class="post on-list">
+<h1 class=post-title><a href=/posts/golang-design-study/>从并发模型看 Go 的语言设计</a></h1>
+<div class=post-meta>
+<span class=post-date>
+2019-05-03
+</span>
+</div>
+<span class=post-tags>
+<a href=/tags/go/>#Go</a>&nbsp;
+</span>
+<div class=post-content>
+传统的程序语言设计都不会将输入输出作为语言的核心，但 Tony Hoare 认为输入输出是基本的编程原语，且通信顺序进程（Communicating sequential processes，CSP）的并行组合（这里可能用「并发」会更为准确）是基本的程序组织方法。Go 语言的并发设计就是基于 CSP 模型的。
+在最初的 CSP 模型中，程序总由若干个可以相互通信的进程构成，其中每一个进程内部是顺序执行的（这也就是 CSP 名称的含义）。注意这里的「进程」并不一定指操作系统中的进程，也不一定是操作系统的线程，它是一个抽象的概念，代表一组计算的序列，例如 goroutine 这种在应用层调度的计算序列也算 CSP 中的「P」。与 Go 语言不同的地方在于，这个最初的设计中并没有通信管道的概念，每个进程是直接和另一个进程进行通信的，但在 Go 语言中，goroutine 是匿名的，一个 goroutine 并没有办法直接将消息发给另一个 goroutine，为了实现 goroutine 之间的通信，Go 语言提供了 first class 的 channel，消息通过 channel 来从一个 goroutine 发到另一个 goroutine。而且，Go 语言也不要求 goroutine 内部是顺序执行的，goroutine 内部可以创建更多的 goroutine，并发地完成工作。
+下面，我们通过例子说明基于 CSP 模型是如何组织程序的。
+阶乘计算 首先来看的是一个计算阶乘的例子，阶乘的一个简单的递归实现可以是这样的：
+fact 0 = 1 fact n = n * fact (n - 1) 而基于 CSP 组织程序，我们可以这样做：
+// 阶乘计算的实体 func FactCalc(in &lt;-chan int, out chan&lt;- int) { var subIn, subOut chan int for { n := &lt;-in if n == 0 { out &lt;- 1 } else { if subIn == nil { subIn, subOut = make(chan int), make(chan int) go FactCalc(subIn, subOut) } subIn &lt;- n - 1 r := &lt;-subOut out &lt;- n * r } } } // 包装一个阶乘计算函数 func MakeFactFunc() func(int) int { in, out := make(chan int), make(chan int) go FactCalc(in, out) return func(x int) int { in &lt;- x return &lt;-out } } MakeFactFunc 就是简单地封装一下 FactCalc，获取一个计算阶乘的函数。主要的计算是由 FactCalc 进行的。
+</div>
+<div>
+<a class="read-more button" href=/posts/golang-design-study/>Read more →</a>
+</div>
+</div>
+<div class="post on-list">
+<h1 class=post-title><a href=/posts/dynamic-scope/>静态作用域和动态作用域</a></h1>
+<div class=post-meta>
+<span class=post-date>
+2017-03-25
+</span>
+</div>
+<span class=post-tags>
+<a href=/tags/c++/>#C++</a>&nbsp;
+<a href=/tags/haskell/>#Haskell</a>&nbsp;
+<a href=/tags/lisp/>#Lisp</a>&nbsp;
+</span>
+<div class=post-content>
+静态作用域和动态作用域 所谓作用域规则就是程序解析名字的方法。如果一个变量的名称不在当前作用域内，则这样的变量称为 unbound variable，例如有一个函数 (lambda () (+ a a))，a 就是一个 unbound variable，在当前作用域内我们无法找到这个变量。那么调用这个函数的求值结果是什么呢？显然要根据 context 来确定，对于 unbound variables 的解析，从解析的时机来划分，有两种规则，一种是「静态作用域」（Static Scope）也被称为「词法作用域」（Lexical Scope），另一种是「动态作用域」（Dynamic Scope）1。
+对于现在流行的大多数语言来说，其作用域规则都是静态作用域规则，例如 Java、C++ 等，其特点根据函数定义处的环境解析里面用到的 unbound variables。仅有少数语言使用动态作用域规则，例如 Emacs Lisp，其函数内的 unbound variables 的解析是根据函数被调用时的环境来决定的。举例而言，对如下的表达式求值：
+(let ((a 1)) (let ((doubleA (lambda () (+ a a)))) (let ((a 2)) (doubleA)))) 如果采用静态作用域规则，这个表达式的值为 2，而如果采用动态作用域规则，其值则为 4。原因是当 doubleA 被定义时，可以在外层作用域找到 a = 1。而对于采用动态作用域的语言来说，a 的查找并不是在 doubleA 被定义的时候，而是在 doubleA 被调用的地方，此时 a = 2。当然，采用动态作用域规则的语言也会不断向外层作用域寻找名字，所以对下面这个表达式求值，无论是采用静态作用域规则还是动态作用域规则，其结果都是 2：
+(let ((a 1)) (let ((doubleA (lambda () (+ a a)))) (doubleA))) 那这两种规则哪种比较好呢？看被语言所采用的比例就知道，显然是静态作用域规则更好。其原因是在采用静态作用域规则的时候，对于函数的定义者来说，他可以通过阅读自己的代码很容易地知道他所使用到的变量当前绑定的具体实体是什么，而在使用采用动态作用域的语言时，则需要考虑这个函数被调用的时候该变量所对应的具体实体，这事实上是一种破坏封装的行为。举个例子，假设我们需要写几个对传入参数加一个数字的函数，例如 (lambda (n) (+ n 1))，那我们可能会希望对这组函数进行一个抽象，构建一个 createAddN 函数：
+</div>
+<div>
+<a class="read-more button" href=/posts/dynamic-scope/>Read more →</a>
+</div>
+</div>
+<div class="post on-list">
+<h1 class=post-title><a href=/posts/rust-safety/>Rust 提升安全性的方式</a></h1>
+<div class=post-meta>
+<span class=post-date>
+2017-03-16
+</span>
+</div>
+<span class=post-tags>
+<a href=/tags/rust/>#Rust</a>&nbsp;
+<a href=/tags/c++/>#C++</a>&nbsp;
+</span>
+<div class=post-content>
+Rust 的起源与目的 Rust 1 是 Mozilla 公司开发的编程语言，它在 2010 才开始发布第一个版本，可以说是一个非常年轻的语言了。在提出一个新的编程语言的时候，设计者必须要回答的一个问题是「为什么要设计这样一个编程语言？」。对于 Rust 来说，他的目的就是要在保证安全的基础上不失对底层的控制力。
+注意这里所指的「安全」不是说防止黑客攻击服务器，而是内存安全。拿 Rust 的主要竞争对手 C++ 为例，下面这段代码是安全的吗？
+int foo(Bar* pBar) { if (pBar == nullptr) { return -1; } else { return pBar->baz(); } } 显然不是，尽管在 foo 函数中对 pBar 进行了非空的判断，但 pBar 可能指向了一块已经被释放掉了的内存，也就是所谓的「dangling pointer」错误 2，此时程序的行为是未定义的。在 Java 等跑在虚拟机里的语言中，一般会将指针操作隐藏起来，同时由于有 GC 的存在，避免了程序员手动去释放内存，当一个对象不可达的时候，虚拟机会帮程序员去释放掉其占用的内存，所以，这段代码在 Java 中是安全的：
+int foo(Bar bar) { if (bar == null) { return -1; } else { return bar.baz(); } } Java 对内存安全的解决方案的问题在于，用户额外增加了虚拟机运行的开销，而且其模型无法做到 C++ 引以为傲的「zero overhead abstraction」。什么叫「zero overhead abstraction」？考虑如下的 C++ 代码：
+</div>
+<div>
+<a class="read-more button" href=/posts/rust-safety/>Read more →</a>
+</div>
+</div>
+<div class="post on-list">
+<h1 class=post-title><a href=/posts/immutable-state/>不可变的状态</a></h1>
+<div class=post-meta>
+<span class=post-date>
+2016-10-02
+</span>
+</div>
+<span class=post-tags>
+<a href=/tags/scala/>#Scala</a>&nbsp;
+<a href=/tags/haskell/>#Haskell</a>&nbsp;
+</span>
+<div class=post-content>
+可变与状态 在过程式的编程中，例如使用 C 语言，我们的工作是不断地以副作用的形式对状态进行修改，然后产生结果。例如我们可能会先令 int x = 0，然后进行一系列操作，将 x 修改以记录这些操作的过程和产生的效果，最后再产生结果。但是，如果一个语言建议一个值不可变（例如 Scala）或是强制要求一个值不可变（例如 Haskell）那又该怎么办？
+例如说我们想要实现这样的一个函数，这个函数将遍历一棵二叉树，并给其每一个树叶打上标签 1，二叉树的定义如下：
+sealed trait Tree[A] case class Leaf[A](value: A) extends Tree[A] case class Branch[A](left: Tree[A], right: Tree[A]) extends Tree[A] 如果我们传递给 labelTree 函数一棵
+val tree = Branch(Leaf('a'), Branch(Branch(Leaf('b'), Leaf('c')), Leaf('d'))) 这样的树，我们想要得到这样的结果：
+Branch(Leaf((0,'a')),Branch(Branch(Leaf((1,'b')),Leaf((2,'c'))),Leaf((3,'d')))) 这显然是一个涉及读写状态的问题，当函数决定给一个节点进行标记的时候，它必须需要知道当前应该打什么标签，并且用某种方法影响下一个节点所要被打的标签。一个简单的处理如下：
+var i = 0 def labelTree[A](tree: Tree[A]): Tree[(Int, A)] = tree match { case Leaf(value) => val newLeaf = Leaf(i, value) i += 1 newLeaf case Branch(left, right) => Branch(labelTree(left), labelTree(right)) } 这个处理很简单直接，就是维护一个变量 i，当函数 labelTree 遍历一棵树的时候，如果看到了叶子节点，就打上标签 i 并将 i 加 1。如果看到一个树枝节点，就先递归标记左子树，然后再递归标记右子树，并用这两个结果构筑新树。使用方法如下：
+</div>
+<div>
+<a class="read-more button" href=/posts/immutable-state/>Read more →</a>
+</div>
+</div>
+<div class="post on-list">
+<h1 class=post-title><a href=/posts/parser-combinator/>Parser Combinator</a></h1>
+<div class=post-meta>
+<span class=post-date>
+2016-09-10
+</span>
+</div>
+<span class=post-tags>
+<a href=/tags/haskell/>#Haskell</a>&nbsp;
+<a href=/tags/scala/>#Scala</a>&nbsp;
+</span>
+<div class=post-content>
+词法分析和语法分析 词法分析（lexical analysis）1 和语法分析（syntactic analysis，又称为 parsing）2，同属于编译器的前端部分。词法分析器（lexer）将输入拆分为一个个的 token，然后语法分析器根据特定的语法规则将输入的 token 解析为一个结构化的表示，一般为抽象语法树（abstract syntax tree），供之后的语义分析器使用。
+在实际开发中，为了简化写词法分析和语法分析的过程，常常会使用生成器来代替人工操作，Lex 和 Yacc 就是生成器的经典实现 3。Lex 是 Lexical Analyzer 的简写，是一个词法分析器的生成器，Yacc 是 Yet Another Compiler Compiler 的简写，是一个语法分析器的生成器。这两个工具允许用户用类似 BNF 范式的写法声明一个词法描述和语法描述文件，然后自动生成能够解析对应词法语法的 C 语言程序。
+这个解决方案直观有效，实际应用也很普遍，不止是 C 语言，在其他平台也常有类似的实现，例如 Java 的 ANTLR。但是它也存在一些问题，首先是用机器生成的代码质量往往不如手写高。这个代码质量的问题在程序正常运作的时候倒也不算什么问题，毕竟可以将生成出来的代码当作一个黑盒来调用，不太需要理会内部的实现，但实际情况有时并不这么理想，如果描述的时候出现问题怎么办？甚至如果生成器本身就有 bug 又怎么办？由于生成出来的代码质量较低，所以这就带来了调试困难的问题。所以，在很多重要的应用中，parser 的部分往往是手写的而非用生成器生成 4。不过手写解析器毕竟会有代码不直观的问题，而且这个过程往往比较枯燥乏味。
+也就是说，我们希望有一个方法，能够使得我们在用某种规范形式描述出一个语言的语法后，就能构造出针对该语言的词法分析器和语法分析器，且这个特性必须要尽可能不损失可调试性，同时又足够简单易用。
+使用 Parser Combinator 解析文本 Parser combinator 5 也许是对上述问题的一个比较好的回答，虽然 parser combinator 也有不少缺点使得它解析复杂语法的时候往往力不从心，但在简单的情况下还是比较好用的，另外其中反映的编程思想也相当有趣。
+举个例子，在 Java 中，bool 类型的字面值写法有 true 和 false 两种，用 BNF 范式表述大概是这样：
+bool_literal ::= "true" | "false" 如果使用 Haskell 的 Megaparsec 6 来写，就可以写成这样：
+</div>
+<div>
+<a class="read-more button" href=/posts/parser-combinator/>Read more →</a>
+</div>
+</div>
+<div class="post on-list">
+<h1 class=post-title><a href=/posts/handle-concurrency-using-future/>使用 Future 进行并发编程</a></h1>
+<div class=post-meta>
+<span class=post-date>
+2016-08-27
+</span>
+</div>
+<span class=post-tags>
+<a href=/tags/concurrency/>#Concurrency</a>&nbsp;
+<a href=/tags/java/>#Java</a>&nbsp;
+<a href=/tags/scala/>#Scala</a>&nbsp;
+</span>
+<div class=post-content>
+Future 的概念 在编程的时候，常常会遇到需要并行处理一些代码，最原始的做法就是创建不同的线程进行处理，但是线程之间的同步处理非常麻烦而且容易出错，如果要同时得到几个线程的结果并且通过这些结果进行进一步的计算，则需要共享变量或者进行线程间通信，无论如何都非常难以处理。另外，直接使用线程也使得代码灵活性不高，比如在双核机器上可能只希望使用两个线程执行代码，到了四核机器上就希望最多能有四个线程了。Future 能够提供一个高层的抽象，将计算任务的并发化和计算最终的执行方式分离，使得这类处理更为方便。Future 作为一个代理对象代表一个可能完成也可能未完成的值 1，通过对 future 进行操作，能够获取内部的计算是否已经完成，是否出现异常，计算结果是什么等信息。
+Java 中的 Future Java 很早就提供了 Future 接口 2，使用起来大概是这样的：
+interface ArchiveSearcher { String search(String target); } class App { ExecutorService executor = ... ; // init executor service ArchiveSearcher searcher = ... ; // init searcher void showSearch(final String target) throws InterruptedException { Future&lt;String> future = executor.submit(new Callable&lt;String>() { public String call() { return searcher.search(target); } }); displayOtherThings(); // do other things while searching try { displayText(future.
+</div>
+<div>
+<a class="read-more button" href=/posts/handle-concurrency-using-future/>Read more →</a>
+</div>
+</div>
+<div class="post on-list">
+<h1 class=post-title><a href=/posts/null-value-and-handling/>Null 值及其处理方式</a></h1>
+<div class=post-meta>
+<span class=post-date>
+2016-07-22
+</span>
+</div>
+<span class=post-tags>
+<a href=/tags/type-system/>#Type System</a>&nbsp;
+<a href=/tags/java/>#Java</a>&nbsp;
+<a href=/tags/scala/>#Scala</a>&nbsp;
+<a href=/tags/kotlin/>#Kotlin</a>&nbsp;
+</span>
+<div class=post-content>
+Null 值由来已久，它最早是由 Tony Hoare 图方便而创造的，后来被证明这是个错误，而他本人也对此进行了道歉，并称之为「十亿美金错误」1。
+I call it my billion-dollar mistake. It was the invention of the null reference in 1965. At that time, I was designing the first comprehensive type system for references in an object oriented language (ALGOL W). My goal was to ensure that all use of references should be absolutely safe, with checking performed automatically by the compiler. But I couldn&rsquo;t resist the temptation to put in a null reference, simply because it was so easy to implement.
+</div>
+<div>
+<a class="read-more button" href=/posts/null-value-and-handling/>Read more →</a>
+</div>
+</div>
+<div class="post on-list">
+<h1 class=post-title><a href=/posts/covariant-and-contravariant/>协变、逆变与不变</a></h1>
+<div class=post-meta>
+<span class=post-date>
+2016-07-14
+</span>
+</div>
+<span class=post-tags>
+<a href=/tags/type-system/>#Type System</a>&nbsp;
+<a href=/tags/scala/>#Scala</a>&nbsp;
+<a href=/tags/java/>#Java</a>&nbsp;
+</span>
+<div class=post-content>
+型变（variance）是类型系统里的概念，包括协变（covariance）、逆变（contravariance）和不变（invariance）。这组术语的目的是描述泛型情况下类型参数的父子类关系如何影响参数化类型的父子类关系。也就是说，假设有一个接收一个类型参数的参数化类型 T 和两个类 A，B，且 B 是 A 的子类，那么 T[A] 与 T[B] 的关系是什么？如果 T[B] 是 T[A] 的子类，那么这种型变就是「协变」，因为参数化类型 T 的父子类关系与其类型参数的父子类关系是「同一个方向的」。如果 T[A] 是 T[B] 的子类，则这种关系是「逆变」，因为参数化类型 T 的父子类关系与类型参数的父子类关系是「相反方向的」。类似地，如果 T[A] 和 T[B] 之间不存在父子类关系，那么这种型变就是「不变」1。
+协变 在 Java 中，数组是协变的，也就是说，假设有一个基类 Person 和一个 Person 的子类 Student。因为 Student 类型是 Person 类型的子类，所以 Student[] 类型是 Person[] 类型的子类，这个设计似乎相当符合直觉，一个学生（Student）是一个人（Person），那一个存放着学生的数组当然也应该是一个存放着人的数组了。
+然而这是错误的。
+假设 Person 有另一个子类 Teacher，考虑如下代码：
+Student[] students = { new Student() } students[0].study(); Person[] persons = students; persons[0] = new Teacher(); students[0].study(); // Oops! 这段代码显然错了，看一下刚刚做了什么。我们在 Student 数组里存放了一个 Student 实例，紧接着调用了这个对象的 study 方法，这个显然没错；然后将这个数组赋值给一个 Person 数组，由于数组是协变的，所以这步没问题；然后，向 Person 数组里添加一个 Teacher 的实例，这步也没问题，因为一个 Teacher 是一个 Person；接下来是获取 Student 数组里的对象，调用 Student 类的 study 方法，这似乎也是合理的。那问题在哪呢？
+</div>
+<div>
+<a class="read-more button" href=/posts/covariant-and-contravariant/>Read more →</a>
+</div>
+</div>
+<div class="post on-list">
+<h1 class=post-title><a href=/posts/representation-of-calculation/>计算的表示</a></h1>
+<div class=post-meta>
+<span class=post-date>
+2016-07-08
+</span>
+</div>
+<span class=post-tags>
+<a href=/tags/lisp/>#Lisp</a>&nbsp;
+</span>
+<div class=post-content>
+当提到「计算」这个词的时候，我们会想到什么，是想到「计算机」，或是「图灵机」，又或是操控计算机的「汇编语言」，还是说「1 + 1」这样的算式？这些都是计算，但它们都是计算的一种表示而非计算本身，计算本身是一个更加本质的东西，可以认为是一种柏拉图型相，或是理念，刚刚说到的东西都是对它的摹仿。
+比如我们说到「4」的时候，我们在用「4」这个符号去摹仿「4」这个理念，这个理念可以用「4」来摹仿，也可以用「四」，也可以用「four」，具体是什么不重要，重要的是你不会走在路上突然见到一个「4」，而是会见到一个类似「4」的东西。那既然可以用这样一个来自阿拉伯的符号来摹仿数字，那是否有其他的方式来摹仿呢？更一般地说，是否有其他的计算表示方式，并以此来实现我们在汇编语言，C，Java，等语言中表示的计算呢？下面将介绍一个图灵完备的计算模型，称为 λ 演算（lambda calculus）1，该计算的表示由 Alonzo Church 在 20 世纪 30 年代发明，它可被称为是最小的通用程序设计语言。
+λ 演算 λ 演算非常简练，而且相对于图灵机的计算模型来说非常优雅，其核心在于表达式（expression）。一个名字（name）又被称为变量（variable），是一个标识符（identifier），可以是任意的字母，如：a, b, c 等。而表达式的定义如下：
+$$ \begin{array}{rcl} \text{(expression)} & := & \text{(name) | (function) | (application)} \newline \text{(function)} & := & \lambda~\text{(name).(expression)} \newline \text{(application)} & := & \text{(expression)(expression)} \newline \end{array} $$
+至于变换规则则总共有三条，更加具体的描述可参考维基百科 2：
+α - conversion: 改变绑定变量的名称不影响函数本身；β - reduction: 将函数应用于其参数；η - conversion: 两个函数对于所有的参数得到的结果都一致，当且仅当它们是同一个函数。
+本文后面的部分均使用 Scheme 语言来描述这些计算，在 Scheme 中，有非常类似 λ 演算中表达式的表示，例如一个函数 $\lambda x.y$ 将在 Scheme 中表示为 (lambda (x) y)，而将函数应用于参数 $x~y$ 将在 Scheme 中表示为 (x y)。最大的区别可能在于，在 λ 演算中，(x) 和 x 一样，而在 Scheme 中，前者会变成一个对函数 x 的调用，而后面则是 x 本身。
+</div>
+<div>
+<a class="read-more button" href=/posts/representation-of-calculation/>Read more →</a>
+</div>
+</div>
+<div class=pagination>
+<div class=pagination__buttons>
+<span class="button previous">
+<a href=/categories/articles/page/4/>
+<span class=button__icon>←</span>
+<span class=button__text>Newer posts</span>
+</a>
+</span>
+</div>
+</div>
+</div>
+</div>
+<footer class=footer>
+<div class=footer__inner>
+<div class="copyright copyright--user"><p>我的博客即将同步至腾讯云+社区，<a target=_blank href="https://cloud.tencent.com/developer/support-plan?invite_code=11dehb9vzutlx">邀请大家一同入驻</a></p><p>本网站采用 <a href=https://creativecommons.org/licenses/by-sa/4.0/>CC BY-SA 4.0</a> 协议进行授权</p></div>
+</div>
+</footer>
+<script src=/assets/main.js></script>
+<script src=/assets/prism.js></script>
+</div>
+<script type=application/javascript>var doNotTrack=!1;doNotTrack||(function(a,e,f,g,b,c,d){a.GoogleAnalyticsObject=b,a[b]=a[b]||function(){(a[b].q=a[b].q||[]).push(arguments)},a[b].l=1*new Date,c=e.createElement(f),d=e.getElementsByTagName(f)[0],c.async=1,c.src=g,d.parentNode.insertBefore(c,d)}(window,document,'script','https://www.google-analytics.com/analytics.js','ga'),ga('create','UA-80302213-1','auto'),ga('send','pageview'))</script>
+</body>
+</html>
