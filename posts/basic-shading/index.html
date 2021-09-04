@@ -251,13 +251,13 @@ $$</p>
 <p>$$
 \begin{align}
 Z_t &= \frac{d}{u_1 + s \ (u_2 - u_1)} \ (X_1 + t \ (X_2 - X_1)) \newline
-&= \frac{d}{u_1 + s \ (u_2 - u_1)} \ (\frac{u_1}{d} \ Z_1 + t \ (\frac{u_2}{d} \ Z_2 - \frac{u_1}{d} \ Z_1)) \newline
+&= \frac{d}{u_1 + s \ (u_2 - u_1)} \ \left( \frac{u_1}{d} \ Z_1 + t \ \left( \frac{u_2}{d} \ Z_2 - \frac{u_1}{d} \ Z_1 \right) \right) \newline
 &= \frac{u_1 \ Z_1 + t \ (u_2 \ Z_2 - u_1 \ Z_1)}{u_1 + s \ (u_2 - u_1)}
 \end{align}
 $$</p>
 <p>因此我们有：</p>
 <p>$$
-Z_1 + t \ (Z_2 - Z_1) = \frac{u_1 \ Z_1 + t \ (u_2 \ Z_2 - u_1 \ Z_1)}{u_1 + s \ (u_2 - u_1)}
+Z_1 + t \ (Z_2 - Z_1) = \frac{u_1 \ Z_1 + t \ \left( u_2 \ Z_2 - u_1 \ Z_1 \right)}{u_1 + s \ (u_2 - u_1)}
 $$</p>
 <p>化简可得：</p>
 <p>$$
@@ -278,12 +278,12 @@ $$</p>
 <p>$$
 \begin{align}
 I_t &= I_1 + \frac{s \ Z_1}{s \ Z_1 + (1 - s) \ Z_2} \ (I_2 - I_1) \newline
-&= (\frac{I_1}{Z_1} + s \ (\frac{I_2}{Z_2} - \frac{I_1}{Z_1})) / (\frac{1}{Z_1} + s \ (\frac{1}{Z_2} - \frac{1}{Z_1}))
+&= \left. \left( \frac{I_1}{Z_1} + s \left( \frac{I_2}{Z_2} - \frac{I_1}{Z_1} \right) \right) \middle/ \left( \frac{1}{Z_1} + s \left( \frac{1}{Z_2} - \frac{1}{Z_1} \right) \right) \right.
 \end{align}
 $$</p>
 <p>我们可以发现，这个被除数正好就是刚刚计算出来的 $Z_t$ 的倒数，代入可得：</p>
 <p>$$
-I_t = (\frac{I_1}{Z_1} + s \ (\frac{I_2}{Z_2} - \frac{I_1}{Z_1})) / \frac{1}{Z_t}
+I_t = \left. \left( \frac{I_1}{Z_1} + s \left( \frac{I_2}{Z_2} - \frac{I_1}{Z_1} \right) \right) \middle/ \frac{1}{Z_t} \right.
 $$</p>
 <p>根据这个公式，我们就能知道如何计算正确的顶点属性插值了。对于任意需要插值的顶点属性 $I$ 而言，设其对应的深度值为 $Z$，那么我们应该先对 $I/Z$ 进行插值，然后将结果再除以 $1/Z$ 插值的结果，使用这样的方法插值出来的顶点属性才是透视正确的插值结果。</p>
 <h2 id=参考资料>参考资料</h2>
