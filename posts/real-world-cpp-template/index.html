@@ -6,11 +6,7 @@
 </title>
 <meta charset=utf-8>
 <meta name=viewport content="width=device-width,initial-scale=1">
-<meta name=description content="C++ 的模板是 C++ 的一个重要的语言特性，我们使用的 STL 就是 Standard Template Library 的缩写，但是在很多情况下，开发者都对其敬而远之，有些团队甚至是直接在工程中禁用模板。模板常被当作洪水猛兽的一个原因是许多人提起模板就要提 C++ 模板图灵完备，甚至还要再秀一段编译期排序，这种表现模板强大的方式不仅不会让人觉得模板有用，反而让人觉得模板难以理解而且不应该使用。在这篇文章里，我将聊一下最近实际工程中的一些模板的应用，希望可以让更多人了解到模板并不是一个可怕的存在，以及一些常见的使用方式。
-按版本号过滤配置 我所在的项目组前后台的复杂配置现在都用 protobuf 进行承载，然后生成 Excel 进行配置，生成 C++ 代码进行加载。例如这样的 message：
-message ConfigItem1 { int32 id = 1; string text = 2;}message Config { repeated ConfigItem1 items1 = 1;}这里的 Config 会被映射为一个 Excel，里面有一个表 items1，其中，这个表有两列，一列 id，一列 text。这个表的每一行都是一个具体的配置项。也就是我们可以这样获取配置：
-cout &amp;lt;&amp;lt; cfg.items1(0).id() &amp;lt;&amp;lt; &amp;#34;: &amp;#34; &amp;lt;&amp;lt; cfg.items1(0).text(); 现在有个需求是这样的，在加载某些配置的时候，前台需要根据版本号进行配置的过滤，部分配置项只会在某些版本中可见，例如这样：
-message VersionRange { int32 lo = 1; int32 hi = 2;}message ConfigItem2 { repeated VersionRange version_ranges = 1; int32 id = 2; int32 value = 3;}message Config { repeated ConfigItem1 items1 = 1; repeated ConfigItem2 items2 = 2;}加载的时候大概有这样的代码：">
+<meta name=description content="C++ 的模板是 C++ 的一个重要的语言特性，我们使用的 STL 就是 Standard Template Library 的缩写，但是在很多情况下，开发者都对其敬而远之，有些团队甚至是直接在工程中禁用模板。">
 <meta name=keywords content="编程,计算机图形学,游戏开发">
 <meta name=robots content="noodp">
 <link rel=canonical href=/posts/real-world-cpp-template/>
@@ -26,17 +22,9 @@ message VersionRange { int32 lo = 1; int32 hi = 2;}message ConfigItem2 { repeate
 <link href=/assets/fonts/Inter-BoldItalic.woff2 rel=preload type=font/woff2 as=font crossorigin>
 <meta name=twitter:card content="summary">
 <meta name=twitter:title content="实际工程中的 C++ 模板">
-<meta name=twitter:description content="C++ 的模板是 C++ 的一个重要的语言特性，我们使用的 STL 就是 Standard Template Library 的缩写，但是在很多情况下，开发者都对其敬而远之，有些团队甚至是直接在工程中禁用模板。模板常被当作洪水猛兽的一个原因是许多人提起模板就要提 C++ 模板图灵完备，甚至还要再秀一段编译期排序，这种表现模板强大的方式不仅不会让人觉得模板有用，反而让人觉得模板难以理解而且不应该使用。在这篇文章里，我将聊一下最近实际工程中的一些模板的应用，希望可以让更多人了解到模板并不是一个可怕的存在，以及一些常见的使用方式。
-按版本号过滤配置 我所在的项目组前后台的复杂配置现在都用 protobuf 进行承载，然后生成 Excel 进行配置，生成 C++ 代码进行加载。例如这样的 message：
-message ConfigItem1 { int32 id = 1; string text = 2;}message Config { repeated ConfigItem1 items1 = 1;}这里的 Config 会被映射为一个 Excel，里面有一个表 items1，其中，这个表有两列，一列 id，一列 text。这个表的每一行都是一个具体的配置项。也就是我们可以这样获取配置：
-cout << cfg.items1(0).id() << &#34;: &#34; << cfg.items1(0).text(); 现在有个需求是这样的，在加载某些配置的时候，前台需要根据版本号进行配置的过滤，部分配置项只会在某些版本中可见，例如这样：
-message VersionRange { int32 lo = 1; int32 hi = 2;}message ConfigItem2 { repeated VersionRange version_ranges = 1; int32 id = 2; int32 value = 3;}message Config { repeated ConfigItem1 items1 = 1; repeated ConfigItem2 items2 = 2;}加载的时候大概有这样的代码：">
+<meta name=twitter:description content="C++ 的模板是 C++ 的一个重要的语言特性，在这篇文章里，我将聊一下最近实际工程中的一些模板的应用，希望可以让更多人了解到模板并不是一个可怕的存在，以及一些常见的使用方式。">
 <meta property="og:title" content="实际工程中的 C++ 模板">
-<meta property="og:description" content="C++ 的模板是 C++ 的一个重要的语言特性，我们使用的 STL 就是 Standard Template Library 的缩写，但是在很多情况下，开发者都对其敬而远之，有些团队甚至是直接在工程中禁用模板。模板常被当作洪水猛兽的一个原因是许多人提起模板就要提 C++ 模板图灵完备，甚至还要再秀一段编译期排序，这种表现模板强大的方式不仅不会让人觉得模板有用，反而让人觉得模板难以理解而且不应该使用。在这篇文章里，我将聊一下最近实际工程中的一些模板的应用，希望可以让更多人了解到模板并不是一个可怕的存在，以及一些常见的使用方式。
-按版本号过滤配置 我所在的项目组前后台的复杂配置现在都用 protobuf 进行承载，然后生成 Excel 进行配置，生成 C++ 代码进行加载。例如这样的 message：
-message ConfigItem1 { int32 id = 1; string text = 2;}message Config { repeated ConfigItem1 items1 = 1;}这里的 Config 会被映射为一个 Excel，里面有一个表 items1，其中，这个表有两列，一列 id，一列 text。这个表的每一行都是一个具体的配置项。也就是我们可以这样获取配置：
-cout << cfg.items1(0).id() << &#34;: &#34; << cfg.items1(0).text(); 现在有个需求是这样的，在加载某些配置的时候，前台需要根据版本号进行配置的过滤，部分配置项只会在某些版本中可见，例如这样：
-message VersionRange { int32 lo = 1; int32 hi = 2;}message ConfigItem2 { repeated VersionRange version_ranges = 1; int32 id = 2; int32 value = 3;}message Config { repeated ConfigItem1 items1 = 1; repeated ConfigItem2 items2 = 2;}加载的时候大概有这样的代码：">
+<meta property="og:description" content="C++ 的模板是 C++ 的一个重要的语言特性，在这篇文章里，我将聊一下最近实际工程中的一些模板的应用，希望可以让更多人了解到模板并不是一个可怕的存在，以及一些常见的使用方式。">
 <meta property="og:type" content="article">
 <meta property="og:url" content="/posts/real-world-cpp-template/"><meta property="article:section" content="posts">
 <meta property="article:published_time" content="2019-09-17T00:00:00+00:00">

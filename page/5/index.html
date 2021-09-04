@@ -79,10 +79,7 @@ Zhirui Li's Blog
 <a href=/tags/lisp/>#Lisp</a>&nbsp;
 </span>
 <div class=post-content>
-静态作用域和动态作用域 所谓作用域规则就是程序解析名字的方法。如果一个变量的名称不在当前作用域内，则这样的变量称为 unbound variable，例如有一个函数 (lambda () (+ a a))，a 就是一个 unbound variable，在当前作用域内我们无法找到这个变量。那么调用这个函数的求值结果是什么呢？显然要根据 context 来确定，对于 unbound variables 的解析，从解析的时机来划分，有两种规则，一种是「静态作用域」（Static Scope）也被称为「词法作用域」（Lexical Scope），另一种是「动态作用域」（Dynamic Scope）1。
-对于现在流行的大多数语言来说，其作用域规则都是静态作用域规则，例如 Java、C++ 等，其特点根据函数定义处的环境解析里面用到的 unbound variables。仅有少数语言使用动态作用域规则，例如 Emacs Lisp，其函数内的 unbound variables 的解析是根据函数被调用时的环境来决定的。举例而言，对如下的表达式求值：
-(let ((a 1)) (let ((doubleA (lambda () (+ a a)))) (let ((a 2)) (doubleA)))) 如果采用静态作用域规则，这个表达式的值为 2，而如果采用动态作用域规则，其值则为 4。原因是当 doubleA 被定义时，可以在外层作用域找到 a = 1。而对于采用动态作用域的语言来说，a 的查找并不是在 doubleA 被定义的时候，而是在 doubleA 被调用的地方，此时 a = 2。当然，采用动态作用域规则的语言也会不断向外层作用域寻找名字，所以对下面这个表达式求值，无论是采用静态作用域规则还是动态作用域规则，其结果都是 2：
-(let ((a 1)) (let ((doubleA (lambda () (+ a a)))) (doubleA))) 那这两种规则哪种比较好呢？看被语言所采用的比例就知道，显然是静态作用域规则更好。其原因是在采用静态作用域规则的时候，对于函数的定义者来说，他可以通过阅读自己的代码很容易地知道他所使用到的变量当前绑定的具体实体是什么，而在使用采用动态作用域的语言时，则需要考虑这个函数被调用的时候该变量所对应的具体实体，这事实上是一种破坏封装的行为。举个例子，假设我们需要写几个对传入参数加一个数字的函数，例如 (lambda (n) (+ n 1))，那我们可能会希望对这组函数进行一个抽象，构建一个 createAddN 函数：
+解释静态作用域和动态作用域的区别，并对其进行实现与模拟。
 </div>
 <div><a class="read-more button" href=/posts/dynamic-scope/>Read more →</a></div>
 </div>
@@ -98,10 +95,7 @@ Zhirui Li's Blog
 <a href=/tags/c++/>#C++</a>&nbsp;
 </span>
 <div class=post-content>
-Rust 的起源与目的 Rust 1 是 Mozilla 公司开发的编程语言，它在 2010 才开始发布第一个版本，可以说是一个非常年轻的语言了。在提出一个新的编程语言的时候，设计者必须要回答的一个问题是「为什么要设计这样一个编程语言？」。对于 Rust 来说，他的目的就是要在保证安全的基础上不失对底层的控制力。
-注意这里所指的「安全」不是说防止黑客攻击服务器，而是内存安全。拿 Rust 的主要竞争对手 C++ 为例，下面这段代码是安全的吗？
-int foo(Bar* pBar) { if (pBar == nullptr) { return -1; } else { return pBar->baz(); } } 显然不是，尽管在 foo 函数中对 pBar 进行了非空的判断，但 pBar 可能指向了一块已经被释放掉了的内存，也就是所谓的「dangling pointer」错误 2，此时程序的行为是未定义的。在 Java 等跑在虚拟机里的语言中，一般会将指针操作隐藏起来，同时由于有 GC 的存在，避免了程序员手动去释放内存，当一个对象不可达的时候，虚拟机会帮程序员去释放掉其占用的内存，所以，这段代码在 Java 中是安全的：
-int foo(Bar bar) { if (bar == null) { return -1; } else { return bar.baz(); } } Java 对内存安全的解决方案的问题在于，用户额外增加了虚拟机运行的开销，而且其模型无法做到 C++ 引以为傲的「zero overhead abstraction」。什么叫「zero overhead abstraction」？考虑如下的 C++ 代码：
+通过和 C++ 进行对比，谈谈 Rust 如何通过编译器和程序语义避免程序员犯错。
 </div>
 <div><a class="read-more button" href=/posts/rust-safety/>Read more →</a></div>
 </div>
@@ -117,12 +111,7 @@ int foo(Bar bar) { if (bar == null) { return -1; } else { return bar.baz(); } } 
 <a href=/tags/haskell/>#Haskell</a>&nbsp;
 </span>
 <div class=post-content>
-可变与状态 在过程式的编程中，例如使用 C 语言，我们的工作是不断地以副作用的形式对状态进行修改，然后产生结果。例如我们可能会先令 int x = 0，然后进行一系列操作，将 x 修改以记录这些操作的过程和产生的效果，最后再产生结果。但是，如果一个语言建议一个值不可变（例如 Scala）或是强制要求一个值不可变（例如 Haskell）那又该怎么办？
-例如说我们想要实现这样的一个函数，这个函数将遍历一棵二叉树，并给其每一个树叶打上标签 1，二叉树的定义如下：
-sealed trait Tree[A] case class Leaf[A](value: A) extends Tree[A] case class Branch[A](left: Tree[A], right: Tree[A]) extends Tree[A] 如果我们传递给 labelTree 函数一棵
-val tree = Branch(Leaf('a'), Branch(Branch(Leaf('b'), Leaf('c')), Leaf('d'))) 这样的树，我们想要得到这样的结果：
-Branch(Leaf((0,'a')),Branch(Branch(Leaf((1,'b')),Leaf((2,'c'))),Leaf((3,'d')))) 这显然是一个涉及读写状态的问题，当函数决定给一个节点进行标记的时候，它必须需要知道当前应该打什么标签，并且用某种方法影响下一个节点所要被打的标签。一个简单的处理如下：
-var i = 0 def labelTree[A](tree: Tree[A]): Tree[(Int, A)] = tree match { case Leaf(value) => val newLeaf = Leaf(i, value) i += 1 newLeaf case Branch(left, right) => Branch(labelTree(left), labelTree(right)) } 这个处理很简单直接，就是维护一个变量 i，当函数 labelTree 遍历一棵树的时候，如果看到了叶子节点，就打上标签 i 并将 i 加 1。如果看到一个树枝节点，就先递归标记左子树，然后再递归标记右子树，并用这两个结果构筑新树。使用方法如下：
+状态总与变化相关，如果我们不使用可变的变量，那要如何表示状态？又该如何使状态间的转换更加方便？
 </div>
 <div><a class="read-more button" href=/posts/immutable-state/>Read more →</a></div>
 </div>

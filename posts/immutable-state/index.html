@@ -6,12 +6,7 @@
 </title>
 <meta charset=utf-8>
 <meta name=viewport content="width=device-width,initial-scale=1">
-<meta name=description content="可变与状态 在过程式的编程中，例如使用 C 语言，我们的工作是不断地以副作用的形式对状态进行修改，然后产生结果。例如我们可能会先令 int x = 0，然后进行一系列操作，将 x 修改以记录这些操作的过程和产生的效果，最后再产生结果。但是，如果一个语言建议一个值不可变（例如 Scala）或是强制要求一个值不可变（例如 Haskell）那又该怎么办？
-例如说我们想要实现这样的一个函数，这个函数将遍历一棵二叉树，并给其每一个树叶打上标签 1，二叉树的定义如下：
-sealed trait Tree[A] case class Leaf[A](value: A) extends Tree[A] case class Branch[A](left: Tree[A], right: Tree[A]) extends Tree[A] 如果我们传递给 labelTree 函数一棵
-val tree = Branch(Leaf(&amp;#39;a&amp;#39;), Branch(Branch(Leaf(&amp;#39;b&amp;#39;), Leaf(&amp;#39;c&amp;#39;)), Leaf(&amp;#39;d&amp;#39;))) 这样的树，我们想要得到这样的结果：
-Branch(Leaf((0,&amp;#39;a&amp;#39;)),Branch(Branch(Leaf((1,&amp;#39;b&amp;#39;)),Leaf((2,&amp;#39;c&amp;#39;))),Leaf((3,&amp;#39;d&amp;#39;)))) 这显然是一个涉及读写状态的问题，当函数决定给一个节点进行标记的时候，它必须需要知道当前应该打什么标签，并且用某种方法影响下一个节点所要被打的标签。一个简单的处理如下：
-var i = 0 def labelTree[A](tree: Tree[A]): Tree[(Int, A)] = tree match { case Leaf(value) =&amp;gt; val newLeaf = Leaf(i, value) i += 1 newLeaf case Branch(left, right) =&amp;gt; Branch(labelTree(left), labelTree(right)) } 这个处理很简单直接，就是维护一个变量 i，当函数 labelTree 遍历一棵树的时候，如果看到了叶子节点，就打上标签 i 并将 i 加 1。如果看到一个树枝节点，就先递归标记左子树，然后再递归标记右子树，并用这两个结果构筑新树。使用方法如下：">
+<meta name=description content="可变与状态 在过程式的编程中，例如使用 C 语言，我们的工作是不断地以副作用的形式对状态进行修改，然后产生结果。例如我们可能会先令 int x = 0，然后进">
 <meta name=keywords content="编程,计算机图形学,游戏开发">
 <meta name=robots content="noodp">
 <link rel=canonical href=/posts/immutable-state/>
@@ -27,19 +22,9 @@ var i = 0 def labelTree[A](tree: Tree[A]): Tree[(Int, A)] = tree match { case Le
 <link href=/assets/fonts/Inter-BoldItalic.woff2 rel=preload type=font/woff2 as=font crossorigin>
 <meta name=twitter:card content="summary">
 <meta name=twitter:title content="不可变的状态">
-<meta name=twitter:description content="可变与状态 在过程式的编程中，例如使用 C 语言，我们的工作是不断地以副作用的形式对状态进行修改，然后产生结果。例如我们可能会先令 int x = 0，然后进行一系列操作，将 x 修改以记录这些操作的过程和产生的效果，最后再产生结果。但是，如果一个语言建议一个值不可变（例如 Scala）或是强制要求一个值不可变（例如 Haskell）那又该怎么办？
-例如说我们想要实现这样的一个函数，这个函数将遍历一棵二叉树，并给其每一个树叶打上标签 1，二叉树的定义如下：
-sealed trait Tree[A] case class Leaf[A](value: A) extends Tree[A] case class Branch[A](left: Tree[A], right: Tree[A]) extends Tree[A] 如果我们传递给 labelTree 函数一棵
-val tree = Branch(Leaf('a'), Branch(Branch(Leaf('b'), Leaf('c')), Leaf('d'))) 这样的树，我们想要得到这样的结果：
-Branch(Leaf((0,'a')),Branch(Branch(Leaf((1,'b')),Leaf((2,'c'))),Leaf((3,'d')))) 这显然是一个涉及读写状态的问题，当函数决定给一个节点进行标记的时候，它必须需要知道当前应该打什么标签，并且用某种方法影响下一个节点所要被打的标签。一个简单的处理如下：
-var i = 0 def labelTree[A](tree: Tree[A]): Tree[(Int, A)] = tree match { case Leaf(value) => val newLeaf = Leaf(i, value) i += 1 newLeaf case Branch(left, right) => Branch(labelTree(left), labelTree(right)) } 这个处理很简单直接，就是维护一个变量 i，当函数 labelTree 遍历一棵树的时候，如果看到了叶子节点，就打上标签 i 并将 i 加 1。如果看到一个树枝节点，就先递归标记左子树，然后再递归标记右子树，并用这两个结果构筑新树。使用方法如下：">
+<meta name=twitter:description content="状态总与变化相关，如果我们不使用可变的变量，那要如何表示状态？又该如何使状态间的转换更加方便？">
 <meta property="og:title" content="不可变的状态">
-<meta property="og:description" content="可变与状态 在过程式的编程中，例如使用 C 语言，我们的工作是不断地以副作用的形式对状态进行修改，然后产生结果。例如我们可能会先令 int x = 0，然后进行一系列操作，将 x 修改以记录这些操作的过程和产生的效果，最后再产生结果。但是，如果一个语言建议一个值不可变（例如 Scala）或是强制要求一个值不可变（例如 Haskell）那又该怎么办？
-例如说我们想要实现这样的一个函数，这个函数将遍历一棵二叉树，并给其每一个树叶打上标签 1，二叉树的定义如下：
-sealed trait Tree[A] case class Leaf[A](value: A) extends Tree[A] case class Branch[A](left: Tree[A], right: Tree[A]) extends Tree[A] 如果我们传递给 labelTree 函数一棵
-val tree = Branch(Leaf('a'), Branch(Branch(Leaf('b'), Leaf('c')), Leaf('d'))) 这样的树，我们想要得到这样的结果：
-Branch(Leaf((0,'a')),Branch(Branch(Leaf((1,'b')),Leaf((2,'c'))),Leaf((3,'d')))) 这显然是一个涉及读写状态的问题，当函数决定给一个节点进行标记的时候，它必须需要知道当前应该打什么标签，并且用某种方法影响下一个节点所要被打的标签。一个简单的处理如下：
-var i = 0 def labelTree[A](tree: Tree[A]): Tree[(Int, A)] = tree match { case Leaf(value) => val newLeaf = Leaf(i, value) i += 1 newLeaf case Branch(left, right) => Branch(labelTree(left), labelTree(right)) } 这个处理很简单直接，就是维护一个变量 i，当函数 labelTree 遍历一棵树的时候，如果看到了叶子节点，就打上标签 i 并将 i 加 1。如果看到一个树枝节点，就先递归标记左子树，然后再递归标记右子树，并用这两个结果构筑新树。使用方法如下：">
+<meta property="og:description" content="状态总与变化相关，如果我们不使用可变的变量，那要如何表示状态？又该如何使状态间的转换更加方便？">
 <meta property="og:type" content="article">
 <meta property="og:url" content="/posts/immutable-state/"><meta property="article:section" content="posts">
 <meta property="article:published_time" content="2016-10-02T00:00:00+00:00">

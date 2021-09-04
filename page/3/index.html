@@ -77,11 +77,7 @@ Zhirui Li's Blog
 <a href=/tags/prometheus/>#Prometheus</a>&nbsp;
 </span>
 <div class=post-content>
-基本概念 采样样本 Prometheus 会定期去对数据进行采集，每一次采集的结果都是一次采样的样本（sample），这些数据会被存储为时间序列，也就是带有时间戳的 value stream，这些 value stream 归属于自己的监控指标。
-这里采集样本包括了三部分：
-监控指标（metric） 毫秒时间戳（timestamp） 样本的值（value） 监控指标 一个监控指标被表示为下面的格式：
-metric_name { label_name_1=label_value_1, label_name_2=label_value_2, ... } 这里的 metric_name 用于指明监控的内容，label_value_x 则用于声明这个监控内容中不同维度的值。用我们常见的二维坐标系举例，下面有一个二维坐标系，名称为「xxx 坐标系」，其中，有 X，Y 两个轴，上面有两个点，分别是 A 和 B，它们的坐标分别为 (1, 3) 和 (2, 1)：
-xxx坐标系 Y ^ │ . A (1, 3) │ │ . B (2, 1) v &lt;-----------------> X 对应于 Prometheus，这里的 metric_name 就是 「xxx 坐标系」，label_name_1 就是 X，label_name_2 就是 Y。需要注意的是，这里的 A 和 B 两个点并不代表采样点，而是监控指标。我们可以想象在这个图中还存在一条虚拟的时间轴，分别从 A B 两点从屏幕外垂直屏幕进去，在这两条虚拟的时间轴上，每一个点就是一个采样点，采样点上会带一个毫秒时间戳和一个值，这个值就是样本的值。在 Prometheus 中，样本的值必须为 float64 类型的值。
+Prometheus 是一个功能极为强大的监控告警系统，为了实现其灵活性，Prometheus 难免增加了复杂度，造成了一定的理解成本，本文记录了一下学习内容。
 </div>
 <div><a class="read-more button" href=/posts/prometheus-report-query/>Read more →</a></div>
 </div>
@@ -97,10 +93,7 @@ xxx坐标系 Y ^ │ . A (1, 3) │ │ . B (2, 1) v &lt;-----------------> X �
 <a href=/tags/go/>#Go</a>&nbsp;
 </span>
 <div class=post-content>
-C++ 是一个很灵活的语言，这把双刃剑一方面使得 C++ 有很强大的表达能力，但也使得其编程风格相当混乱，就连错误处理到底是使用错误码还是异常都常常争论不休。例如在 C 中我们默认用错误码处理错误，而在 Python、Java 中，则默认用异常来处理错误。而在 C++ 中，使用这两种形式的错误处理形式都有，而目前来看，在我所在的团队中，除非是外部库，否则基本都是使用错误码。在这篇文章中，我将聊一下 C++ 错误处理的方式优劣，以及我们团队是如何进行 C++ 错误处理的。
-错误码的问题 在我们的工程实践中，错误码首先带来的问题是代码中充斥着大量的 -1、-2、-10000 这样的错误码，这样错误码在日志中出现总是让人头痛，在代码中一搜就出来数不清的匹配项，根本无法定位问题。当然，你可能会说，这个主要是开发者水平参差不齐和开发规范不够严明的问题，我们可以通过全局统一错误码来解决问题。这当然是一个合理的反对意见，但问题是，即便确定要全局统一错误码，但这个全局统一错误码应该做到什么层级呢？
-例如，在我们的后台采用了微服务架构，那么一个很显然的处理方案就是全局统一错误码是在服务级别的，A 服务调用 B 服务的时候，通过错误码来获知调用过程中出了什么错误。但是，这事实上并没有解决问题，例如我们现在发现 B 服务给 A 服务返回了 12345 这个错误码，然后我们尝试查看 B 服务的代码，看看为什么会导致这样的错误：
-enum Errors { kErrFailToCallSomeFunction = 12345, }; int Handle(Req const &req, Rsp *rsp) { int ret = SomeFunction(); if (ret) { ERRORLOG("call SomeFunction fail: %d\n", ret); return kErrFailToCallSomeFunction; } // ... } 因为错误码统一，我们很快就发现了是调用 SomeFunction 失败导致了这个错误，然后我们知道了应该找 call SomeFunction fail: 这条日志，可以我们一查阅这条日志就发现，call SomeFunction fail: -1，结果我们又回到了之前的问题，尤其是我们可能在 SomeFunction 中看到这样的实现：
+C++ 是一个很灵活的语言，这把双刃剑一方面使得 C++ 有很强大的表达能力，但也使得其编程风格相当混乱。在这篇文章中，我将聊一下 C++ 错误处理的方式优劣，以及我们团队是如何进行 C++ 错误处理的。
 </div>
 <div><a class="read-more button" href=/posts/cpp-error-handling/>Read more →</a></div>
 </div>
@@ -115,11 +108,7 @@ enum Errors { kErrFailToCallSomeFunction = 12345, }; int Handle(Req const &req, 
 <a href=/tags/c++/>#C++</a>&nbsp;
 </span>
 <div class=post-content>
-C++ 的模板是 C++ 的一个重要的语言特性，我们使用的 STL 就是 Standard Template Library 的缩写，但是在很多情况下，开发者都对其敬而远之，有些团队甚至是直接在工程中禁用模板。模板常被当作洪水猛兽的一个原因是许多人提起模板就要提 C++ 模板图灵完备，甚至还要再秀一段编译期排序，这种表现模板强大的方式不仅不会让人觉得模板有用，反而让人觉得模板难以理解而且不应该使用。在这篇文章里，我将聊一下最近实际工程中的一些模板的应用，希望可以让更多人了解到模板并不是一个可怕的存在，以及一些常见的使用方式。
-按版本号过滤配置 我所在的项目组前后台的复杂配置现在都用 protobuf 进行承载，然后生成 Excel 进行配置，生成 C++ 代码进行加载。例如这样的 message：
-message ConfigItem1 { int32 id = 1; string text = 2;}message Config { repeated ConfigItem1 items1 = 1;}这里的 Config 会被映射为一个 Excel，里面有一个表 items1，其中，这个表有两列，一列 id，一列 text。这个表的每一行都是一个具体的配置项。也就是我们可以这样获取配置：
-cout &lt;&lt; cfg.items1(0).id() &lt;&lt; ": " &lt;&lt; cfg.items1(0).text(); 现在有个需求是这样的，在加载某些配置的时候，前台需要根据版本号进行配置的过滤，部分配置项只会在某些版本中可见，例如这样：
-message VersionRange { int32 lo = 1; int32 hi = 2;}message ConfigItem2 { repeated VersionRange version_ranges = 1; int32 id = 2; int32 value = 3;}message Config { repeated ConfigItem1 items1 = 1; repeated ConfigItem2 items2 = 2;}加载的时候大概有这样的代码：
+C++ 的模板是 C++ 的一个重要的语言特性，在这篇文章里，我将聊一下最近实际工程中的一些模板的应用，希望可以让更多人了解到模板并不是一个可怕的存在，以及一些常见的使用方式。
 </div>
 <div><a class="read-more button" href=/posts/real-world-cpp-template/>Read more →</a></div>
 </div>

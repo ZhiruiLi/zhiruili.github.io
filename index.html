@@ -78,12 +78,7 @@ Zhirui Li's Blog
 <a href=/tags/android/>#Android</a>&nbsp;
 </span>
 <div class=post-content>
-有时候，我们需要在 Unity 里调用一些 Android 的功能，这些功能在 Unity 中可能并没有提供接口，需要在 Android 平台上实现。此时，我们需要有一个方法来让 Android 代码和 Unity 代码互交互。这里记录一下操作方法，并提供一个工具来简化两个工程之间的集成流程。
-示例工程 下面的记录中所使用的工程可以参考 UnityAndroidExample。其中，根目录是 Unity 工程，可以直接用 Unity 打开。根目录下的 AndroidSample 子目录是 Android 工程，可以用 Android Studio 打开。
-Unity 工程运行后如下图左所示，只有一个文本和一个按钮，点击按钮就会触发 Unity 到 Anrdoid 的调用，在主界面上产生一个 toast，同时，触发一次从 Anrdoid 到 Unity 的调用，主界面上的文本变为「Hello From Android」：
-具体操作方式 新建一个 Android 工程 这里随便用 Android Studio 建立空一个工程就行了。建立好工程后，参考官方文档在工程里添加一个自定义的模块：
-菜单栏点击 「File」-「New」-「New Module&mldr;」 弹出窗口中左侧选「Android Library」 右侧填入相关信息后创建模块 假设创建的模块名为「mod」，那么就会在工程根目录下新增一个名为 mod 的目录。此时可以删除工程根目录中默认创建的 app 目录，并将工程根目录中 settings.gradle 文件里的 include ':app' 这一行删除。
-添加 Unity jar 依赖 为了在 Android 中和 Unity 互交互，我们需要引入 Unity 提供的库，这个库以 jar 包的形式提供。以下目录中都有这个 classes.
+本文介绍了一个 Unity 和 Android 工程集成和互调用的方式，并通过工具简化这个流程。
 </div>
 <div><a class="read-more button" href=/posts/unity-with-android/>Read more →</a></div>
 </div>
@@ -99,13 +94,6 @@ Unity 工程运行后如下图左所示，只有一个文本和一个按钮，�
 </span>
 <div class=post-content>
 今天在群里看到了一个错误使用 C++ 模板特化产生的坑，有点意思，这里记录一下。
-问题是这样的：
-有一个名为 A 的库，包含如下的头文件 a.h 和代码文件 a.cc
-// a.h #pragma once #include &lt;iostream>template &lt;class T> struct A { void print() { std::cout &lt;&lt; "normal" &lt;&lt; std::endl; } }; // a.cc #include "a.h"template &lt;> void A&lt;int>::print() { std::cout &lt;&lt; "specialization" &lt;&lt; std::endl; } 有如下代码文件 main.cc 使用了这个库：
-#include "a.h"int main() { A&lt;int> a{}; a.print(); } 那么请问，我们编译这个库和这个代码文件之后，输出结果会是什么呢？
-答案是……不一定。这要看你是怎么链接的。这听起来很奇怪是吧，不过确实是这样：
-链接方式 1：
-g++ -c a.cc g++ -o main main.cc a.o 链接方式 2：
 </div>
 <div><a class="read-more button" href=/posts/cpp-template-specialization/>Read more →</a></div>
 </div>
@@ -120,16 +108,7 @@ g++ -c a.cc g++ -o main main.cc a.o 链接方式 2：
 <a href=/tags/computer-graphics/>#Computer Graphics</a>&nbsp;
 </span>
 <div class=post-content>
-在图形学入门（三）：基础着色中，我们讨论了 Phong 反射模型，当时我们提到过 Phong 反射模型不是一个物理模型，而是一个经验模型，这意味着这个模型对光照效果的模拟是不准确的。即便在简单情况下它能近似出一些不错的效果，但随着场景的复杂度提升（例如复杂的光照、复杂的材质等），要想继续用 Phong 反射模型达到很强的真实感就变得越来越困难。例如下面的这幅图 1 中，士兵和长官的铠甲上都投影出了电梯里非常复杂的灯光，在后面的长官的铠甲上还能看到前面两个士兵的投影：
-要想在计算机中模拟出这样真实的效果，我们首先要知道真实世界中的光线和物体是如何作用的，例如一束光线照射到物体表面，这束光线的量有多少，光线照射到物体表面后发生了什么，最后光线反射的方向和量又有多少，我们用什么物理单位来衡量这些量等等。这些准确定义的信息是计算出正确的结果的前提，只有先理解这些内容，我们才能更好地模拟光与物体相互作用的过程。
-接下来我们会讨论关于辐射度量学（Radiometry）2 的内容，这是一个研究各种电磁辐射强弱的学科。在本文后面我们将会看到，基于辐射度量学构建的渲染方程（Rendering Equation）3 可以准确描述光如何在场景中流动，并在理论上给出了一个完美的结果。而各种各样的渲染技术，就是这个理想结果的一个近似。事实上，只要涉足高质量的实时渲染，渲染方程几乎是绕不开的前置知识。深入理解渲染方程包含的物理意义可以使我们更好地学习高质量真实感渲染的进阶内容。
-在正式开始讨论前，我们首先明确要讨论的对象，也就是光的性质。我们知道，光其实有波粒二象性 4，但我们后面的讨论会基于几何光学 5，既不考虑其波动性，也不考虑其粒子性，仍然认为光沿直线传播。
-辐射度量学 辐射通量（Radiant Flux） 让我们从最简单的物理量开始讨论，辐射能（Radiant Energy）6 $Q$ 是指电磁辐射具有的能量，它的单位是焦耳 $\mathrm{J}$。能量这个概念我们很熟悉，但是它在我们的讨论中几乎用不上，我们更关心的是单位时间的能量，也就是功率（Power）。在辐射度量学中，我们一般称其为辐射通量（Radiant Flux）7 $\Phi$，单位是瓦特 $\mathrm{W}$。
-$$ \Phi \equiv \frac{\mathrm{d} Q}{\mathrm{d} t} $$
-我们更关心单位时间的能量而不是总能量是很符合常理的，例如一个电灯打开的时间越长肯定辐射出的光的总能量越多，但我们关心的主要还是这个灯有多亮，这也就是单位时间的光的能量。
-辐射通量是辐射度量学中最基本的物理量。一个表面的辐射通量可以用「通过」该表面的坡印廷向量（Poynting Vector）8 $S$ 表示（这也是为什么要叫「通量」）。所谓坡印廷向量其实就是有向的能量流，它的方向为电磁能的传递方向，大小为能量密度（单位面积的能量传输速率）。在我们的讨论里，我们认为它是光线就可以了。设所求表面的表面法线为 $\hat{n}$，表面面积为 $A$，$\hat{n}$ 和 $S$ 的夹角为 $\theta$，那么表面 $\sigma$ 的辐射通量可以表示为：
-$$ \Phi = \int_{\sigma} S \cdot \hat{n} \ \mathrm{d} A = \int_{\sigma} \left| S \right| \cos{} \theta \ \mathrm{d} A $$
-有没有觉得这个说法听起来很熟悉？没错，这正是我们在图形学入门（三）：基础着色中计算漫反射分量时提到的内容。当时我们通过下图 9 直观了解入射光和表面法线存在 $\theta$ 夹角时，漫反射能量的减少情况：
+渲染方程是现代渲染的核心理论概念，本文深入了剖析渲染方程包含的物理意义，有助于学习更多进阶的渲染技术。
 </div>
 <div><a class="read-more button" href=/posts/rendering-equation/>Read more →</a></div>
 </div>

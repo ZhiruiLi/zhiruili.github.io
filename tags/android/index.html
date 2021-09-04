@@ -77,12 +77,7 @@ Android ::
 <a href=/tags/android/>#Android</a>&nbsp;
 </span>
 <div class=post-content>
-有时候，我们需要在 Unity 里调用一些 Android 的功能，这些功能在 Unity 中可能并没有提供接口，需要在 Android 平台上实现。此时，我们需要有一个方法来让 Android 代码和 Unity 代码互交互。这里记录一下操作方法，并提供一个工具来简化两个工程之间的集成流程。
-示例工程 下面的记录中所使用的工程可以参考 UnityAndroidExample。其中，根目录是 Unity 工程，可以直接用 Unity 打开。根目录下的 AndroidSample 子目录是 Android 工程，可以用 Android Studio 打开。
-Unity 工程运行后如下图左所示，只有一个文本和一个按钮，点击按钮就会触发 Unity 到 Anrdoid 的调用，在主界面上产生一个 toast，同时，触发一次从 Anrdoid 到 Unity 的调用，主界面上的文本变为「Hello From Android」：
-具体操作方式 新建一个 Android 工程 这里随便用 Android Studio 建立空一个工程就行了。建立好工程后，参考官方文档在工程里添加一个自定义的模块：
-菜单栏点击 「File」-「New」-「New Module&mldr;」 弹出窗口中左侧选「Android Library」 右侧填入相关信息后创建模块 假设创建的模块名为「mod」，那么就会在工程根目录下新增一个名为 mod 的目录。此时可以删除工程根目录中默认创建的 app 目录，并将工程根目录中 settings.gradle 文件里的 include ':app' 这一行删除。
-添加 Unity jar 依赖 为了在 Android 中和 Unity 互交互，我们需要引入 Unity 提供的库，这个库以 jar 包的形式提供。以下目录中都有这个 classes.
+本文介绍了一个 Unity 和 Android 工程集成和互调用的方式，并通过工具简化这个流程。
 </div>
 <div>
 <a class="read-more button" href=/posts/unity-with-android/>Read more →</a>
@@ -100,22 +95,7 @@ Unity 工程运行后如下图左所示，只有一个文本和一个按钮，�
 <a href=/tags/animation/>#Animation</a>&nbsp;
 </span>
 <div class=post-content>
-动画分类 属性动画 Property Animation
-最为方便强大，推荐使用。
-视图动画 View Animation
-旧版本的动画方式。
-绘制动画 Drawable Animation
-即一帧帧绘制画面，万能但仅在必要时使用。
-属性动画和视图动画的区别 视图动画只能作用于 View 对象，属性动画没有这个限制。 视图动画只能操纵少数几个属性，例如缩放比例、旋转角度等，许多属性，例如背景颜色，就没法通过视图动画进行操作，属性动画更加通用。 视图动画仅仅修改了绘制位置，并没有实际修改属性值，例如用视图动画实现一个按钮移动的效果，按钮可以正确移动，但是用户点按按钮的位置却没有改变。 属性动画相对于视图动画而言要复杂一些，对于一些简单情形可以考虑用视图动画解决。 属性动画 属性动画几乎可以实现任何想要的动画效果，非常具有可扩展性并且非常稳健。属性动画可供设定的选项包括了：
-持续时间（默认 300 ms）
-时间插值（Time interpolation）
-即指定一个关于时间的函数，使得属性值的计算依赖于这个函数。
-重复播放、逆向播放
-动画集合
-可以将一组动画合并成一个集合，然后同时播放或是顺序播放或是延时播放。
-帧刷新间隔
-默认是 10 ms，可以改成别的值，但最终取决于系统状态。
-属性动画的工作方式 属性动画通过指定一个对象的属性的改变方式来实现动画，举例来说，如果想要实现一个对象在 x 轴上的横向移动动画，那就让这个对象的 x 轴坐标每隔一个时间间隔变化一点即可。例如下图表示了一个对象在 40 ms 内沿 x 轴移动了 40 px 的动画：
+Android 动画官方文档学习笔记。
 </div>
 <div>
 <a class="read-more button" href=/posts/android-animation/>Read more →</a>

@@ -6,10 +6,7 @@
 </title>
 <meta charset=utf-8>
 <meta name=viewport content="width=device-width,initial-scale=1">
-<meta name=description content="C++ 是一个很灵活的语言，这把双刃剑一方面使得 C++ 有很强大的表达能力，但也使得其编程风格相当混乱，就连错误处理到底是使用错误码还是异常都常常争论不休。例如在 C 中我们默认用错误码处理错误，而在 Python、Java 中，则默认用异常来处理错误。而在 C++ 中，使用这两种形式的错误处理形式都有，而目前来看，在我所在的团队中，除非是外部库，否则基本都是使用错误码。在这篇文章中，我将聊一下 C++ 错误处理的方式优劣，以及我们团队是如何进行 C++ 错误处理的。
-错误码的问题 在我们的工程实践中，错误码首先带来的问题是代码中充斥着大量的 -1、-2、-10000 这样的错误码，这样错误码在日志中出现总是让人头痛，在代码中一搜就出来数不清的匹配项，根本无法定位问题。当然，你可能会说，这个主要是开发者水平参差不齐和开发规范不够严明的问题，我们可以通过全局统一错误码来解决问题。这当然是一个合理的反对意见，但问题是，即便确定要全局统一错误码，但这个全局统一错误码应该做到什么层级呢？
-例如，在我们的后台采用了微服务架构，那么一个很显然的处理方案就是全局统一错误码是在服务级别的，A 服务调用 B 服务的时候，通过错误码来获知调用过程中出了什么错误。但是，这事实上并没有解决问题，例如我们现在发现 B 服务给 A 服务返回了 12345 这个错误码，然后我们尝试查看 B 服务的代码，看看为什么会导致这样的错误：
-enum Errors { kErrFailToCallSomeFunction = 12345, }; int Handle(Req const &amp;amp;req, Rsp *rsp) { int ret = SomeFunction(); if (ret) { ERRORLOG(&amp;#34;call SomeFunction fail: %d\n&amp;#34;, ret); return kErrFailToCallSomeFunction; } // ... } 因为错误码统一，我们很快就发现了是调用 SomeFunction 失败导致了这个错误，然后我们知道了应该找 call SomeFunction fail:  这条日志，可以我们一查阅这条日志就发现，call SomeFunction fail: -1，结果我们又回到了之前的问题，尤其是我们可能在 SomeFunction 中看到这样的实现：">
+<meta name=description content="C++ 是一个很灵活的语言，这把双刃剑一方面使得 C++ 有很强大的表达能力，但也使得其编程风格相当混乱，就连错误处理到底是使用错误码还是异常都常常争论不">
 <meta name=keywords content="编程,计算机图形学,游戏开发">
 <meta name=robots content="noodp">
 <link rel=canonical href=/posts/cpp-error-handling/>
@@ -25,15 +22,9 @@ enum Errors { kErrFailToCallSomeFunction = 12345, }; int Handle(Req const &amp;a
 <link href=/assets/fonts/Inter-BoldItalic.woff2 rel=preload type=font/woff2 as=font crossorigin>
 <meta name=twitter:card content="summary">
 <meta name=twitter:title content="另一种 C++ 程序错误处理方式">
-<meta name=twitter:description content="C++ 是一个很灵活的语言，这把双刃剑一方面使得 C++ 有很强大的表达能力，但也使得其编程风格相当混乱，就连错误处理到底是使用错误码还是异常都常常争论不休。例如在 C 中我们默认用错误码处理错误，而在 Python、Java 中，则默认用异常来处理错误。而在 C++ 中，使用这两种形式的错误处理形式都有，而目前来看，在我所在的团队中，除非是外部库，否则基本都是使用错误码。在这篇文章中，我将聊一下 C++ 错误处理的方式优劣，以及我们团队是如何进行 C++ 错误处理的。
-错误码的问题 在我们的工程实践中，错误码首先带来的问题是代码中充斥着大量的 -1、-2、-10000 这样的错误码，这样错误码在日志中出现总是让人头痛，在代码中一搜就出来数不清的匹配项，根本无法定位问题。当然，你可能会说，这个主要是开发者水平参差不齐和开发规范不够严明的问题，我们可以通过全局统一错误码来解决问题。这当然是一个合理的反对意见，但问题是，即便确定要全局统一错误码，但这个全局统一错误码应该做到什么层级呢？
-例如，在我们的后台采用了微服务架构，那么一个很显然的处理方案就是全局统一错误码是在服务级别的，A 服务调用 B 服务的时候，通过错误码来获知调用过程中出了什么错误。但是，这事实上并没有解决问题，例如我们现在发现 B 服务给 A 服务返回了 12345 这个错误码，然后我们尝试查看 B 服务的代码，看看为什么会导致这样的错误：
-enum Errors { kErrFailToCallSomeFunction = 12345, }; int Handle(Req const &req, Rsp *rsp) { int ret = SomeFunction(); if (ret) { ERRORLOG(&#34;call SomeFunction fail: %d\n&#34;, ret); return kErrFailToCallSomeFunction; } // ... } 因为错误码统一，我们很快就发现了是调用 SomeFunction 失败导致了这个错误，然后我们知道了应该找 call SomeFunction fail:  这条日志，可以我们一查阅这条日志就发现，call SomeFunction fail: -1，结果我们又回到了之前的问题，尤其是我们可能在 SomeFunction 中看到这样的实现：">
+<meta name=twitter:description content="C++ 是一个很灵活的语言，这把双刃剑一方面使得 C++ 有很强大的表达能力，但也使得其编程风格相当混乱。在这篇文章中，我将聊一下 C++ 错误处理的方式优劣，以及我们团队是如何进行 C++ 错误处理的。">
 <meta property="og:title" content="另一种 C++ 程序错误处理方式">
-<meta property="og:description" content="C++ 是一个很灵活的语言，这把双刃剑一方面使得 C++ 有很强大的表达能力，但也使得其编程风格相当混乱，就连错误处理到底是使用错误码还是异常都常常争论不休。例如在 C 中我们默认用错误码处理错误，而在 Python、Java 中，则默认用异常来处理错误。而在 C++ 中，使用这两种形式的错误处理形式都有，而目前来看，在我所在的团队中，除非是外部库，否则基本都是使用错误码。在这篇文章中，我将聊一下 C++ 错误处理的方式优劣，以及我们团队是如何进行 C++ 错误处理的。
-错误码的问题 在我们的工程实践中，错误码首先带来的问题是代码中充斥着大量的 -1、-2、-10000 这样的错误码，这样错误码在日志中出现总是让人头痛，在代码中一搜就出来数不清的匹配项，根本无法定位问题。当然，你可能会说，这个主要是开发者水平参差不齐和开发规范不够严明的问题，我们可以通过全局统一错误码来解决问题。这当然是一个合理的反对意见，但问题是，即便确定要全局统一错误码，但这个全局统一错误码应该做到什么层级呢？
-例如，在我们的后台采用了微服务架构，那么一个很显然的处理方案就是全局统一错误码是在服务级别的，A 服务调用 B 服务的时候，通过错误码来获知调用过程中出了什么错误。但是，这事实上并没有解决问题，例如我们现在发现 B 服务给 A 服务返回了 12345 这个错误码，然后我们尝试查看 B 服务的代码，看看为什么会导致这样的错误：
-enum Errors { kErrFailToCallSomeFunction = 12345, }; int Handle(Req const &req, Rsp *rsp) { int ret = SomeFunction(); if (ret) { ERRORLOG(&#34;call SomeFunction fail: %d\n&#34;, ret); return kErrFailToCallSomeFunction; } // ... } 因为错误码统一，我们很快就发现了是调用 SomeFunction 失败导致了这个错误，然后我们知道了应该找 call SomeFunction fail:  这条日志，可以我们一查阅这条日志就发现，call SomeFunction fail: -1，结果我们又回到了之前的问题，尤其是我们可能在 SomeFunction 中看到这样的实现：">
+<meta property="og:description" content="C++ 是一个很灵活的语言，这把双刃剑一方面使得 C++ 有很强大的表达能力，但也使得其编程风格相当混乱。在这篇文章中，我将聊一下 C++ 错误处理的方式优劣，以及我们团队是如何进行 C++ 错误处理的。">
 <meta property="og:type" content="article">
 <meta property="og:url" content="/posts/cpp-error-handling/"><meta property="article:section" content="posts">
 <meta property="article:published_time" content="2020-03-22T00:00:00+00:00">

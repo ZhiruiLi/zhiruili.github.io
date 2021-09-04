@@ -6,9 +6,7 @@
 </title>
 <meta charset=utf-8>
 <meta name=viewport content="width=device-width,initial-scale=1">
-<meta name=description content="Future 的概念 在编程的时候，常常会遇到需要并行处理一些代码，最原始的做法就是创建不同的线程进行处理，但是线程之间的同步处理非常麻烦而且容易出错，如果要同时得到几个线程的结果并且通过这些结果进行进一步的计算，则需要共享变量或者进行线程间通信，无论如何都非常难以处理。另外，直接使用线程也使得代码灵活性不高，比如在双核机器上可能只希望使用两个线程执行代码，到了四核机器上就希望最多能有四个线程了。Future 能够提供一个高层的抽象，将计算任务的并发化和计算最终的执行方式分离，使得这类处理更为方便。Future 作为一个代理对象代表一个可能完成也可能未完成的值 1，通过对 future 进行操作，能够获取内部的计算是否已经完成，是否出现异常，计算结果是什么等信息。
-Java 中的 Future Java 很早就提供了 Future 接口 2，使用起来大概是这样的：
-interface ArchiveSearcher { String search(String target); } class App { ExecutorService executor = ... ; // init executor service  ArchiveSearcher searcher = ... ; // init searcher  void showSearch(final String target) throws InterruptedException { Future&amp;lt;String&amp;gt; future = executor.submit(new Callable&amp;lt;String&amp;gt;() { public String call() { return searcher.search(target); } }); displayOtherThings(); // do other things while searching  try { displayText(future.">
+<meta name=description content="Future 的概念 在编程的时候，常常会遇到需要并行处理一些代码，最原始的做法就是创建不同的线程进行处理，但是线程之间的同步处理非常麻烦而且容易出错，如">
 <meta name=keywords content="编程,计算机图形学,游戏开发">
 <meta name=robots content="noodp">
 <link rel=canonical href=/posts/handle-concurrency-using-future/>
@@ -24,13 +22,9 @@ interface ArchiveSearcher { String search(String target); } class App { Executor
 <link href=/assets/fonts/Inter-BoldItalic.woff2 rel=preload type=font/woff2 as=font crossorigin>
 <meta name=twitter:card content="summary">
 <meta name=twitter:title content="使用 Future 进行并发编程">
-<meta name=twitter:description content="Future 的概念 在编程的时候，常常会遇到需要并行处理一些代码，最原始的做法就是创建不同的线程进行处理，但是线程之间的同步处理非常麻烦而且容易出错，如果要同时得到几个线程的结果并且通过这些结果进行进一步的计算，则需要共享变量或者进行线程间通信，无论如何都非常难以处理。另外，直接使用线程也使得代码灵活性不高，比如在双核机器上可能只希望使用两个线程执行代码，到了四核机器上就希望最多能有四个线程了。Future 能够提供一个高层的抽象，将计算任务的并发化和计算最终的执行方式分离，使得这类处理更为方便。Future 作为一个代理对象代表一个可能完成也可能未完成的值 1，通过对 future 进行操作，能够获取内部的计算是否已经完成，是否出现异常，计算结果是什么等信息。
-Java 中的 Future Java 很早就提供了 Future 接口 2，使用起来大概是这样的：
-interface ArchiveSearcher { String search(String target); } class App { ExecutorService executor = ... ; // init executor service  ArchiveSearcher searcher = ... ; // init searcher  void showSearch(final String target) throws InterruptedException { Future<String> future = executor.submit(new Callable<String>() { public String call() { return searcher.search(target); } }); displayOtherThings(); // do other things while searching  try { displayText(future.">
+<meta name=twitter:description content="Future 能够将计算任务的并发化和计算最终的执行方式分离，通过一套设计良好的 API 使得对数据的操作变得简单。">
 <meta property="og:title" content="使用 Future 进行并发编程">
-<meta property="og:description" content="Future 的概念 在编程的时候，常常会遇到需要并行处理一些代码，最原始的做法就是创建不同的线程进行处理，但是线程之间的同步处理非常麻烦而且容易出错，如果要同时得到几个线程的结果并且通过这些结果进行进一步的计算，则需要共享变量或者进行线程间通信，无论如何都非常难以处理。另外，直接使用线程也使得代码灵活性不高，比如在双核机器上可能只希望使用两个线程执行代码，到了四核机器上就希望最多能有四个线程了。Future 能够提供一个高层的抽象，将计算任务的并发化和计算最终的执行方式分离，使得这类处理更为方便。Future 作为一个代理对象代表一个可能完成也可能未完成的值 1，通过对 future 进行操作，能够获取内部的计算是否已经完成，是否出现异常，计算结果是什么等信息。
-Java 中的 Future Java 很早就提供了 Future 接口 2，使用起来大概是这样的：
-interface ArchiveSearcher { String search(String target); } class App { ExecutorService executor = ... ; // init executor service  ArchiveSearcher searcher = ... ; // init searcher  void showSearch(final String target) throws InterruptedException { Future<String> future = executor.submit(new Callable<String>() { public String call() { return searcher.search(target); } }); displayOtherThings(); // do other things while searching  try { displayText(future.">
+<meta property="og:description" content="Future 能够将计算任务的并发化和计算最终的执行方式分离，通过一套设计良好的 API 使得对数据的操作变得简单。">
 <meta property="og:type" content="article">
 <meta property="og:url" content="/posts/handle-concurrency-using-future/"><meta property="article:section" content="posts">
 <meta property="article:published_time" content="2016-08-27T00:00:00+00:00">

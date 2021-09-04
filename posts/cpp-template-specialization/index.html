@@ -6,14 +6,7 @@
 </title>
 <meta charset=utf-8>
 <meta name=viewport content="width=device-width,initial-scale=1">
-<meta name=description content="今天在群里看到了一个错误使用 C++ 模板特化产生的坑，有点意思，这里记录一下。
-问题是这样的：
-有一个名为 A 的库，包含如下的头文件 a.h 和代码文件 a.cc
-// a.h #pragma once #include &amp;lt;iostream&amp;gt;template &amp;lt;class T&amp;gt; struct A { void print() { std::cout &amp;lt;&amp;lt; &amp;#34;normal&amp;#34; &amp;lt;&amp;lt; std::endl; } }; // a.cc #include &amp;#34;a.h&amp;#34;template &amp;lt;&amp;gt; void A&amp;lt;int&amp;gt;::print() { std::cout &amp;lt;&amp;lt; &amp;#34;specialization&amp;#34; &amp;lt;&amp;lt; std::endl; } 有如下代码文件 main.cc 使用了这个库：
-#include &amp;#34;a.h&amp;#34;int main() { A&amp;lt;int&amp;gt; a{}; a.print(); } 那么请问，我们编译这个库和这个代码文件之后，输出结果会是什么呢？
-答案是……不一定。这要看你是怎么链接的。这听起来很奇怪是吧，不过确实是这样：
-链接方式 1：
-g++ -c a.cc g++ -o main main.cc a.o 链接方式 2：">
+<meta name=description content="今天在群里看到了一个错误使用 C++ 模板特化产生的坑，有点意思，这里记录一下。 问题是这样的： 有一个名为 A 的库，包含如下的头文件 a.h 和代码文件 a.cc // a.h #pragma">
 <meta name=keywords content="编程,计算机图形学,游戏开发">
 <meta name=robots content="noodp">
 <link rel=canonical href=/posts/cpp-template-specialization/>
@@ -29,23 +22,9 @@ g++ -c a.cc g++ -o main main.cc a.o 链接方式 2：">
 <link href=/assets/fonts/Inter-BoldItalic.woff2 rel=preload type=font/woff2 as=font crossorigin>
 <meta name=twitter:card content="summary">
 <meta name=twitter:title content="错误使用 C++ 模板特化产生的坑">
-<meta name=twitter:description content="今天在群里看到了一个错误使用 C++ 模板特化产生的坑，有点意思，这里记录一下。
-问题是这样的：
-有一个名为 A 的库，包含如下的头文件 a.h 和代码文件 a.cc
-// a.h #pragma once #include <iostream>template <class T> struct A { void print() { std::cout << &#34;normal&#34; << std::endl; } }; // a.cc #include &#34;a.h&#34;template <> void A<int>::print() { std::cout << &#34;specialization&#34; << std::endl; } 有如下代码文件 main.cc 使用了这个库：
-#include &#34;a.h&#34;int main() { A<int> a{}; a.print(); } 那么请问，我们编译这个库和这个代码文件之后，输出结果会是什么呢？
-答案是……不一定。这要看你是怎么链接的。这听起来很奇怪是吧，不过确实是这样：
-链接方式 1：
-g++ -c a.cc g++ -o main main.cc a.o 链接方式 2：">
+<meta name=twitter:description content="今天在群里看到了一个错误使用 C++ 模板特化产生的坑，有点意思，这里记录一下。">
 <meta property="og:title" content="错误使用 C++ 模板特化产生的坑">
-<meta property="og:description" content="今天在群里看到了一个错误使用 C++ 模板特化产生的坑，有点意思，这里记录一下。
-问题是这样的：
-有一个名为 A 的库，包含如下的头文件 a.h 和代码文件 a.cc
-// a.h #pragma once #include <iostream>template <class T> struct A { void print() { std::cout << &#34;normal&#34; << std::endl; } }; // a.cc #include &#34;a.h&#34;template <> void A<int>::print() { std::cout << &#34;specialization&#34; << std::endl; } 有如下代码文件 main.cc 使用了这个库：
-#include &#34;a.h&#34;int main() { A<int> a{}; a.print(); } 那么请问，我们编译这个库和这个代码文件之后，输出结果会是什么呢？
-答案是……不一定。这要看你是怎么链接的。这听起来很奇怪是吧，不过确实是这样：
-链接方式 1：
-g++ -c a.cc g++ -o main main.cc a.o 链接方式 2：">
+<meta property="og:description" content="今天在群里看到了一个错误使用 C++ 模板特化产生的坑，有点意思，这里记录一下。">
 <meta property="og:type" content="article">
 <meta property="og:url" content="/posts/cpp-template-specialization/"><meta property="article:section" content="posts">
 <meta property="article:published_time" content="2021-08-27T00:00:00+00:00">

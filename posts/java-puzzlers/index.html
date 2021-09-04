@@ -6,9 +6,7 @@ Java Puzzlers ::
 </title>
 <meta charset=utf-8>
 <meta name=viewport content="width=device-width,initial-scale=1">
-<meta name=description content="The Joy of Sets public class ShortSet { public static void main(String args[]) { Set&amp;lt;Short&amp;gt; s = new HashSet&amp;lt;Short&amp;gt;(); for (short i = 0; i &amp;lt; 100; i++) { s.add(i); s.remove(i - 1); } } System.out.println(s.size()); } 可能会认为这段代码输出的结果是 1，但实际上这段代码输出的结果是 100。
-原因在于当调用 i - 1 时，这个计算结果不是 short 类型，而是 int 类型，当调用 s.remove(i - 1) 时，i - 1 的结果会被自动装箱，成为一个 Integer 类型的对象，而不是 Short 类型的对象，这导致 Set&amp;lt;Short&amp;gt; s 中根本没有要删除的对象，所以会出现 100 这个结果。
-但为什么当用户想从一个存放 Short 类型对象的 Set 中移除一个 Integer 类型的对象而编译器并没有报错呢？原因是 Set&amp;lt;T&amp;gt; 提供的接口声明如下：">
+<meta name=description content="The Joy of Sets public class ShortSet { public static void main(String args[]) { Set&amp;lt;Short&amp;gt; s = new HashSet&amp;lt;Short&amp;gt;(); for (short i = 0; i &amp;lt; 100; i++) { s.add(i); s.remove(i - 1); } } System.out.println(s.size()); } 可能会认为这段代码输出的结果是 1，但实际上这段代码输出的结果是 10">
 <meta name=keywords content="编程,计算机图形学,游戏开发">
 <meta name=robots content="noodp">
 <link rel=canonical href=/posts/java-puzzlers/>
@@ -24,13 +22,9 @@ Java Puzzlers ::
 <link href=/assets/fonts/Inter-BoldItalic.woff2 rel=preload type=font/woff2 as=font crossorigin>
 <meta name=twitter:card content="summary">
 <meta name=twitter:title content="Java Puzzlers">
-<meta name=twitter:description content="The Joy of Sets public class ShortSet { public static void main(String args[]) { Set<Short> s = new HashSet<Short>(); for (short i = 0; i < 100; i++) { s.add(i); s.remove(i - 1); } } System.out.println(s.size()); } 可能会认为这段代码输出的结果是 1，但实际上这段代码输出的结果是 100。
-原因在于当调用 i - 1 时，这个计算结果不是 short 类型，而是 int 类型，当调用 s.remove(i - 1) 时，i - 1 的结果会被自动装箱，成为一个 Integer 类型的对象，而不是 Short 类型的对象，这导致 Set<Short> s 中根本没有要删除的对象，所以会出现 100 这个结果。
-但为什么当用户想从一个存放 Short 类型对象的 Set 中移除一个 Integer 类型的对象而编译器并没有报错呢？原因是 Set<T> 提供的接口声明如下：">
+<meta name=twitter:description content="看 Google 的 Java Puzzlers 技术视频的笔记">
 <meta property="og:title" content="Java Puzzlers">
-<meta property="og:description" content="The Joy of Sets public class ShortSet { public static void main(String args[]) { Set<Short> s = new HashSet<Short>(); for (short i = 0; i < 100; i++) { s.add(i); s.remove(i - 1); } } System.out.println(s.size()); } 可能会认为这段代码输出的结果是 1，但实际上这段代码输出的结果是 100。
-原因在于当调用 i - 1 时，这个计算结果不是 short 类型，而是 int 类型，当调用 s.remove(i - 1) 时，i - 1 的结果会被自动装箱，成为一个 Integer 类型的对象，而不是 Short 类型的对象，这导致 Set<Short> s 中根本没有要删除的对象，所以会出现 100 这个结果。
-但为什么当用户想从一个存放 Short 类型对象的 Set 中移除一个 Integer 类型的对象而编译器并没有报错呢？原因是 Set<T> 提供的接口声明如下：">
+<meta property="og:description" content="看 Google 的 Java Puzzlers 技术视频的笔记">
 <meta property="og:type" content="article">
 <meta property="og:url" content="/posts/java-puzzlers/"><meta property="article:section" content="posts">
 <meta property="article:published_time" content="2016-08-07T00:00:00+00:00">
