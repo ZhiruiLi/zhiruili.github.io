@@ -77,7 +77,7 @@ Rust 提升安全性的方式 ::
 <a href=/tags/c++/>#C++</a>&nbsp;
 </span>
 <div class=post-content>
-<h1 id=rust-的起源与目的>Rust 的起源与目的</h1>
+<h2 id=rust-的起源与目的>Rust 的起源与目的</h2>
 <p>Rust <sup id=fnref:1><a href=#fn:1 class=footnote-ref role=doc-noteref>1</a></sup> 是 Mozilla 公司开发的编程语言，它在 2010 才开始发布第一个版本，可以说是一个非常年轻的语言了。在提出一个新的编程语言的时候，设计者必须要回答的一个问题是「为什么要设计这样一个编程语言？」。对于 Rust 来说，他的目的就是要在保证安全的基础上不失对底层的控制力。</p>
 <p>注意这里所指的「安全」不是说防止黑客攻击服务器，而是内存安全。拿 Rust 的主要竞争对手 C++ 为例，下面这段代码是安全的吗？</p>
 <div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style=color:#66d9ef>int</span> <span style=color:#a6e22e>foo</span>(Bar<span style=color:#f92672>*</span> pBar) {
@@ -120,7 +120,7 @@ Rust 提升安全性的方式 ::
     bar.foo.i;
 }
 </code></pre></div><p>Rust 也保证了这样的代码在内存中是紧密排布的，不会有额外的指针开销，同时也保证在 <code>func</code> 执行结束的时候，<code>bar</code> 对象所占用的内存被释放，不需要 GC 的存在。了解完 Rust 的设计目标之后，下面就开始说明 Rust 是如何实现这个目标的。</p>
-<h1 id=rust-的所有权管理>Rust 的所有权管理</h1>
+<h2 id=rust-的所有权管理>Rust 的所有权管理</h2>
 <p>Rust 实现内存安全的第一件事就是严格的所有权管理 <sup id=fnref:3><a href=#fn:3 class=footnote-ref role=doc-noteref>3</a></sup>。对于 Java 程序员来说，这个概念可能比较陌生，毕竟内存交给了 JVM 来进行管理，但对于 C++ 程序员来说，所有权这个概念是必然要接触的，尤其是配合上智能指针之后，所有权就更加清晰了 <sup id=fnref:4><a href=#fn:4 class=footnote-ref role=doc-noteref>4</a></sup>。</p>
 <p>例如在 C++ 98 里我们常常会需要写类似这样的代码：</p>
 <div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style=color:#66d9ef>void</span> <span style=color:#a6e22e>f1</span>(Foo<span style=color:#f92672>*</span> pFoo) { ... }
@@ -153,7 +153,7 @@ Rust 提升安全性的方式 ::
     p.i;  <span style=color:#75715e>// error: use of moved value: `p.i`
 </span><span style=color:#75715e></span>}
 </code></pre></div><p>Rust 默认采用了移动语义，如果需要拷贝需要另外声明，而 C++ 出于历史的兼容性考虑，其默认语义是拷贝的，如果要禁止拷贝或者实现移动语义则是需要另外声明。并且，Rust 的编译器在发现一个变量被移动后又被继续使用时，会直接拒绝编译，这个安全保证直接嵌进了语言中，防止出现 C++ 中使用已移动资源的未定义行为。</p>
-<h1 id=rust-的借用检查>Rust 的借用检查</h1>
+<h2 id=rust-的借用检查>Rust 的借用检查</h2>
 <p>如果仅仅是实现了对重新使用已移动对象的检查，似乎还不是太有说服力，尤其是对于 Java 程序员来说，他们根本就不需要考虑这个问题。但 Rust 在保证内存安全的方面不仅做了这件事，例如下面说的这个问题是连 Java 这样依赖虚拟机管理内存的语言也没法解决的问题。考虑如下 C++ 代码：</p>
 <div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style=color:#66d9ef>auto</span> vec <span style=color:#f92672>=</span> vector<span style=color:#f92672>&lt;</span><span style=color:#66d9ef>int</span><span style=color:#f92672>&gt;</span>{ <span style=color:#ae81ff>1</span>, <span style=color:#ae81ff>2</span>, <span style=color:#ae81ff>3</span> };
 <span style=color:#66d9ef>for</span> (<span style=color:#66d9ef>auto</span> i : vec) {
@@ -229,7 +229,7 @@ Rust 提升安全性的方式 ::
 <div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style=color:#66d9ef>auto</span> vec <span style=color:#f92672>=</span> vector<span style=color:#f92672>&lt;</span><span style=color:#66d9ef>int</span><span style=color:#f92672>&gt;</span>{ <span style=color:#ae81ff>1</span>, <span style=color:#ae81ff>2</span>, <span style=color:#ae81ff>3</span> };
 pushMany(vec[<span style=color:#ae81ff>0</span>], <span style=color:#ae81ff>100</span>, vec);
 </code></pre></div><p>这里又是一个「dangling pointer」错误，相当隐蔽，对于不知晓 <code>pushMany</code> 实现细节的用户而言，上面这段调用是很正常的，我希望向 <code>vec</code> 中添加 100 个 <code>vec</code> 的第一个元素，但是由于 <code>pushMany</code> 的实现使用了引用，且用户在传参数的时候对同一个 <code>vector</code> 同时进行了可变的引用（ <code>vec</code> ）和不可变的引用（ <code>vec[0]</code> ）这导致了潜在的错误，而且这个错误还不一定会发生，例如写 <code>pushMany(vec[0], 1, vec)</code> 的时候就很可能不会出错，这导致了错误排查的困难。如果在 Rust 中，这个错误则直接可以被 Borrow Checker 发现，它将禁止用户同时对 <code>vec</code> 进行可变和不可变的借用。</p>
-<h1 id=rust-的生命周期管理>Rust 的生命周期管理</h1>
+<h2 id=rust-的生命周期管理>Rust 的生命周期管理</h2>
 <p>如果 Borrow Checker 只能做到之前的说到的保障那还不足够，我们还是可能出现「dangling pointer」这类错误，考虑如下 C++ 代码：</p>
 <div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style=color:#66d9ef>auto</span> <span style=color:#a6e22e>get0</span>() <span style=color:#f92672>-&gt;</span> <span style=color:#66d9ef>int</span><span style=color:#f92672>&amp;</span> {
     <span style=color:#66d9ef>auto</span> i <span style=color:#f92672>=</span> <span style=color:#ae81ff>0</span>;
@@ -277,9 +277,10 @@ pushMany(vec[<span style=color:#ae81ff>0</span>], <span style=color:#ae81ff>100<
 <div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-rust data-lang=rust><span style=color:#66d9ef>fn</span> <span style=color:#a6e22e>print_async</span>(i: <span style=color:#66d9ef>i32</span>) {
     thread::spawn(<span style=color:#66d9ef>move</span> <span style=color:#f92672>||</span> println<span style=color:#f92672>!</span>(<span style=color:#e6db74>&#34;the number is: {}&#34;</span>, i));
 }
-</code></pre></div><h1 id=对-rust-的质疑>对 Rust 的质疑</h1>
+</code></pre></div><h2 id=对-rust-的质疑>对 Rust 的质疑</h2>
 <p>有人会指出，这些错误都是很显然的，只要你认真看了《Effective C++》、《More Effective C++》、《Effective Modern C++》等等等等，并且严格按照标准的做法去做，注意不去犯这些错误就可以了，如果一个人会在 C++ 中犯这些错误，他即便换到 Rust 中也不会有什么好转。但事实上，即便是专业的程序员，在面对一个大型系统的时候，也难免出现这样那样的错误，一个语言提供的保障可以在很大程度上防止错误的发生。在 Rust 中，一个被判定为不安全的操作需要一个 <code>unsafe</code> 块来包裹才能编译通过，这个明确的界限使得程序的 debug 更加方便。</p>
 <p>另外的一个质疑点是 Rust 的做法会使得一些本来合理的代码出现编译错误，使得用户需要用很扭曲的方式实现 C++ 这类语言中很轻易实现的功能。其实这一点，在 C++ 发明人 Bjarne Stroustrup 的一个演讲里也提到，他说他听到过许多「Language Myths」，其中一个就是「We want a language for writing reliable code」，他认为大多数人并不想要这样的语言，因为这样的语言需要学习更多的概念，而且要同时兼顾性能与安全的时候，开发会变得困难 <sup id=fnref:10><a href=#fn:10 class=footnote-ref role=doc-noteref>10</a></sup>。这个质疑其实很像动态语言的拥趸对静态语言的质疑，他们的其中一个质疑点就是静态语言的编译器会拒绝一些合理的代码，编译器只能提供非常弱的保障，更多的保障还是需要测试来实现，与其依赖编译器，不如完全依赖测试。但无论如何，静态强类型的语言确实能在编译期间发现许多问题，防止了程序员犯低级错误，为此付出的一点代价是值得的。举例来说，JavaScript 的设计者在设计这个语言时就认为人们只会用它来完成一些简单的工作，不应该让他们去学习类型的概念，所以 JavaScript 被设计为动态弱类型语言，当然现在 JavaScript 因为其在浏览器的独占性而逐渐侵蚀了许多领域，使得 JavaScript 承担了许多本来不应该由它来承担的非常复杂的逻辑，这使得各种语言支持了「compile to JS」<sup id=fnref:11><a href=#fn:11 class=footnote-ref role=doc-noteref>11</a></sup>，也有许多改良的语言出现，例如 TypeScript、PureScript 等等，他们其实主要解决的问题就是 JavaScript 的类型系统实在是太容易让人犯错了，在一个复杂的工程里，我们需要编译器来协助减少一些错误。所以说，在工程规模足够小的时候，例如写一个日常辅助的小脚本，许多概念可以不必要存在，灵活性可能要放在首位，让人能快速完成工作，但是，一旦工程规模增大，一个足够严格的语义和足够强大的编译器能够给开发者提供非常多的保障，防止许多错误的发生，而 Rust 的杀手级优势也正是在于此。</p>
+<h2 id=参考资料>参考资料</h2>
 <section class=footnotes role=doc-endnotes>
 <hr>
 <ol>

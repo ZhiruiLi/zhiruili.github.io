@@ -77,7 +77,7 @@
 </span>
 <div class=post-content>
 <p>C++ 的模板是 C++ 的一个重要的语言特性，我们使用的 STL 就是 Standard Template Library 的缩写，但是在很多情况下，开发者都对其敬而远之，有些团队甚至是直接在工程中禁用模板。模板常被当作洪水猛兽的一个原因是许多人提起模板就要提 C++ 模板图灵完备，甚至还要再秀一段编译期排序，这种表现模板强大的方式不仅不会让人觉得模板有用，反而让人觉得模板难以理解而且不应该使用。在这篇文章里，我将聊一下最近实际工程中的一些模板的应用，希望可以让更多人了解到模板并不是一个可怕的存在，以及一些常见的使用方式。</p>
-<h1 id=按版本号过滤配置>按版本号过滤配置</h1>
+<h2 id=按版本号过滤配置>按版本号过滤配置</h2>
 <p>我所在的项目组前后台的复杂配置现在都用 protobuf 进行承载，然后生成 Excel 进行配置，生成 C++ 代码进行加载。例如这样的 message：</p>
 <div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-protobuf data-lang=protobuf><span style=color:#66d9ef>message</span> <span style=color:#a6e22e>ConfigItem1</span> {<span style=color:#960050;background-color:#1e0010>
 </span><span style=color:#960050;background-color:#1e0010></span>  <span style=color:#66d9ef>int32</span> id <span style=color:#f92672>=</span> <span style=color:#ae81ff>1</span>;<span style=color:#960050;background-color:#1e0010>
@@ -168,7 +168,7 @@
 <span style=color:#66d9ef>decltype</span>(std<span style=color:#f92672>::</span>begin(std<span style=color:#f92672>::</span>declval<span style=color:#f92672>&lt;</span>CfgItem<span style=color:#f92672>&gt;</span>().version_ranges())<span style=color:#f92672>-&gt;</span>hi())
 </code></pre></div><p>虽然说这两个类型声明被忽略了，但是它们还是会参与替换，<code>decltype</code> 可以根据括号里的表达式计算出其类型，而 <code>std::declval&lt;T>()</code> 则相反，给定一个类型，它可以获得该类型的值，虽然这个值并不是有效的，但是在这个类型声明里我们可以用它来填写表达式。如果一个类型没有带 <code>version_ranges</code> 字段，则 <code>std::declval&lt;CfgItem>().version_ranges()</code> 会失败，如果这个 <code>version_range()</code> 返回的对象不支持 <code>std::begin</code>，则 <code>std::begin(...)</code> 会失败，若这个 <code>std::begin</code> 计算出来的迭代器不支持 <code>lo</code> 函数，则 <code>std::begin(...)->lo()</code> 会失败，这里的结合就确保了 <code>CfgItem</code> 类型必须有 <code>version_range</code>，且每一个 <code>version_range</code> 都是可迭代的，且每一个 range 都有 <code>lo</code> 成员。下面的 <code>hi</code> 也是类似的。当然，我们还可以通过 <code>std::is_same</code> 之类的 type trait 进一步确保 <code>lo</code> 和 <code>hi</code> 返回的类型，这个就不在此演示了，对于我们的需求而言，这样就足够了。</p>
 <p>那说回来，如果我们填入的是 <code>ConfigItem2</code> 会怎样？在这个时候，两个类型替换都会成功，但由于原始版本中，第二个类型参数是默认值 <code>void</code>，而特化版本中，则填入了自定义的一个类型 <code>lib::void_t...</code>，虽然这个类型最后计算出来的类型还是 <code>void</code>，但它依然是比原始版本更「特殊」的版本，因此编译器会选择这个版本，这就达到了我们的目的。</p>
-<h1 id=data-blob-操作辅助类>Data blob 操作辅助类</h1>
+<h2 id=data-blob-操作辅助类>Data blob 操作辅助类</h2>
 <p>在公司中，我们有自己的 NoSQL 数据库服务，我们在使用的过程中常常有这样的模式：</p>
 <div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++>MyDataBlob data{};
 data.key1 <span style=color:#f92672>=</span> ...;
@@ -319,7 +319,7 @@ api1.Put(res.data);
 <span style=color:#66d9ef>struct</span> <span style=color:#a6e22e>enable_if</span><span style=color:#f92672>&lt;</span>true, T<span style=color:#f92672>&gt;</span> { <span style=color:#66d9ef>using</span> type <span style=color:#f92672>=</span> T; };
 </code></pre></div><p>所以说，4 处的代码的实现了如果 <code>std::is_convertible</code> 判定为 <code>true</code>，那么 <code>std::enable_if</code> 里就会有 <code>type</code>，那么模板的类型置换就会成功，否则则是失败，这就实现了我们想要的判定 <code>T::TableName()</code> 返回类型可以转换为 <code>std::string</code> 的效果。</p>
 <p><code>IsLegalDb</code> 的实现相对而言可能会有点麻烦，但是它可以带来清晰的错误提示，是一个很好的文档，因此对于一个有特定约束的模板类型参数，尤其是无法从名字上直接看出来约束内容的模板类型参数，最好配套加上这样一个检查，配合注释说明，给使用者明确的约束，以方便使用者实现合法的类型。</p>
-<h1 id=强类型别名>强类型别名</h1>
+<h2 id=强类型别名>强类型别名</h2>
 <p>我们经常会碰到一个函数带有几个类型相同的参数的情况。以扑克牌举例，一种表示方式是基于花色和数字的表示，使用一个 <code>uint8_t</code> 表示花色，同时一个 <code>uint8_t</code> 表示数字，另一种是直接基于牌编码的方式，也就是将牌从 0 编号到 54，只需要一个 <code>uint8_t</code> 就能实现。那么，如果不同地方使用到了不同的表示方式，就需要有类似这样的转换函数：</p>
 <div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style=color:#66d9ef>uint8_t</span> <span style=color:#a6e22e>ConvertCardToCode</span>(<span style=color:#66d9ef>uint8_t</span> shape, <span style=color:#66d9ef>uint8_t</span> number);
 </code></pre></div><p>这个函数本身是没什么问题，但在使用的时候经常一不小心就写歪了：</p>
@@ -443,7 +443,7 @@ CardCode <span style=color:#a6e22e>ConvertCardToCode</span>(Shape shape, Number 
 </code></pre></div><p>有了这些运算符模板，使用者就可以按需选择自己需要的来进行使用了，例如：</p>
 <div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style=color:#66d9ef>using</span> Number <span style=color:#f92672>=</span> StrongAlias<span style=color:#f92672>&lt;</span><span style=color:#66d9ef>uint8_t</span>, <span style=color:#66d9ef>struct</span> <span style=color:#a6e22e>NumberTag</span>, Eq, Ne, Lt, Le, Gt, Ge<span style=color:#f92672>&gt;</span>;
 </code></pre></div><p>这样，我们就拥有了更加好用的强类型别名了。</p>
-<h1 id=小结>小结</h1>
+<h2 id=小结>小结</h2>
 <p>在这篇文章里，我们看到了在实际工程中 C++ 模板的一些应用。很显然，这些功能脱离了模板的能力是非常难以实现的。对于 C++ 开发者而言，不应该盲目地拒绝模板，而是应该将它应用在正确的地方，以获得更好的性能和更清晰可靠的代码。</p>
 </div>
 <div class=pagination>

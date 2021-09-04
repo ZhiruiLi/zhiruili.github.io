@@ -76,8 +76,8 @@ Prometheus 上报和查询 ::
 <a href=/tags/prometheus/>#Prometheus</a>&nbsp;
 </span>
 <div class=post-content>
-<h1 id=基本概念>基本概念</h1>
-<h2 id=采样样本>采样样本</h2>
+<h2 id=基本概念>基本概念</h2>
+<h3 id=采样样本>采样样本</h3>
 <p>Prometheus 会定期去对数据进行采集，每一次采集的结果都是一次采样的样本（sample），这些数据会被存储为时间序列，也就是带有时间戳的 value stream，这些 value stream 归属于自己的监控指标。</p>
 <p>这里采集样本包括了三部分：</p>
 <ul>
@@ -85,7 +85,7 @@ Prometheus 上报和查询 ::
 <li>毫秒时间戳（timestamp）</li>
 <li>样本的值（value）</li>
 </ul>
-<h2 id=监控指标>监控指标</h2>
+<h3 id=监控指标>监控指标</h3>
 <p>一个监控指标被表示为下面的格式：</p>
 <pre tabindex=0><code>metric_name { label_name_1=label_value_1, label_name_2=label_value_2, ... }
 </code></pre><p>这里的 <code>metric_name</code> 用于指明监控的内容，<code>label_value_x</code> 则用于声明这个监控内容中不同维度的值。用我们常见的二维坐标系举例，下面有一个二维坐标系，名称为「xxx 坐标系」，其中，有 <code>X</code>，<code>Y</code> 两个轴，上面有两个点，分别是 <code>A</code> 和 <code>B</code>，它们的坐标分别为 <code>(1, 3)</code> 和 <code>(2, 1)</code>：</p>
@@ -103,9 +103,9 @@ Y
 <pre tabindex=0><code>xxx坐标系{&quot;X&quot;=&quot;1&quot;,&quot;Y&quot;=&quot;3&quot;}
 xxx坐标系{&quot;X&quot;=&quot;2&quot;,&quot;Y&quot;=&quot;1&quot;}
 </code></pre><p>说到这里，我们不难意识到，当我们上报数据的时候，这里的标签值不可以用一个数量非常多的值（例如用户 ID），否则会造成时间序列数量的极度膨胀。</p>
-<h1 id=数据上报>数据上报</h1>
+<h2 id=数据上报>数据上报</h2>
 <p>在 Prometheus 内部，所有的采样样本都是以时间序列的形式保存在时序数据库中，但为了方便理解和使用，Prometheus 定义了 4 种数据上报的类型，用户可以根据上报的数据内容选择合适的接口。下面以 <a href=https://godoc.org/github.com/prometheus/client_golang/prometheus>Go 的接口</a>为例说明这几种类型的区别和应用场景。</p>
-<h2 id=计数器-counter>计数器 Counter</h2>
+<h3 id=计数器-counter>计数器 Counter</h3>
 <p>和一般理解的计数器一样，Prometheus 的 counter 也是一个只增不减的值，Go 语言中的接口如下：</p>
 <div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=color:#66d9ef>type</span> <span style=color:#a6e22e>Counter</span> <span style=color:#66d9ef>interface</span> {
     <span style=color:#a6e22e>Metric</span>
@@ -132,7 +132,7 @@ xxx坐标系{&quot;X&quot;=&quot;2&quot;,&quot;Y&quot;=&quot;1&quot;}
 <span style=color:#a6e22e>httpReqs</span>.<span style=color:#a6e22e>WithLabelValues</span>(<span style=color:#e6db74>&#34;404&#34;</span>, <span style=color:#e6db74>&#34;POST&#34;</span>).<span style=color:#a6e22e>Add</span>(<span style=color:#ae81ff>42</span>)
 </code></pre></div><p>这里，我们指定的 <code>metric_name</code> 是 <code>http_requests_total</code>（<a href=https://prometheus.io/docs/practices/naming/>官方建议</a> counter 的 metric name 用 <code>_total</code> 结尾），分成两个维度，<code>code</code> 和 <code>method</code>，我们在 <code>(404, POST)</code> 这个维度上上报了一个 <code>42</code>。</p>
 <p>Counter 非常常见，也非常容易理解，常被用来监控类似「请求量」、「失败量」、「错误码出现次数」等场景。由于 counter 只增不减，所以我们不能用它来监控可能增可能减的数值（例如 goroutine 的数量），如果要监控这种数量，就应该用下面的 gauge。</p>
-<h2 id=测量仪表-gauge>测量仪表 Gauge</h2>
+<h3 id=测量仪表-gauge>测量仪表 Gauge</h3>
 <p>Gauge 的监控值可增可减，在 Go 语言中的接口如下：</p>
 <div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=color:#66d9ef>type</span> <span style=color:#a6e22e>Gauge</span> <span style=color:#66d9ef>interface</span> {
     <span style=color:#a6e22e>Metric</span>
@@ -157,7 +157,7 @@ xxx坐标系{&quot;X&quot;=&quot;2&quot;,&quot;Y&quot;=&quot;1&quot;}
 </span><span style=color:#75715e></span>    <span style=color:#a6e22e>SetToCurrentTime</span>()
 }
 </code></pre></div><p>可以看到，相比起 <code>Counter</code> 这里的 <code>Gauge</code> 增加了 <code>Dec</code> 和 <code>Sub</code> 这样的减少数值的接口，同时提供了 <code>Set</code> 和 <code>SetToCurrentTime</code> 这样的直接设置数值的接口。相比起 counter 而言，gauge 的数值要更加灵活通用。我们可以用它来监控前面提到的「goroutine 的数量」或者是其他可增可减的值，例如「CPU 使用率」、「内存使用率」等。</p>
-<h2 id=直方图-histogram>直方图 Histogram</h2>
+<h3 id=直方图-histogram>直方图 Histogram</h3>
 <p>尽管我们能够通过 gauge 监控可增可减的值，并可以在查询时求出其一段时间内的平均值，但是对于一些场景而言，这个能力还是存在相当大的局限性。典型的场景是请求时延、响应数据量大小等，在这些场景中，平均值可能并不能很好地反映问题。</p>
 <p>举例而言，我们现在需要统计请求时延的长度，如果大部分时延都只有 100 毫秒，而少量有几秒，那么单纯的平均时延就会让我们难以确定实际的时延情况，我们并不是想知道平均时延是几百毫秒，而是想知道多大比例的请求时延是 100 毫秒，多大比例的是几百毫秒，多大比例的是超过一秒。</p>
 <p>Histogram 可以帮我们解决这个问题，它并不是记录一个值的变化情况，而是将被观测到的值划分进某一个区间中，这里称为桶（bucket）。下面是 Go 版本的接口，可以看到 <code>Histogram</code> 只有一个 <code>Observe</code> 方法：</p>
@@ -187,7 +187,7 @@ xxx坐标系{&quot;X&quot;=&quot;2&quot;,&quot;Y&quot;=&quot;1&quot;}
 <span style=color:#a6e22e>temps</span>.<span style=color:#a6e22e>Write</span>(<span style=color:#a6e22e>metric</span>)
 <span style=color:#a6e22e>fmt</span>.<span style=color:#a6e22e>Println</span>(<span style=color:#a6e22e>proto</span>.<span style=color:#a6e22e>MarshalTextString</span>(<span style=color:#a6e22e>metric</span>))
 </code></pre></div><p>通过这样的方法，我们可以描绘出被观测值的分布情况。通过这个分布数据，我们还能算出类似「99% 的请求时延在多少以内」这样的数据。不过，当我们需要这样的数据时，需要对被观测数据有一定的先验知识才能真正使得计算结果比较准确。还是用刚刚提到的时延观测来举个极端一点的例子，假设我们将桶划分为 1ms、10ms、10s，那么我们得出的结果可能是 0% 的请求时延在 1ms 以内，0% 的请求时延在 10ms 以内，100% 的请求在 10s 以内，0% 的请求在 10s 以上，这样的结论显然没有什么意义，只有当我们对时延的长度本身有一个基本概念，并正确划分桶的大小时，我们才能更准确地计算出我们想要的结果。那假设我们就是对一个数据没有什么先验知识，那我们是否有更准确的方式计算出这个数据呢？Prometheus 给出的方法就是用 Summary。</p>
-<h2 id=概要-summary>概要 Summary</h2>
+<h3 id=概要-summary>概要 Summary</h3>
 <p>Summary 和 histogram 类似，也是用来观测数据的分布情况的，它的接口也和 histogram 一样：</p>
 <div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=color:#66d9ef>type</span> <span style=color:#a6e22e>Summary</span> <span style=color:#66d9ef>interface</span> {
     <span style=color:#a6e22e>Metric</span>
@@ -216,9 +216,9 @@ xxx坐标系{&quot;X&quot;=&quot;2&quot;,&quot;Y&quot;=&quot;1&quot;}
 <span style=color:#a6e22e>fmt</span>.<span style=color:#a6e22e>Println</span>(<span style=color:#a6e22e>proto</span>.<span style=color:#a6e22e>MarshalTextString</span>(<span style=color:#a6e22e>metric</span>))
 </code></pre></div><p>通过上面的 summary 上报，我们能够更加准确地获知 50% 的观测值，90% 的观测值以及 99% 的观测值，避免了前面 histogram 的问题。但 summary 的数据计算是由客户端进行的，会造成一定的性能损耗。</p>
 <p>更多 histogram 和 summary 的对比可以参考<a href=https://prometheus.io/docs/practices/histograms/>这一篇文章</a>。</p>
-<h1 id=数据查询>数据查询</h1>
+<h2 id=数据查询>数据查询</h2>
 <p>Prometheus 定义了一个名为 PromQL 的 DSL 用来进行数据查询。常用的 Prometheus 数据可视化工具 Grafana 里面的面板就是通过 PromQL 来进行数据查询的。</p>
-<h2 id=瞬时向量-instant-vector>瞬时向量 Instant Vector</h2>
+<h3 id=瞬时向量-instant-vector>瞬时向量 Instant Vector</h3>
 <p>假设我们有一个对 HTTP 请求量的 counter 名为 <code>http_requests_total</code>，那么我们只需要在 Grafana 面板的 query editor 中输入 <code>http_requests_total</code> 就可以看到数据了。这个 <code>http_requests_total</code> 是一个瞬时向量，也就是说，这个数据是 Prometheus 采集数据的那一刻数据的值。对于 counter 数据，我们看到的会是一条不断增长的线（采集到的值只增不减）。</p>
 <p>之前提到了，我们可以通过标签来给一个监控指标划分维度，在上面绘制出的图里，所有的 标签的值会交叉成多个时间序列，也就是说，假设有一个取值为 <code>200</code> 或 <code>404</code> 的标签 <code>code</code> 和取值为 <code>GET</code> 或 <code>POST</code> 的标签 <code>method</code>，那么，图中会有四条线，分别为：</p>
 <div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-promql data-lang=promql>http_requests_total { <span style=color:#960050;background-color:#1e0010>code=200</span>, <span style=color:#960050;background-color:#1e0010>method=GET</span> }
@@ -277,7 +277,7 @@ mymetric_bucket { le=&quot;+Inf&quot; } = 9
 mymetric_count = 9
 mymetric_sum = 15.8
 </code></pre><p>如前所述，histogram 并没有存储数据采样点的值，只保留了总和和每一个区间的 counter。我们可以在 PromQL 中用 <code>histogram_quantile()</code> 函数来计算其值的分位数。由于 histogram 的分位数是在 PromQL 中指定的，因此它的灵活性比 summary 高（summary 只能获取上报时定下来的分位数）。</p>
-<h2 id=范围向量-range-vector>范围向量 Range Vector</h2>
+<h3 id=范围向量-range-vector>范围向量 Range Vector</h3>
 <p>前面提到我们用 <code>http_requests_total</code> 获取到单调递增的 HTTP 请求总数图像，但是这个对于我们而言并没有太大意义，我们希望看到的是类似「每分钟请求数量」这样的数据，PromQL 允许我们获取一段时间的数据，这个被称为范围向量。它的获取方式是在瞬时向量后面加一个中括号，里面填入需要的时间段长度，例如：</p>
 <div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-promql data-lang=promql>http_requests_total [<span style=color:#e6db74>1m</span>]
 </code></pre></div><p>这里获取的就是过去一分钟的 HTTP 请求总数。但是，当我们将这个语句输入 query editor 后，我们会看到一个错误</p>
@@ -301,7 +301,7 @@ http_requests_total { <span style=color:#960050;background-color:#1e0010>code=40
 </code></pre></div><p>后缀可以紧跟 <code>sum</code>，也可以放到被操作的表达式后面：</p>
 <div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-promql data-lang=promql><span style=color:#66d9ef>sum</span> <span style=color:#f92672>(</span><span style=color:#66d9ef>increase</span><span style=color:#f92672>(</span>http_requests_total [<span style=color:#e6db74>1m</span>]<span style=color:#f92672>))</span> <span style=color:#66d9ef>by</span> <span style=color:#f92672>(</span>code<span style=color:#f92672>)</span>
 </code></pre></div><p>更多对操作符的介绍可以在<a href=https://prometheus.io/docs/prometheus/latest/querying/operators>这里</a>找到。另外，也可以在<a href=https://prometheus.io/docs/prometheus/latest/querying/examples/>这里</a>找到更多的使用例子。</p>
-<h1 id=总结>总结</h1>
+<h2 id=总结>总结</h2>
 <p>Prometheus 基于时序数据库的查询实现了丰富复杂的语义，让用户能够灵活实现各种监控需求，为了能更好地表达自己的查询逻辑，我们需要先了解其中的基本语义，本文仅进行了较为简略的总结，更详细的可以参考<a href=https://prometheus.io/docs/prometheus/latest/getting_started/>官方文档</a>和<a href=https://prometheus.io/docs/practices/naming/>官方最佳实践</a>。</p>
 </div>
 <div class=pagination>

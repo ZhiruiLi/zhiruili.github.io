@@ -79,7 +79,7 @@
 </span>
 <div class=post-content>
 <p>型变（variance）是类型系统里的概念，包括协变（covariance）、逆变（contravariance）和不变（invariance）。这组术语的目的是描述泛型情况下类型参数的父子类关系如何影响参数化类型的父子类关系。也就是说，假设有一个接收一个类型参数的参数化类型 <code>T</code> 和两个类 <code>A</code>，<code>B</code>，且 <code>B</code> 是 <code>A</code> 的子类，那么 <code>T[A]</code> 与 <code>T[B]</code> 的关系是什么？如果 <code>T[B]</code> 是 <code>T[A]</code> 的子类，那么这种型变就是「协变」，因为参数化类型 <code>T</code> 的父子类关系与其类型参数的父子类关系是「同一个方向的」。如果 <code>T[A]</code> 是 <code>T[B]</code> 的子类，则这种关系是「逆变」，因为参数化类型 <code>T</code> 的父子类关系与类型参数的父子类关系是「相反方向的」。类似地，如果 <code>T[A]</code> 和 <code>T[B]</code> 之间不存在父子类关系，那么这种型变就是「不变」<sup id=fnref:1><a href=#fn:1 class=footnote-ref role=doc-noteref>1</a></sup>。</p>
-<h1 id=协变>协变</h1>
+<h2 id=协变>协变</h2>
 <p>在 Java 中，数组是协变的，也就是说，假设有一个基类 <code>Person</code> 和一个 <code>Person</code> 的子类 <code>Student</code>。因为 <code>Student</code> 类型是 <code>Person</code> 类型的子类，所以 <code>Student[]</code> 类型是 <code>Person[]</code> 类型的子类，这个设计似乎相当符合直觉，一个学生（<code>Student</code>）是一个人（<code>Person</code>），那一个存放着学生的数组当然也应该是一个存放着人的数组了。</p>
 <p>然而这是错误的。</p>
 <p>假设 <code>Person</code> 有另一个子类 <code>Teacher</code>，考虑如下代码：</p>
@@ -125,7 +125,7 @@ Person person <span style=color:#f92672>=</span>  persons<span style=color:#f926
 </span><span style=color:#75715e>// to (int, test.Teacher)
 </span><span style=color:#75715e></span>persons<span style=color:#f92672>.</span><span style=color:#a6e22e>set</span><span style=color:#f92672>(</span>0<span style=color:#f92672>,</span> <span style=color:#66d9ef>new</span> Teacher<span style=color:#f92672>());</span>
 </code></pre></div><p>这段代码无法编译通过，<code>List&lt;? extends Person> persons</code> 是 Java 的协变声明，它大概表达了这样的语义： <code>List</code> 的类型参数是 <code>Person</code> 的「某个」子类，而具体是什么类型并不知道，既然不知道是什么类型，也就自然无法将其中的元素替换为其他值了。但由于已经知道了其元素类型是 <code>Person</code> 的「某个」子类，所以可以将其元素当作 <code>Person</code> 类型的对象取出。这就保证了协变集合的要求。也就是说，Java 选择不在参数化类型声明的时候去声明该类型的型变关系，而是选择在这个类型被使用的时候去进行限定。从语义上也可以看出，这个方式掩盖了协变本身的概念，是一个较为工程化的思路。但是，型变应该是一个类型本身的特性，Scala 的处理方式能在类型声明上更加清晰地表意，个人更偏向于 Scala 的处理方式。</p>
-<h1 id=逆变>逆变</h1>
+<h2 id=逆变>逆变</h2>
 <p>相对于协变，逆变显得非常不符合直觉，它表明，如果 <code>B</code> 是 <code>A</code> 的子类，那么 <code>T[B]</code> 反而是 <code>T[A]</code> 的父类。很难想象什么地方会出现逆变的情况，而事实上，函数类型相对于其参数类型就是逆变的，Scala 中接受一个参数的函数类型声明如下：</p>
 <div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-scala data-lang=scala><span style=color:#66d9ef>trait</span> <span style=color:#a6e22e>Function1</span><span style=color:#f92672>[</span><span style=color:#66d9ef>-T1</span>, <span style=color:#66d9ef>+R</span><span style=color:#f92672>]</span> <span style=color:#a6e22e>extends</span> <span style=color:#a6e22e>AnyRef</span>
 </code></pre></div><p>其中，<code>T1</code> 是其参数类型，<code>R</code> 是其返回值类型，可以看出，函数在其参数类型上是逆变的。这件事仔细想想就会明白这是合理的，考虑如下代码：</p>
@@ -176,7 +176,7 @@ students<span style=color:#f92672>.</span><span style=color:#a6e22e>add</span><s
 </tr>
 </tbody>
 </table>
-<h1 id=规律>规律</h1>
+<h2 id=规律>规律</h2>
 <p>现在可以回头再看看之前的讨论，会发现其实只有一个规律，就是函数类型在其返回值的类型上协变，在其参数类型上逆变。</p>
 <p>为什么数组是不变的？因为数组上的每个单元都相当于包含了两个方法，当写下 <code>T value = arr[3]</code> 这样的代码时，概念上可以理解为 <code>T value = arr3.get()</code>。而 <code>get</code> 方法的类型显然是 <code>() => T</code>。所以从单元中获取元素这个操作上来看，数组在其元素的类型上协变。而当写下 <code>arr[3] = value</code> 的时候，概念上则可以理解为 <code>arr3.set(value)</code>。而 <code>set</code> 方法的类型则为 <code>T => Unit</code>（<code>Unit</code> 相当于 Java 的 <code>void</code>）。所以从给数组单元赋值这个操作上看，数组又在其元素的类型上逆变。因此，数组在其元素类型上不变。</p>
 <p>为什么可以写 <code>val person: Person = new Student</code> 呢？因为每个对象都可以看作是一个只带有一个方法的对象，相当于 <code>value.get()</code>。而 <code>get</code> 方法的类型是 <code>() => T</code>。所以我们可以写这样的代码，它是协变的。这么说感觉有点怪，但是，在 Scala 的语法糖加持下，这么说其实挺自然的，因为 Scala 允许在函数不需要参数的情况下省略括号，且如果调用的方法是 <code>apply</code> 的话，不需要写 <code>value.apply()</code> 直接写成 <code>value()</code> 即可。也就是 <code>def t() = new T</code> 和 <code>val t = new T</code> 相比，虽然前者每次都会创建一个新的实例，但是在使用者看来，都可以写为 <code>t</code>，并不会有区别。</p>
@@ -188,6 +188,7 @@ students<span style=color:#f92672>.</span><span style=color:#a6e22e>add</span><s
 </span><span style=color:#75715e></span>  <span style=color:#66d9ef>def</span> set<span style=color:#f92672>(</span>v<span style=color:#66d9ef>:</span> <span style=color:#66d9ef>T</span><span style=color:#f92672>)</span><span style=color:#66d9ef>:</span> <span style=color:#66d9ef>Unit</span>
 <span style=color:#f92672>}</span>
 </code></pre></div><p>类型声明是很好的文档，更精确的类型声明就是更清晰的文档，Scala 的设计在这方面可以说是更胜一筹。</p>
+<h2 id=参考资料>参考资料</h2>
 <section class=footnotes role=doc-endnotes>
 <hr>
 <ol>

@@ -78,12 +78,12 @@ Unity 和 Android 的工程集成 ::
 </span>
 <div class=post-content>
 <p>有时候，我们需要在 Unity 里调用一些 Android 的功能，这些功能在 Unity 中可能并没有提供接口，需要在 Android 平台上实现。此时，我们需要有一个方法来让 Android 代码和 Unity 代码互调用。这里记录一下操作方法，并提供一个工具来简化两个工程之间的集成流程。</p>
-<h1 id=示例工程>示例工程</h1>
+<h2 id=示例工程>示例工程</h2>
 <p>下面的记录中所使用的工程可以参考 <a href=https://github.com/ZhiruiLi/UnityAndroidExample>UnityAndroidExample</a>。其中，根目录是 Unity 工程，可以直接用 Unity 打开。根目录下的 AndroidSample 子目录是 Android 工程，可以用 Android Studio 打开。</p>
 <p>Unity 工程运行后如下图左所示，只有一个文本和一个按钮，点击按钮就会触发 Unity 到 Anrdoid 的调用，在主界面上产生一个 toast，同时，触发一次从 Anrdoid 到 Unity 的调用，主界面上的文本变为「Hello From Android」：</p>
 <p><img src=/images/2021-09-02-15-30-47.png alt></p>
-<h1 id=具体操作方式>具体操作方式</h1>
-<h2 id=新建一个-android-工程>新建一个 Android 工程</h2>
+<h2 id=具体操作方式>具体操作方式</h2>
+<h3 id=新建一个-android-工程>新建一个 Android 工程</h3>
 <p>这里随便用 Android Studio 建立空一个工程就行了。建立好工程后，参考<a href=https://developer.android.com/studio/projects/android-library>官方文档</a>在工程里添加一个自定义的模块：</p>
 <ul>
 <li>菜单栏点击 「File」-「New」-「New Module&mldr;」</li>
@@ -93,7 +93,7 @@ Unity 和 Android 的工程集成 ::
 <p><img src=/images/2021-09-02-17-04-53.png alt></p>
 <p>假设创建的模块名为「mod」，那么就会在工程根目录下新增一个名为 mod 的目录。此时可以删除工程根目录中默认创建的 app 目录，并将工程根目录中 settings.gradle 文件里的 <code>include ':app'</code> 这一行删除。</p>
 <p><img src=/images/2021-09-02-17-07-57.png alt></p>
-<h2 id=添加-unity-jar-依赖>添加 Unity jar 依赖</h2>
+<h3 id=添加-unity-jar-依赖>添加 Unity jar 依赖</h3>
 <p>为了在 Android 中和 Unity 互交互，我们需要引入 Unity 提供的库，这个库以 jar 包的形式提供。以下目录中都有这个 classes.jar 文件，有 mono 和 il2cpp 版本，还区分 Release 和 Development：</p>
 <ul>
 <li>YOUR_EDITOR_PATH/Data/PlaybackEngines/AndroidPlayer/Variations/il2cpp/Release/Classes</li>
@@ -116,10 +116,10 @@ Unity 和 Android 的工程集成 ::
 </code></pre></div><p><img src=/images/2021-09-02-17-09-37.png alt></p>
 <p>修改完后，Android Studio 会提示是否要同步，点击「Sync Now」即可。</p>
 <p><img src=/images/2021-09-02-17-10-38.png alt></p>
-<h2 id=引入-unityplayeractivity>引入 <code>UnityPlayerActivity</code></h2>
+<h3 id=引入-unityplayeractivity>引入 <code>UnityPlayerActivity</code></h3>
 <p>我们在实现自己的 Activity 时不能直接实现，而是需要继承 Unity 的 <code>UnityPlayerActivity</code>，这个类型会按照一定的规则去调用 Unity 的回调函数，以确保程序的正确运行。从前这个类就在刚刚我们引入的 unity.jar 中，而在新版本的 Unity 中这个类却以单独文件的形式存在，需要自己拷贝一下，这个文件所在的路径为：YOUR_EDITOR_PATH/Data/PlaybackEngines/AndroidPlayer/Source/com/unity3d/player/UnityPlayerActivity.java。</p>
 <p>我们直接将 YOUR_EDITOR_PATH/Data/PlaybackEngines/AndroidPlayer/Source/com 这个目录直接拷到工程里的 mod/src/main/java 目录下，这样一来，我们的代码就可以看到这个 Activity 了。</p>
-<h2 id=新增一个-activity-继承-unityplayeractivity>新增一个 Activity 继承 <code>UnityPlayerActivity</code></h2>
+<h3 id=新增一个-activity-继承-unityplayeractivity>新增一个 Activity 继承 <code>UnityPlayerActivity</code></h3>
 <p>在这里，我们添加一个 <code>showMessage</code> 函数用于给 Unity 调用，同时，在这个函数里面，我们通过 <code>UnityPlayer.UnitySendMessage</code> 来调用 Unity 中的函数。这个 <code>UnityPlayer</code> 定义于我们引入的 unity.jar 文件中。其中第一个参数是 Unity 场景中的对象名，第二个参数是需要调用的函数名，第三个参数是传递的参数：</p>
 <div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=color:#66d9ef>public</span> <span style=color:#66d9ef>class</span> <span style=color:#a6e22e>MainActivity</span> <span style=color:#66d9ef>extends</span> UnityPlayerActivity <span style=color:#f92672>{</span>
     <span style=color:#75715e>// 被用于 Unity 调用的函数
@@ -131,9 +131,9 @@ Unity 和 Android 的工程集成 ::
 <span style=color:#f92672>}</span>
 </code></pre></div><p>此时，文件结构如下图所示：</p>
 <p><img src=/images/2021-09-02-17-21-53.png alt></p>
-<h2 id=构建模块>构建模块</h2>
+<h3 id=构建模块>构建模块</h3>
 <p>菜单栏中选择「Build」-「Make Module &lsquo;mod&rsquo;」。等待构建完成后，会在 mod/build/output/aar 目录下看到构建出来的包。</p>
-<h2 id=和-unity-集成>和 Unity 集成</h2>
+<h3 id=和-unity-集成>和 Unity 集成</h3>
 <p>接下来，我们需要将这个库和 Unity 集成，并让 Unity 以这个 Activity 为入口启动程序。</p>
 <p>将这个 aar 包解压，放入 Unity 工程的 Plugins/Android/mod 目录下，然后在这个目录下建立一个 project.properties 文件，填入如下内容：</p>
 <div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-ini data-lang=ini><span style=color:#a6e22e>android.library</span><span style=color:#f92672>=</span><span style=color:#e6db74>true</span>
@@ -180,9 +180,9 @@ Unity 和 Android 的工程集成 ::
 </span><span style=color:#75715e>#endif
 </span></code></pre></div><p>这一块代码用 <code>#if UNITY_ANDROID && !UNITY_EDITOR</code> 包裹，只在 Android 设备上生效。</p>
 <p>另外我们还需要在 Unity 场景中添加刚刚 Android 代码中调用 Unity 时 Unity 侧的接收者（在本示例中为 <code>Canvas</code>），这块具体操作直接参考示例工程即可。</p>
-<h2 id=unity-构建>Unity 构建</h2>
+<h3 id=unity-构建>Unity 构建</h3>
 <p>在 Unity 菜单中点击「File」-「Build Settings&mldr;」，在弹出的窗口中选择 Android 平台，然后构建即可。</p>
-<h1 id=一个小工具>一个小工具</h1>
+<h2 id=一个小工具>一个小工具</h2>
 <p>上面这个流程有些是只用操作一次的（例如新建工程），但也存在一批需要反复操作的（例如编译 Android 工程、删除 Unity 的 Activity 等），这些需要反复操作的流程在每次修改 Android 工程中的代码后，都需要进行一次，非常麻烦还容易出错，因此，这里提供一个简单的<a href=https://github.com/ZhiruiLi/upack>小工具</a>来简化这个工作。这个工具的安装需要用到 go，需要先<a href=https://golang.org/doc/install>安装一下 go 的环境</a>。</p>
 <p>这个小工具可以编译指定的 Android 模块，然后将 aar 压缩包解压到 Unity 工程中，删除 Unity 的 Activity class，并生成 project.properties 和 AndroidManifest.xml 文件。在生成 AndroidManifest.xml 的时候，提供了默认的文件模板，允许通过命令行参数指定需要申请的 Android 权限。</p>
 <p>例如这样的命令：</p>

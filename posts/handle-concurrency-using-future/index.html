@@ -78,9 +78,9 @@
 <a href=/tags/scala/>#Scala</a>&nbsp;
 </span>
 <div class=post-content>
-<h1 id=future-的概念>Future 的概念</h1>
+<h2 id=future-的概念>Future 的概念</h2>
 <p>在编程的时候，常常会遇到需要并行处理一些代码，最原始的做法就是创建不同的线程进行处理，但是线程之间的同步处理非常麻烦而且容易出错，如果要同时得到几个线程的结果并且通过这些结果进行进一步的计算，则需要共享变量或者进行线程间通信，无论如何都非常难以处理。另外，直接使用线程也使得代码灵活性不高，比如在双核机器上可能只希望使用两个线程执行代码，到了四核机器上就希望最多能有四个线程了。Future 能够提供一个高层的抽象，将计算任务的并发化和计算最终的执行方式分离，使得这类处理更为方便。Future 作为一个代理对象代表一个可能完成也可能未完成的值 <sup id=fnref:1><a href=#fn:1 class=footnote-ref role=doc-noteref>1</a></sup>，通过对 future 进行操作，能够获取内部的计算是否已经完成，是否出现异常，计算结果是什么等信息。</p>
-<h1 id=java-中的-future>Java 中的 <code>Future</code></h1>
+<h2 id=java-中的-future>Java 中的 <code>Future</code></h2>
 <p>Java 很早就提供了 <code>Future</code> 接口 <sup id=fnref:2><a href=#fn:2 class=footnote-ref role=doc-noteref>2</a></sup>，使用起来大概是这样的：</p>
 <div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=color:#66d9ef>interface</span> <span style=color:#a6e22e>ArchiveSearcher</span> <span style=color:#f92672>{</span> String <span style=color:#a6e22e>search</span><span style=color:#f92672>(</span>String target<span style=color:#f92672>);</span> <span style=color:#f92672>}</span>
 <span style=color:#66d9ef>class</span> <span style=color:#a6e22e>App</span> <span style=color:#f92672>{</span>
@@ -170,7 +170,7 @@
   <span style=color:#f92672>}</span>
 <span style=color:#f92672>}</span>
 </code></pre></div><p>在这个例子里，搜索不但依赖于传入的搜索内容，还要依赖于根据搜索类型决定的搜索服务提供者以及搜索配置，由于获取搜索服务提供者和读取配置的过程都是需要费时的，所以此处将这两个任务都提交给 <code>executor</code> 处理，获得两个 future 后，我们首先查看搜索服务提供者是否成功被获取到了，如果获取失败，就直接抛出一个异常。如果服务提供者获取成功了，就去查看配置是否读取成功，由于读取配置的过程也可能出错，所以这里还要进行错误处理，如果配置读取不到，就使用默认的配置。获取到服务提供者和配置后再进行搜索并返回结果。在 <code>displayOtherThings</code> 结束后，调用 <code>resultFuture</code> 的 <code>get</code> 方法获取搜索结果，然后渲染获得的内容，再进行展示。这段代码虽然不长，但也足够难读了，从这段代码可以发现，由于每一次的 <code>get</code> 操作都可能抛出异常，我们需要进行很多异常处理，再加上嵌套的 future，使得主要的代码逻辑非常混乱，不但难以阅读，且调试相当困难，最后的阻塞调用也可能会对性能造成很大影响。</p>
-<h1 id=对-java-future-api-的改进>对 Java <code>Future</code> API 的改进</h1>
+<h2 id=对-java-future-api-的改进>对 Java <code>Future</code> API 的改进</h2>
 <p>要改善 Java 的 <code>Future</code> API，首先要提供接口让用户从阻塞调用变为非阻塞调用，也就是使用回调函数（使用 Scala 表示）：</p>
 <div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-scala data-lang=scala><span style=color:#66d9ef>trait</span> <span style=color:#a6e22e>Future</span><span style=color:#f92672>[</span><span style=color:#66d9ef>T</span><span style=color:#f92672>]</span> <span style=color:#f92672>{</span>
   <span style=color:#66d9ef>def</span> onComplete<span style=color:#f92672>(</span>callback<span style=color:#66d9ef>:</span> <span style=color:#66d9ef>T</span> <span style=color:#f92672>=&gt;</span> <span style=color:#a6e22e>Unit</span><span style=color:#f92672>)</span><span style=color:#66d9ef>:</span> <span style=color:#66d9ef>Unit</span>
@@ -418,7 +418,7 @@ CompletableFuture<span style=color:#f92672>&lt;</span>String<span style=color:#f
 <span style=color:#f92672>}</span>
 </code></pre></div><p>虽然 Java 的这个实现没有 Scala 版本的代码优雅，但是在大多数情况下也够用，尤其是在受到 Java 的语法局限的情况下，这个已经是一个比较好的处理了。从获取搜索结果并显示的例子中可以看出，使用这套 API 的关键优点在于这个版本的代码也做到了在异步回调避免阻塞主线程的情况下，加强了 future 间的组合性，避免出现最初版本的难读代码。</p>
 <p>总之，在 Java 8 之后，应该使用新的 API 来操作 future，以便能更加简便地处理并发和异步代码。另外，对于 API 设计而言，要尽可能加强组件与组件之间的可组合性，将无法组合的部分抽离，只有在最后才调用，以使得 API 更加易用。</p>
-<h1 id=参考资料>参考资料</h1>
+<h2 id=参考资料>参考资料</h2>
 <section class=footnotes role=doc-endnotes>
 <hr>
 <ol>

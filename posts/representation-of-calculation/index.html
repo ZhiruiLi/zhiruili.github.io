@@ -78,7 +78,7 @@
 <div class=post-content>
 <p>当提到「计算」这个词的时候，我们会想到什么，是想到「计算机」，或是「图灵机」，又或是操控计算机的「汇编语言」，还是说「1 + 1」这样的算式？这些都是计算，但它们都是计算的一种表示而非计算本身，计算本身是一个更加本质的东西，可以认为是一种柏拉图型相，或是理念，刚刚说到的东西都是对它的摹仿。</p>
 <p>比如我们说到「4」的时候，我们在用「4」这个符号去摹仿「4」这个理念，这个理念可以用「4」来摹仿，也可以用「四」，也可以用「four」，具体是什么不重要，重要的是你不会走在路上突然见到一个「4」，而是会见到一个类似「4」的东西。那既然可以用这样一个来自阿拉伯的符号来摹仿数字，那是否有其他的方式来摹仿呢？更一般地说，是否有其他的计算表示方式，并以此来实现我们在汇编语言，C，Java，等语言中表示的计算呢？下面将介绍一个图灵完备的计算模型，称为 λ 演算（lambda calculus）<sup id=fnref:1><a href=#fn:1 class=footnote-ref role=doc-noteref>1</a></sup>，该计算的表示由 Alonzo Church 在 20 世纪 30 年代发明，它可被称为是最小的通用程序设计语言。</p>
-<h1 id=λ-演算>λ 演算</h1>
+<h2 id=λ-演算>λ 演算</h2>
 <p>λ 演算非常简练，而且相对于图灵机的计算模型来说非常优雅，其核心在于表达式（expression）。一个名字（name）又被称为变量（variable），是一个标识符（identifier），可以是任意的字母，如：a, b, c 等。而表达式的定义如下：</p>
 <p>$$
 \begin{array}{rcl}
@@ -92,7 +92,7 @@ $$</p>
 β - reduction: 将函数应用于其参数；
 η - conversion: 两个函数对于所有的参数得到的结果都一致，当且仅当它们是同一个函数。</p>
 <p>本文后面的部分均使用 Scheme 语言来描述这些计算，在 Scheme 中，有非常类似 λ 演算中表达式的表示，例如一个函数 $\lambda x.y$ 将在 Scheme 中表示为 <code>(lambda (x) y)</code>，而将函数应用于参数 $x~y$ 将在 Scheme 中表示为 <code>(x y)</code>。最大的区别可能在于，在 λ 演算中，<code>(x)</code> 和 <code>x</code> 一样，而在 Scheme 中，前者会变成一个对函数 <code>x</code> 的调用，而后面则是 <code>x</code> 本身。</p>
-<h1 id=自然数的表示>自然数的表示</h1>
+<h2 id=自然数的表示>自然数的表示</h2>
 <p>在考虑如何表示数之前，先思考一下数是什么，前面已经说了，数是一种理念，我们在去摹仿这个理念的时候，一般是做两件事，一是定义一些基本运算，将数进行组合获取新的数，比如四则运算；二是通过和上下文结合，用来表达某个意思，比如三个苹果，走了一步等。这样看来，只要能抽象出这两点，具体用什么来表示似乎就不重要了，其中一个方式就是邱奇数 <sup id=fnref:3><a href=#fn:3 class=footnote-ref role=doc-noteref>3</a></sup>。</p>
 <p>在这种表示法下，数字被表现为一个函数应用于一个值多少次。也就是说，所谓的「0」，就是一个函数应用一个值 0 次，即 <code>x</code>，「1」是应用 1 次，即 <code>(f x)</code>，「2」则是先应用 1 次，再对作用后的返回值再应用 1 次，即 <code>(f (f x))</code>，以此类推。首先，要先有一个初始，也就是所谓的「0」，用 Scheme 表示如下：</p>
 <div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-scheme data-lang=scheme>(<span style=color:#66d9ef>define </span>ZERO
@@ -173,7 +173,7 @@ $$</p>
   (<span style=color:#66d9ef>lambda </span>(<span style=color:#a6e22e>x</span>) x))
 </code></pre></div><p>也就是说 <code>(pred ONE)</code> 就是 <code>ZERO</code>。</p>
 <p>一但有了这些对自然数的运算，负数、浮点数都是可以定义的，毕竟我们使用的计算机也是通过一些约定的记法来表示负数和浮点数的。</p>
-<h1 id=逻辑的表示>逻辑的表示</h1>
+<h2 id=逻辑的表示>逻辑的表示</h2>
 <p>上一节说明了如何用函数来表示数的概念，这一节将用函数来表示逻辑与断言。同样地，首先要思考的是，我们一般使用的 <code>True</code> 和 <code>False</code> 到底是用来做什么的。事实上，逻辑不是为了判断对错，而是对条件分支的选择，它说明了有两种情况，在一种情况下选择一种分支，在另一种情况下选择另一分支，另外还需要在其上进行逻辑运算的算子（与或非）。注意到 C 语言其实是没有布尔值这个类型的，但是依然不影响 <code>if</code> 的使用，因为 C 里面可以用其他类型的值来进行逻辑运算，在 <code>if</code> 里也可以用这些结果来进行分支的选择。</p>
 <p>所以，我们可以这样来定义布尔值，下面这个定义法被称为邱奇布尔值：</p>
 <div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-scheme data-lang=scheme>(<span style=color:#66d9ef>define </span>TRUE
@@ -199,7 +199,7 @@ $$</p>
 </code></pre></div><p>当然也可以转成一个可以被打印的形式：</p>
 <pre tabindex=0><code>&gt;&gt;&gt; ((((and (not FALSE)) TRUE) 'true) 'false)
 true
-</code></pre><h1 id=序对的表示>序对的表示</h1>
+</code></pre><h2 id=序对的表示>序对的表示</h2>
 <p>一个序对（pair）就是一个二元组（2-tuple），这是一个非常简单而且非常强大的结构构件，如果在 C 中，表示形式大概是这样的：</p>
 <div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c data-lang=c><span style=color:#66d9ef>struct</span> Pair {
   <span style=color:#66d9ef>void</span><span style=color:#f92672>*</span> first;
@@ -230,9 +230,10 @@ true
 </code></pre></div><p><code>nil?</code> 接受一个序对或是一个 <code>NIL</code>，并传递给他一个接受两个参数再返回 <code>FALSE</code> 的函数，如果是一个序对，那么结果必然是 <code>FALSE</code>，而如果是 <code>NIL</code>，那么这个函数则不会被调用，而是 <code>NIL</code> 直接返回了 <code>TRUE</code>。这样就表示了 <code>NIL</code>。那么构建有两个元素的 list 的方法可以表示为：</p>
 <div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-scheme data-lang=scheme>(<span style=color:#66d9ef>lambda </span>(<span style=color:#a6e22e>x</span>) (<span style=color:#66d9ef>lambda </span>(<span style=color:#a6e22e>y</span>) ((<span style=color:#a6e22e>pair</span> x) ((<span style=color:#a6e22e>pair</span> y) NIL))))
 </code></pre></div><p>这样一个 list 的构建方式就是链表，通过 pair，可以构建更为复杂的数据结构。</p>
-<h1 id=进一步思考>进一步思考</h1>
+<h2 id=进一步思考>进一步思考</h2>
 <p>在这种计算模型下除法如何实现？递归如何实现？这些都是更为进阶的话题，在 Wikipedia 上有更详细的说明 <sup id=fnref:4><a href=#fn:4 class=footnote-ref role=doc-noteref>4</a></sup> <sup id=fnref:5><a href=#fn:5 class=footnote-ref role=doc-noteref>5</a></sup>。</p>
 <p>计算是一个非常本质的东西，跳出固有的思维来看，能产生更多的思考。</p>
+<h2 id=参考资料>参考资料</h2>
 <section class=footnotes role=doc-endnotes>
 <hr>
 <ol>

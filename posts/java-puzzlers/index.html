@@ -76,7 +76,7 @@ Java Puzzlers ::
 <a href=/tags/java/>#Java</a>&nbsp;
 </span>
 <div class=post-content>
-<h1 id=the-joy-of-sets>The Joy of Sets</h1>
+<h2 id=the-joy-of-sets>The Joy of Sets</h2>
 <div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=color:#66d9ef>public</span> <span style=color:#66d9ef>class</span> <span style=color:#a6e22e>ShortSet</span> <span style=color:#f92672>{</span>
   <span style=color:#66d9ef>public</span> <span style=color:#66d9ef>static</span> <span style=color:#66d9ef>void</span> <span style=color:#a6e22e>main</span><span style=color:#f92672>(</span>String args<span style=color:#f92672>[])</span> <span style=color:#f92672>{</span>
     Set<span style=color:#f92672>&lt;</span>Short<span style=color:#f92672>&gt;</span> s <span style=color:#f92672>=</span> <span style=color:#66d9ef>new</span> HashSet<span style=color:#f92672>&lt;</span>Short<span style=color:#f92672>&gt;();</span>
@@ -116,7 +116,7 @@ Java Puzzlers ::
 </ul>
 </li>
 </ul>
-<h1 id=more-joy-of-sets>More Joy of Sets</h1>
+<h2 id=more-joy-of-sets>More Joy of Sets</h2>
 <div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=color:#f92672>import</span> java.net.*<span style=color:#f92672>;</span>
 <span style=color:#66d9ef>public</span> <span style=color:#66d9ef>class</span> <span style=color:#a6e22e>UrlSet</span> <span style=color:#f92672>{</span>
   <span style=color:#66d9ef>private</span> <span style=color:#66d9ef>static</span> <span style=color:#66d9ef>final</span> String<span style=color:#f92672>[]</span> URL_NAMES <span style=color:#f92672>=</span> <span style=color:#f92672>{</span>
@@ -162,7 +162,7 @@ Java Puzzlers ::
 </li>
 <li>在设计 API 时，要注意 <code>equals</code> 方法不应该依赖于环境</li>
 </ul>
-<h1 id=racy-little-number>Racy Little Number</h1>
+<h2 id=racy-little-number>Racy Little Number</h2>
 <div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=color:#66d9ef>public</span> <span style=color:#66d9ef>class</span> <span style=color:#a6e22e>Test</span> <span style=color:#66d9ef>extends</span> junit<span style=color:#f92672>.</span><span style=color:#a6e22e>framework</span><span style=color:#f92672>.</span><span style=color:#a6e22e>TestCase</span> <span style=color:#f92672>{</span>
   <span style=color:#66d9ef>int</span> number<span style=color:#f92672>;</span>
 
@@ -207,7 +207,7 @@ Java Puzzlers ::
 <li>JUnit 不支持并发</li>
 <li>在使用 JUnit 时，你需要自己提供相应的东西去支持并发</li>
 </ul>
-<h1 id=elvis-lives-again>Elvis Lives Again</h1>
+<h2 id=elvis-lives-again>Elvis Lives Again</h2>
 <div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=color:#66d9ef>public</span> <span style=color:#66d9ef>class</span> <span style=color:#a6e22e>Elvis</span> <span style=color:#f92672>{</span>
   <span style=color:#75715e>// Singleton
 </span><span style=color:#75715e></span>  <span style=color:#66d9ef>public</span> <span style=color:#66d9ef>static</span> <span style=color:#66d9ef>final</span> Elvis ELVIS <span style=color:#f92672>=</span> <span style=color:#66d9ef>new</span> Elvis<span style=color:#f92672>();</span>
@@ -255,7 +255,7 @@ Java Puzzlers ::
 </ul>
 </li>
 </ul>
-<h1 id=mind-the-gap>Mind the Gap</h1>
+<h2 id=mind-the-gap>Mind the Gap</h2>
 <div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=color:#f92672>import</span> java.io.*<span style=color:#f92672>;</span>
 <span style=color:#66d9ef>public</span> <span style=color:#66d9ef>class</span> <span style=color:#a6e22e>Gap</span> <span style=color:#f92672>{</span>
   privagte <span style=color:#66d9ef>static</span> <span style=color:#66d9ef>final</span> <span style=color:#66d9ef>int</span> GAP_SIZE <span style=color:#f92672>=</span> 10 <span style=color:#f92672>*</span> 1024<span style=color:#f92672>;</span>
@@ -297,7 +297,7 @@ Java Puzzlers ::
 </ul>
 </li>
 </ul>
-<h1 id=histogram-mystery>Histogram Mystery</h1>
+<h2 id=histogram-mystery>Histogram Mystery</h2>
 <div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=color:#66d9ef>public</span> <span style=color:#66d9ef>class</span> <span style=color:#a6e22e>Histogram</span> <span style=color:#f92672>{</span>
   <span style=color:#66d9ef>private</span> <span style=color:#66d9ef>static</span> <span style=color:#66d9ef>final</span> String<span style=color:#f92672>[]</span> words <span style=color:#f92672>=</span>
     <span style=color:#f92672>{</span> <span style=color:#e6db74>&#34;I&#34;</span><span style=color:#f92672>,</span> <span style=color:#e6db74>&#34;recommend&#34;</span><span style=color:#f92672>,</span> <span style=color:#e6db74>&#34;polygene&#34;</span><span style=color:#f92672>,</span> <span style=color:#e6db74>&#34;lubricants&#34;</span> <span style=color:#f92672>};</span>
@@ -338,7 +338,7 @@ Java Puzzlers ::
 </ul>
 </li>
 </ul>
-<h1 id=a-sea-of-troubles>A Sea of Troubles</h1>
+<h2 id=a-sea-of-troubles>A Sea of Troubles</h2>
 <div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=color:#66d9ef>public</span> <span style=color:#66d9ef>class</span> <span style=color:#a6e22e>Hamlet</span> <span style=color:#f92672>{</span>
   <span style=color:#66d9ef>public</span> <span style=color:#66d9ef>static</span> <span style=color:#66d9ef>void</span> <span style=color:#a6e22e>main</span><span style=color:#f92672>(</span>String<span style=color:#f92672>[]</span> args<span style=color:#f92672>)</span> <span style=color:#f92672>{</span>
     Random rnd <span style=color:#f92672>=</span> <span style=color:#66d9ef>new</span> Random<span style=color:#f92672>();</span>
@@ -362,7 +362,7 @@ Java Puzzlers ::
 <li><code>?:</code> 操作符在操作两个不同的包装类型时会有违反直觉的语义</li>
 <li>如果一定要在两个包装类型的值之间进行选择，不要用 <code>?:</code> 操作符，而应该使用 <code>if-else</code></li>
 </ul>
-<h1 id=ground-round>Ground Round</h1>
+<h2 id=ground-round>Ground Round</h2>
 <div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=color:#66d9ef>public</span> <span style=color:#66d9ef>class</span> <span style=color:#a6e22e>Round</span> <span style=color:#f92672>{</span>
   <span style=color:#66d9ef>public</span> <span style=color:#66d9ef>static</span> <span style=color:#66d9ef>void</span> <span style=color:#a6e22e>main</span><span style=color:#f92672>(</span>String<span style=color:#f92672>[]</span> args<span style=color:#f92672>)</span> <span style=color:#f92672>{</span>
     Random rnd <span style=color:#f92672>=</span> <span style=color:#66d9ef>new</span> Random<span style=color:#f92672>();</span>
@@ -388,7 +388,7 @@ Java Puzzlers ::
 <li><code>float</code> 类型很少被使用，尽可能用 <code>double</code>。除非有一个很大的 <code>float</code> 数组</li>
 <li>方法的重载是危险的，尤其是出现隐式的<strong>放宽</strong>时</li>
 </ul>
-<h1 id=size-matters>Size Matters</h1>
+<h2 id=size-matters>Size Matters</h2>
 <div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=color:#66d9ef>public</span> <span style=color:#66d9ef>class</span> <span style=color:#a6e22e>Size</span> <span style=color:#f92672>{</span>
   <span style=color:#66d9ef>private</span> <span style=color:#66d9ef>enum</span> Sex <span style=color:#f92672>{</span> MALE<span style=color:#f92672>,</span> FEMALE <span style=color:#f92672>}</span>
 
@@ -439,7 +439,7 @@ Set<span style=color:#f92672>&lt;</span>Map<span style=color:#f92672>.</span><sp
 </ul>
 </li>
 </ul>
-<h1 id=the-match-game>The Match Game</h1>
+<h2 id=the-match-game>The Match Game</h2>
 <div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=color:#f92672>import</span> java.util.regex.*<span style=color:#f92672>;</span>
 <span style=color:#66d9ef>public</span> <span style=color:#66d9ef>class</span> <span style=color:#a6e22e>Match</span> <span style=color:#f92672>{</span>
   <span style=color:#66d9ef>public</span> <span style=color:#66d9ef>static</span> <span style=color:#66d9ef>void</span> <span style=color:#a6e22e>main</span><span style=color:#f92672>(</span>String<span style=color:#f92672>[]</span> args<span style=color:#f92672>)</span> <span style=color:#f92672>{</span>
@@ -453,7 +453,7 @@ Set<span style=color:#f92672>&lt;</span>Map<span style=color:#f92672>.</span><sp
 <span style=color:#f92672>}</span>
 </code></pre></div><p>可能会认为这个程序将打印出 <code>100</code> 但它并不会输出任何结果，因为 <strong>catastrophic backtracking</strong> 导致其计算时间超过 1015 年。</p>
 <p>正则表达式匹配的本质是构建了一个 DFA，而对于这段代码而言，它将产生一个二叉树，对于任意的奇数个 <code>a</code> 构成的字符串，匹配过程将会遍历整个二叉树的叶子节点，而其复杂度为 $O(2^{n/2})$。这不是 Java 的问题，而是所有支持回溯的正则表达式匹配引擎共有的问题。这个问题没有什么解决方式，只能是在使用正则表达式的时候想清楚其代价。另外，由于正则表达式本身就很容易产生错误，所以尽量少用正则表达式。</p>
-<h1 id=that-sinking-feeling>That Sinking Feeling</h1>
+<h2 id=that-sinking-feeling>That Sinking Feeling</h2>
 <div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=color:#66d9ef>abstract</span> <span style=color:#66d9ef>class</span> <span style=color:#a6e22e>Sink</span><span style=color:#f92672>&lt;</span>T<span style=color:#f92672>&gt;</span> <span style=color:#f92672>{</span>
   <span style=color:#66d9ef>abstract</span> <span style=color:#66d9ef>void</span> <span style=color:#a6e22e>add</span><span style=color:#f92672>(</span>T<span style=color:#f92672>...</span> elements<span style=color:#f92672>);</span>
   <span style=color:#66d9ef>void</span> <span style=color:#a6e22e>addUnlessnull</span><span style=color:#f92672>(</span>T<span style=color:#f92672>...</span> elements<span style=color:#f92672>)</span> <span style=color:#f92672>{</span>
@@ -536,7 +536,7 @@ Set<span style=color:#f92672>&lt;</span>Map<span style=color:#f92672>.</span><sp
 </ul>
 </li>
 </ul>
-<h1 id=glommer-pile>Glommer Pile</h1>
+<h2 id=glommer-pile>Glommer Pile</h2>
 <div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=color:#66d9ef>public</span> <span style=color:#66d9ef>class</span> <span style=color:#a6e22e>Glommer</span><span style=color:#f92672>&lt;</span>T<span style=color:#f92672>&gt;</span> <span style=color:#f92672>{</span>
   String <span style=color:#a6e22e>glom</span><span style=color:#f92672>(</span>Clooection<span style=color:#f92672>&lt;?&gt;</span> objs<span style=color:#f92672>)</span> <span style=color:#f92672>{</span>
     String result <span style=color:#f92672>=</span> <span style=color:#e6db74>&#34;&#34;</span><span style=color:#f92672>;</span>
@@ -600,8 +600,9 @@ Set<span style=color:#f92672>&lt;</span>Map<span style=color:#f92672>.</span><sp
 </ul>
 </li>
 </ul>
-<p><a href="https://www.youtube.com/watch?v=wDN_EYUvUq0">Advanced Topics in Programming Languages: Java Puzzlers,&mldr;</a></p>
-<p><a href="https://www.youtube.com/watch?v=wbp-3BJWsU8">Google I/O 2011: Java Puzzlers - Scraping the Bottom of the Barrel</a></p>
+<h2 id=源视频>源视频</h2>
+<p><a href="https://www.youtube.com/watch?v=wDN_EYUvUq0">Advanced Topics in Programming Languages: Java Puzzlers,&mldr;</a>
+<a href="https://www.youtube.com/watch?v=wbp-3BJWsU8">Google I/O 2011: Java Puzzlers - Scraping the Bottom of the Barrel</a></p>
 </div>
 <div class=pagination>
 <div class=pagination__title>

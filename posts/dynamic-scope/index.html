@@ -78,7 +78,7 @@
 <a href=/tags/lisp/>#Lisp</a>&nbsp;
 </span>
 <div class=post-content>
-<h1 id=静态作用域和动态作用域>静态作用域和动态作用域</h1>
+<h2 id=静态作用域和动态作用域>静态作用域和动态作用域</h2>
 <p>所谓作用域规则就是程序解析名字的方法。如果一个变量的名称不在当前作用域内，则这样的变量称为 unbound variable，例如有一个函数 <code>(lambda () (+ a a))</code>，<code>a</code> 就是一个 unbound variable，在当前作用域内我们无法找到这个变量。那么调用这个函数的求值结果是什么呢？显然要根据 context 来确定，对于 unbound variables 的解析，从解析的时机来划分，有两种规则，一种是「静态作用域」（Static Scope）也被称为「词法作用域」（Lexical Scope），另一种是「动态作用域」（Dynamic Scope）<sup id=fnref:1><a href=#fn:1 class=footnote-ref role=doc-noteref>1</a></sup>。</p>
 <p>对于现在流行的大多数语言来说，其作用域规则都是静态作用域规则，例如 Java、C++ 等，其特点根据函数定义处的环境解析里面用到的 unbound variables。仅有少数语言使用动态作用域规则，例如 Emacs Lisp，其函数内的 unbound variables 的解析是根据函数被调用时的环境来决定的。举例而言，对如下的表达式求值：</p>
 <div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-scheme data-lang=scheme>(<span style=color:#66d9ef>let </span>((<span style=color:#a6e22e>a</span> <span style=color:#ae81ff>1</span>))
@@ -101,7 +101,7 @@
   (<span style=color:#66d9ef>let </span>((<span style=color:#a6e22e>n</span> <span style=color:#ae81ff>2</span>))
     (<span style=color:#a6e22e>add1</span> n)))
 </code></pre></div><p>显然我们还是希望这个表达式求值的结果为 <code>3</code>，这对采用静态作用域的语言来说仍然如此，但对于采用动态作用域语言的使用者来说这就有问题了，因为这个表达式将会返回 <code>4</code>。所以，对于函数的实现者来说他需要担心函数被使用的位置会出现重名造成的问题，对于函数的调用者来说他也要担心这个问题，结果就是在 Emacs Lisp 这样的语言里，函数的实现者往往会使用一个非常长的名字来命名变量，这显然不是什么好事。也许有时你确实需要这样的效果，但是在大多数情况下，动态作用域的规则是很容易造成大量难以排查的 bug 的，况且如果真的需要在静态作用域语言里实现这样的效果，传入参数是一个更加可靠且可控的做法。</p>
-<h1 id=分别实现两种作用域>分别实现两种作用域</h1>
+<h2 id=分别实现两种作用域>分别实现两种作用域</h2>
 <p>下面要谈到的是对于一个解释器来说，这两种作用域应该分别怎么实现 <sup id=fnref:2><a href=#fn:2 class=footnote-ref role=doc-noteref>2</a></sup>，当然，刚刚也说了，动态作用域其实没什么好处，这么做其实纯粹是为了好玩。</p>
 <p>首先说明需要用到的 ADT，先说程序里面用到的值和表达式应该如何表示，这里只列出我们关心的部分：</p>
 <div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-haskell data-lang=haskell><span style=color:#66d9ef>data</span> <span style=color:#66d9ef>Val</span> <span style=color:#f92672>=</span> <span style=color:#66d9ef>IntVal</span> <span style=color:#66d9ef>Int</span>
@@ -170,7 +170,7 @@
   evalCall params args body capture env ((name, val)<span style=color:#66d9ef>:</span>scope)
 <span style=color:#a6e22e>evalCall</span> <span style=color:#66d9ef>_</span> <span style=color:#66d9ef>_</span> <span style=color:#66d9ef>_</span> <span style=color:#66d9ef>_</span> <span style=color:#66d9ef>_</span> <span style=color:#66d9ef>_</span> <span style=color:#f92672>=</span> <span style=color:#66d9ef>Left</span> <span style=color:#e6db74>&#34;Mismatched parameters and arguments&#34;</span>
 </code></pre></div><p>我们将参数列表绑定形成的作用域放在当前求值环境 <code>env</code> 的开头，然后，为了使其在找不到名字的时候能在它被定义的作用域里查找，我们还要将捕获的环境 <code>capture</code> 接在末尾，这样形成的新环境就是 closure 的 body 的求值环境，此时其作用域就是动态的了。当我们在当前作用域中找不到一个名字时，我们会先查找函数被调用的空间。</p>
-<h1 id=在-c-中模拟动态作用域>在 C++ 中模拟动态作用域</h1>
+<h2 id=在-c-中模拟动态作用域>在 C++ 中模拟动态作用域</h2>
 <p>上一节讲的是在解释器中实现两种作用域的方式，那如果我们就是想在现有的语言里模拟这个特性呢？这里就试着在 C++ 里模拟出类似的效果 <sup id=fnref:3><a href=#fn:3 class=footnote-ref role=doc-noteref>3</a></sup>。</p>
 <p>其实说 C++ 完全是静态作用域语言是不完全正确的，C++ 的宏系统由于是直接展开，所以它是根据展开的位置来判定其值到底是多少，所以本身是类似于动态作用域的，例如：</p>
 <div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style=color:#75715e>#define ADD_N(x) ((x) + n)
@@ -371,7 +371,8 @@ x <span style=color:#f92672>=</span> <span style=color:#e6db74>&#34;123&#34;</sp
 </span><span style=color:#75715e></span>  END_BINDING
   <span style=color:#75715e>// foo();      // runtime error: no such binding
 </span><span style=color:#75715e></span>}
-</code></pre></div><section class=footnotes role=doc-endnotes>
+</code></pre></div><h2 id=参考资料>参考资料</h2>
+<section class=footnotes role=doc-endnotes>
 <hr>
 <ol>
 <li id=fn:1 role=doc-endnote>
