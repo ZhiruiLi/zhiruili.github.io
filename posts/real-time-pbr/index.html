@@ -114,7 +114,7 @@
 <h2 id=镜面反射分量>镜面反射分量</h2>
 <p>镜面反射分量比漫反射分量要复杂不少，它的计算方式如下：</p>
 <p>$$f_r(\mathrm{i},\ \mathrm{o}) = \frac{F(\mathrm{i},\ \mathrm{h})\ G(\mathrm{i},\ \mathrm{o},\ \mathrm{h})\ D(\mathrm{h})}{4 (\mathrm{n},\ \mathrm{i}) (\mathrm{n},\ \mathrm{o})}$$</p>
-<p>其中，等式右侧的分子用于进行归一化，我们核心关注的点在分母部分。分母部分是三个项的乘积，它们分别为：</p>
+<p>其中，等式右侧的分母用于进行归一化，我们核心关注的点在分子部分。分子部分是三个项的乘积，它们分别为：</p>
 <ul>
 <li>$F(\mathrm{i},\ \mathrm{h})$ 菲涅耳项（Fresnel Term）</li>
 <li>$G(\mathrm{i},\ \mathrm{o},\ \mathrm{h})$ 阴影遮蔽项（Shadowing-Masking Term）</li>
@@ -122,7 +122,7 @@
 </ul>
 <p>下面我们分别讨论这几项。</p>
 <h3 id=菲涅耳项>菲涅耳项</h3>
-<p>菲涅耳项用于描述物体表面对光的反射比例和光的入射角（Incident Angle）以及光的极化情况（Polarization of Light）的关系。在下图 <sup id=fnref:8><a href=#fn:8 class=footnote-ref role=doc-noteref>8</a></sup> 中我们可以看到，桌子在不同角度下对书本的反射情况存在明显的不同，当观察角度越接近掠射角（Glancing Angle），即入射角和桌面法线方向越接近 $90^\circ$ 的时候（我们认为光路具有可逆性，观察视线方向越接近掠射角也就意味着入射方向越接近掠射角），光线反射比例越大，我们就能越清晰地看到桌面上书本的倒影：</p>
+<p>菲涅耳项用于描述物体表面对光的反射比例和光的入射角（Incident Angle）以及光的极化情况（Polarization of Light）的关系。在下图 <sup id=fnref:8><a href=#fn:8 class=footnote-ref role=doc-noteref>8</a></sup> 中我们可以看到，桌子在不同角度下对书本的反射情况存在明显的不同，当观察方向和桌面越接近平行，即入射角和桌面法线方向越接近 $90^\circ$ 的时候，光线反射比例越大，我们就能越清晰地看到桌面上书本的倒影（根据镜面反射定律，观察视线方向和桌面法线的夹角接近 $90^\circ$ 就意味着入射光与桌面法线的夹角接近 $90^\circ$）：</p>
 <p><img src=/images/2021-09-04-12-32-06.png alt></p>
 <p>从下图 <sup id=fnref:8><a href=#fn:8 class=footnote-ref role=doc-noteref>8</a></sup> 中我们能更加明确地看到反射比例和光的入射角之间的关系（图中的红线）。左侧的图是绝缘体的反射比例变化图，右侧则是导体的反射比例变化图，从图中可以看出绝缘体和导体的菲涅耳项有非常大的区别。其中，绝缘体的反射比例确实就像我们在上图中观察到的那样，与光的入射角度存在明显的正相关性。而导体的反射比例变化则较为复杂，有一个先降后升的过程。另外我们还能发现，相比与绝缘体，导体在任何角度下都有相当高的反射比例，我们日常也确实会发现金属总是会有相当明显的高光。</p>
 <p><img src=/images/2021-09-04-18-49-04.png alt></p>
@@ -171,9 +171,9 @@ R(0) &= \left( \frac{n_1 - n_2}{n_1 + n_2} \right)^2
 <p>GGX 的长尾特性使得 GGX 能显著减缓高光边缘亮度的衰减。在 GGX 模型出现之前，为了模拟这样的效果，需要叠加多个 BRDF，而改用 GGX 之后，则只需要用一个 BRDF 即可实现了。下图 <sup id=fnref:12><a href=#fn:12 class=footnote-ref role=doc-noteref>12</a></sup> 对比了 Beckmann 模型和 GGX 模型的实际渲染效果，可以看到 GGX 能渲染出更加柔和自然的高光：</p>
 <p><img src=/images/2021-09-05-12-09-46.png alt></p>
 <h3 id=阴影遮蔽项>阴影遮蔽项</h3>
-<p>在讨论阴影遮蔽项 $G(\mathrm{i},\ \mathrm{o},\ \mathrm{h})$ 的计算之前，我们先来考虑一下这一项存在的意义。根据菲涅耳项的变化规律，我们知道，如果我们看向场景中的一个球体，那么这个球体的中央法线和观察方向的夹角会接近于 $0^\circ$，此时反射比例应该是基准反射率 $R_0$，而这个球体的边缘法线方向和观察方向的夹角就比较接近掠视角度，反射比例应该是 $1$，因此我们理论上应该看到类似下图 <sup id=fnref:4><a href=#fn:4 class=footnote-ref role=doc-noteref>4</a></sup> 中的边缘发光效果：</p>
+<p>在讨论阴影遮蔽项 $G(\mathrm{i},\ \mathrm{o},\ \mathrm{h})$ 的计算之前，我们先来考虑一下这一项存在的意义。根据菲涅耳项的变化规律，我们知道，如果我们看向场景中的一个球体，那么这个球体的中央法线和观察方向的夹角会接近于 $0^\circ$，此时反射比例应该是基准反射率 $R_0$，而这个球体的边缘法线方向和观察方向的夹角就比较接近 $90^\circ$，反射比例应该是 $1$，因此我们理论上应该看到类似下图 <sup id=fnref:4><a href=#fn:4 class=footnote-ref role=doc-noteref>4</a></sup> 中的边缘发光效果：</p>
 <p><img src=/images/2021-09-05-12-30-12.png alt></p>
-<p>而阴影遮蔽项存在的主要目的是为了中和菲涅耳项产生的这个影响。而这一项本身的定义也符合物理规律，它表达的是微表面在入射方向（阴影）和出射方向（遮蔽）的可见概率。我们可以想象，在微平面模型下，观察方向越是接近掠视角度，那么阴影和遮蔽的情况必然更加明显，而当我们垂直看向一个表面时，阴影遮蔽项应该几乎不产生作用。一个常用的阴影遮蔽函数为 Smith 遮蔽函数。Smith 遮蔽函数为了简化计算，将阴影项和遮蔽项分开考虑（事实上这两项本身应该是有关联的）使：</p>
+<p>而阴影遮蔽项存在的主要目的是为了中和菲涅耳项产生的这个影响。而这一项本身的定义也符合物理规律，它表达的是微表面在入射方向（阴影）和出射方向（遮蔽）的可见概率。我们可以想象，在微平面模型下，观察方向和表面法线的夹角越是接近 $90^\circ$，那么阴影和遮蔽的情况必然更加明显，而当我们垂直看向一个表面时，阴影遮蔽项应该几乎不产生作用。一个常用的阴影遮蔽函数为 Smith 遮蔽函数。Smith 遮蔽函数为了简化计算，将阴影项和遮蔽项分开考虑（事实上这两项本身应该是有关联的）使：</p>
 <p>$$G(\mathrm{i},\ \mathrm{o},\ \mathrm{h}) \approx G_1(\mathrm{i},\ \mathrm{h})\ G_1(\mathrm{o},\ \mathrm{h})$$</p>
 <p>这里的 $G_1$ 有如下的基本形式：</p>
 <p>$$G_1(\mathrm{v},\ \mathrm{h}) = \chi^+{\left( \frac{\mathrm{v} \cdot \mathrm{h}}{\mathrm{v} \cdot \mathrm{n}} \right)} \ \frac{1}{1 + \Lambda(\mathrm{v})}$$</p>
@@ -194,9 +194,10 @@ R(0) &= \left( \frac{n_1 - n_2}{n_1 + n_2} \right)^2
 <p>$$G_1(\mathrm{v},\ \mathrm{h}) = \chi^+{\left( \frac{\mathrm{v} \cdot \mathrm{h}}{\mathrm{v} \cdot \mathrm{n}} \right)} \ \frac{2}{1 + \sqrt{1 + a^2 \tan^2{\theta}}}$$</p>
 <p>下图 <sup id=fnref:14><a href=#fn:14 class=footnote-ref role=doc-noteref>14</a></sup> 展示了两种模型对应的 $G_1$ 的区别，其中绿色的曲线是 Beckmann 模型对应的 $G_1$，红色曲线是 GGX 模型对应的 $G_1$。可以看到这两条曲线的形状和前面我们对阴影遮蔽项的分析相符合，在大多数角度下，$G_1(\mathrm{v})$ 的值都几乎为 $1$，而当角度开始接近 $\pm 90^\circ$ 时，$G_1(\mathrm{v})$ 的值会急剧衰减，避免了前面提到的边缘发光的问题。</p>
 <p><img src=/images/2021-09-05-16-16-11.png alt></p>
-<h2 id=最终的公式>最终的公式</h2>
+<h2 id=总结>总结</h2>
 <p>将我们前面研究的 BRDF 代入反射方程，即可得出完整的 Cook-Torrance PBR 反射方程了：</p>
 <p>$$L_o(\mathrm{x},\ \omega_o) = \int_{H^2} \left( k_d \frac{\rho}{\pi} + k_s \frac{F G D}{4 (\mathrm{n},\ \mathrm{i}) (\mathrm{n},\ \mathrm{o})} \right) \ L_i(\mathrm{x},\ \omega_i) \cos{}\theta_i \ \mathrm{d}\omega_i$$</p>
+<p>在理解了渲染方程的物理基础以及 PBR BRDF 中各项的意义后，原本相当劝退的公式也就变得易于理解了。在实际工程中，PBR 材质的实现可能会有不同程度的修改，但基本形式是不变的。</p>
 <h2 id=参考资料>参考资料</h2>
 <section class=footnotes role=doc-endnotes>
 <hr>
