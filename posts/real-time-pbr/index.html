@@ -153,6 +153,7 @@ R(0) &= \left( \frac{n_1 - n_2}{n_1 + n_2} \right)^2
 <p><img src=/images/2021-09-04-12-24-13.png alt></p>
 <p>我们用一个阴影遮蔽函数 $G(\mathrm{i},\ \mathrm{o},\ \mathrm{h})$ 来描述这种遮挡关系造成反射结果变化。这里的 $G$ 是几何（Geometry）的意思。</p>
 <p>我们前面提到，高光项的计算产生了一些能量损失，因此我们加了一个漫反射项来补充了这部分能量。这部分损失的能量主要就是由阴影遮蔽产生的。我们在计算阴影遮蔽时，只要微平面间产生了互遮挡，我们就不考虑这部分能量了。但我们知道，光在现实的物体表面间会发生弹射，即便光线被表面遮挡，其中的部分能量还是可能在多次弹射后被观察者看到。而这部分本应被看到却被忽略的能量就是导致渲染结果变暗的原因，由于粗糙的物体表面更可能发生微平面的互遮挡，因此在渲染粗糙表面时，渲染效果的变暗情况会更加严重。虽然加入补充的能量的做法并不符合物理规律，但加入它能近似出不错的渲染效果。</p>
+<p>在了解了微平面模型之后，下面我们就来详细讨论基于微平面模型导出的法线分布项和阴影遮蔽项具体怎么算。</p>
 <h3 id=法线分布项>法线分布项</h3>
 <p>法线分布项 $D(\mathrm{h})$ 是一个密度函数，用于描述 $\mathrm{h}$ 方向的法线在微平面上的统计分布情况。给定一个以方向 $\mathrm{h}$ 为中心的无穷小立体角 $\mathrm{d} \omega_\mathrm{h}$ 以及一个无穷小的宏表面 $\mathrm{d}A$，$D(\mathrm{h}) \ \mathrm{d} \omega_\mathrm{h} \ \mathrm{d}A$ 表示 $\mathrm{d}A$ 中法线位于 $d\omega_\mathrm{h}$ 立体角内的所有微平面的总面积。现在常用的法线分布函数为 Beckmann 模型 <sup id=fnref:13><a href=#fn:13 class=footnote-ref role=doc-noteref>13</a></sup> 和 GGX 模型（又称 Trowbridge-Reitz 模型）<sup id=fnref:14><a href=#fn:14 class=footnote-ref role=doc-noteref>14</a></sup>。</p>
 <p>其中 Beckmann 模型的公式如下 <sup id=fnref:14><a href=#fn:14 class=footnote-ref role=doc-noteref>14</a></sup>：</p>
