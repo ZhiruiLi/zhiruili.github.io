@@ -163,7 +163,7 @@ R(0) &= \left( \frac{n_1 - n_2}{n_1 + n_2} \right)^2
 1, & where \ x > 0 \newline
 0, & otherwise
 \end{cases}$$</p>
-<p>$\alpha$ 是表面的粗糙程度（$\alpha$ 越小则表面越光滑），$\theta_\mathrm{h}$ 则表示半程向量 $\mathrm{h}$ 和法线 $\mathrm{n}$ 之间的夹角。这个公式相当复杂，但是它基本上是一个类似高斯分布的钟形曲线，区别在于这个函数定义在坡度空间（Slope Space），即其中的 $\tan^2 \theta_\mathrm{h}$ 部分。这里之所以不直接用 $\theta_\mathrm{h}$ 而需要加入一个 $\tan$ 是因为 $\theta_\mathrm{h}$ 的取值只有 $[0,\ 90^\circ]$，而高斯分布的定义域事实上是无穷大的，为了避免丢失这部分的能量，我们需要将变量的取值范围扩大，这里采用 $\tan$ 的目的就在此。我们知道，$\tan \theta$ 在 $\theta = 0$ 时值为 $0$，而随着 $\theta$ 增大到 $90^\circ$ 时会趋于无穷大，这就符合了我们的要求。</p>
+<p>$\alpha$ 是表面的粗糙程度（$\alpha$ 越小则表面越光滑），$\mathrm{n}$ 是宏表面的法线，$\theta_\mathrm{h}$ 则表示半程向量 $\mathrm{h}$ 和法线 $\mathrm{n}$ 之间的夹角。这个公式相当复杂，但是它基本上是一个类似高斯分布的钟形曲线，区别在于这个函数定义在坡度空间（Slope Space），即其中的 $\tan^2 \theta_\mathrm{h}$ 部分。这里之所以不直接用 $\theta_\mathrm{h}$ 而需要加入一个 $\tan$ 是因为 $\theta_\mathrm{h}$ 的取值只有 $[0,\ 90^\circ]$，而高斯分布的定义域事实上是无穷大的，为了避免丢失这部分的能量，我们需要将变量的取值范围扩大，这里采用 $\tan$ 的目的就在此。我们知道，$\tan \theta$ 在 $\theta = 0$ 时值为 $0$，而随着 $\theta$ 增大到 $90^\circ$ 时会趋于无穷大，这就符合了我们的要求。</p>
 <p>Beckmann 模型类似高斯分布，那它自然也继承了高斯分布的一些性质。我们知道，高斯分布有一个三 $\sigma$ 法则（Three-sigma Rule of Thumb）<sup id=fnref:15><a href=#fn:15 class=footnote-ref role=doc-noteref>15</a></sup>，即尽管高斯分布的定义域是无穷大的，但在取值超过 $\pm 3 \sigma$ 的时候，其值会变得非常小（$\pm 3 \sigma$ 范围内占据了整个钟形曲线超过 99.7% 的面积）。这导致了基于 Beckmann 模型渲染的高光会出现边缘亮度衰减过快的感觉。</p>
 <p>GGX 模型解决了 Beckmann 模型的这个问题，其公式如下 <sup id=fnref:14><a href=#fn:14 class=footnote-ref role=doc-noteref>14</a></sup>：</p>
 <p>$$D(\mathrm{h}) = \frac{\alpha^2 \ \chi^+(\mathrm{h} \cdot \mathrm{n})}{\pi \cos^4 \theta_\mathrm{h} (\alpha^2 + \tan^2 \theta_\mathrm{h})^2}$$</p>
@@ -189,8 +189,8 @@ R(0) &= \left( \frac{n_1 - n_2}{n_1 + n_2} \right)^2
 1, & otherwise
 \end{cases}$$</p>
 <p>其中，</p>
-<p>$$a = (\alpha \tan{\theta})^{-1}$$</p>
-<p>这里的 $\alpha$ 就是法线分布项中的 $\alpha$ 参数。</p>
+<p>$$a = (\alpha \tan{\theta_v})^{-1}$$</p>
+<p>这里的 $\alpha$ 就是法线分布项中的 $\alpha$ 参数，$\theta_v$ 是 $\mathrm{v}$ 和 $\mathrm{n}$ 之间的夹角。</p>
 <p>而 GGX 模型对应的 $G_1$ 具体为 <sup id=fnref:14><a href=#fn:14 class=footnote-ref role=doc-noteref>14</a></sup>：</p>
 <p>$$G_1(\mathrm{v},\ \mathrm{h}) = \chi^+{\left( \frac{\mathrm{v} \cdot \mathrm{h}}{\mathrm{v} \cdot \mathrm{n}} \right)} \ \frac{2}{1 + \sqrt{1 + a^2 \tan^2{\theta}}}$$</p>
 <p>下图 <sup id=fnref:14><a href=#fn:14 class=footnote-ref role=doc-noteref>14</a></sup> 展示了两种模型对应的 $G_1$ 的区别，其中绿色的曲线是 Beckmann 模型对应的 $G_1$，红色曲线是 GGX 模型对应的 $G_1$。可以看到这两条曲线的形状和前面我们对阴影遮蔽项的分析相符合，在大多数角度下，$G_1(\mathrm{v})$ 的值都几乎为 $1$，而当角度开始接近 $\pm 90^\circ$ 时，$G_1(\mathrm{v})$ 的值会急剧衰减，避免了前面提到的边缘发光的问题。</p>
