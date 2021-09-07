@@ -116,9 +116,9 @@
 <p>$$f_r(\mathrm{i},\ \mathrm{o}) = \frac{F(\mathrm{i},\ \mathrm{h})\ G(\mathrm{i},\ \mathrm{o},\ \mathrm{h})\ D(\mathrm{h})}{4 (\mathrm{n},\ \mathrm{i}) (\mathrm{n},\ \mathrm{o})}$$</p>
 <p>其中，等式右侧的分母用于进行归一化，我们核心关注的点在分子部分。分子部分是三个项的乘积，它们分别为：</p>
 <ul>
-<li>$F(\mathrm{i},\ \mathrm{h})$ 菲涅耳项（Fresnel Term）</li>
-<li>$G(\mathrm{i},\ \mathrm{o},\ \mathrm{h})$ 阴影遮蔽项（Shadowing-Masking Term）</li>
-<li>$D(\mathrm{h})$ 法线分布项（Normal Distribution Term）</li>
+<li>$F$ 菲涅耳项（Fresnel Term）</li>
+<li>$G$ 阴影遮蔽项（Shadowing-Masking Term）</li>
+<li>$D$ 法线分布项（Normal Distribution Term）</li>
 </ul>
 <p>下面我们分别讨论这几项。</p>
 <h3 id=菲涅耳项>菲涅耳项</h3>
@@ -148,51 +148,51 @@ R(0) &= \left( \frac{n_1 - n_2}{n_1 + n_2} \right)^2
 <p>反之，如果物体表面的微平面法线方向分散，那么光线照上去后就会倾向于向不同方向反射，此时物体表面的高光就变得不明显，也就是我们通常认为的「粗糙」的表面，如下图所示：</p>
 <p><img src=/images/2021-08-29-19-47-54.png alt></p>
 <p>从上面的两幅渲染图中，我们也能看到能量守恒定律在此处起到的作用。物体表面法线方向越集中时，高光的亮度越高，但其范围越小，反之，物体表面法线方向越分散时，高光范围越大，但亮度则越低。</p>
-<p>在微平面模型的指导下，我们知道，对于一个物体的表面而言，我们之所以能在某个方向上 $\omega_o$ 处看到高光，是因为有一部分微平面将入射光从 $\omega_i$ 反射到 $\omega_o$。由于我们认为每一个微平面都是光滑的镜面，显然，能够将入射光完美反射到给定观察方向的微平面，就是法线方向和 $\omega_i$、$\omega_o$ 的半程向量相同的的微平面（关于半程向量的定义，我们在<a href=/posts/basic-shading>图形学入门（三）：基础着色</a>中已有讨论，这里不再赘述）。因此，我们可以用一个法线分布函数 $D(\mathrm{h})$ 来描述物体表面对光的反射情况。</p>
+<p>在微平面模型的指导下，我们知道，对于一个物体的表面而言，我们之所以能在某个方向上 $\omega_o$ 处看到高光，是因为有一部分微平面将入射光从 $\omega_i$ 反射到 $\omega_o$。由于我们认为每一个微平面都是光滑的镜面，显然，能够将入射光完美反射到给定观察方向的微平面，就是法线方向和 $\omega_i$、$\omega_o$ 的半程向量相同的的微平面（关于半程向量的定义，我们在<a href=/posts/basic-shading>图形学入门（三）：基础着色</a>中已有讨论，这里不再赘述）。因此，我们可以用一个法线分布函数 $D(\mathrm{m})$ 来描述物体表面对光的反射情况。</p>
 <p>类似地，由于在微观上物体表面凹凸不平，因此这些凹凸的表面之间会发生相互的遮挡，如下图 <sup id=fnref:12><a href=#fn:12 class=footnote-ref role=doc-noteref>12</a></sup> 所示。其中，光线在照射到物体表面时会产生阴影（Shadowing）（下图左），而光线在反射时则会被遮挡（Masking）无法被观察者看到（下图右）：</p>
 <p><img src=/images/2021-09-04-12-24-13.png alt></p>
-<p>我们用一个阴影遮蔽函数 $G(\mathrm{i},\ \mathrm{o},\ \mathrm{h})$ 来描述这种遮挡关系造成反射结果变化。这里的 $G$ 是几何（Geometry）的意思。</p>
+<p>我们用一个阴影遮蔽函数 $G(\mathrm{i},\ \mathrm{o},\ \mathrm{m})$ 来描述这种遮挡关系造成反射结果变化。这里的 $G$ 是几何（Geometry）的意思。</p>
 <p>我们前面提到，高光项的计算产生了一些能量损失，因此我们加了一个漫反射项来补充了这部分能量。这部分损失的能量主要就是由阴影遮蔽产生的。我们在计算阴影遮蔽时，只要微平面间产生了互遮挡，我们就不考虑这部分能量了。但我们知道，光在现实的物体表面间会发生弹射，即便光线被表面遮挡，其中的部分能量还是可能在多次弹射后被观察者看到。而这部分本应被看到却被忽略的能量就是导致渲染结果变暗的原因，由于粗糙的物体表面更可能发生微平面的互遮挡，因此在渲染粗糙表面时，渲染效果的变暗情况会更加严重。虽然加入补充的能量的做法并不符合物理规律，但加入它能近似出不错的渲染效果。</p>
 <p>在了解了微平面模型之后，下面我们就来详细讨论基于微平面模型导出的法线分布项和阴影遮蔽项具体怎么算。</p>
 <h3 id=法线分布项>法线分布项</h3>
-<p>法线分布项 $D(\mathrm{h})$ 是一个密度函数，用于描述 $\mathrm{h}$ 方向的法线在微平面上的统计分布情况。给定一个以方向 $\mathrm{h}$ 为中心的无穷小立体角 $\mathrm{d} \omega_\mathrm{h}$ 以及一个无穷小的宏表面 $\mathrm{d}A$，$D(\mathrm{h}) \ \mathrm{d} \omega_\mathrm{h} \ \mathrm{d}A$ 表示 $\mathrm{d}A$ 中法线位于 $d\omega_\mathrm{h}$ 立体角内的所有微平面的总面积。现在常用的法线分布函数为 Beckmann 模型 <sup id=fnref:13><a href=#fn:13 class=footnote-ref role=doc-noteref>13</a></sup> 和 GGX 模型（又称 Trowbridge-Reitz 模型）<sup id=fnref:14><a href=#fn:14 class=footnote-ref role=doc-noteref>14</a></sup>。</p>
+<p>法线分布项 $D(\mathrm{m})$ 是一个密度函数，用于描述方向为 $\mathrm{m}$ 的法线在微平面上的统计分布情况。给定一个以方向 $\mathrm{m}$ 为中心的无穷小立体角 $\mathrm{d} \omega_\mathrm{m}$ 以及一个无穷小的宏表面 $\mathrm{d}A$，$D(\mathrm{m}) \mathrm{d} \omega_\mathrm{m} \mathrm{d}A$ 表示 $\mathrm{d}A$ 中法线位于 $d\omega_\mathrm{m}$ 立体角内的所有微平面的总面积。现在常用的法线分布函数为 Beckmann 模型 <sup id=fnref:13><a href=#fn:13 class=footnote-ref role=doc-noteref>13</a></sup> 和 GGX 模型（又称 Trowbridge-Reitz 模型）<sup id=fnref:14><a href=#fn:14 class=footnote-ref role=doc-noteref>14</a></sup>。</p>
 <p>其中 Beckmann 模型的公式如下 <sup id=fnref:14><a href=#fn:14 class=footnote-ref role=doc-noteref>14</a></sup>：</p>
-<p>$$D(\mathrm{h}) = \frac{\chi^+(\mathrm{h} \cdot \mathrm{n})}{\pi \alpha^2 \cos^4 \theta_\mathrm{h}}\mathrm{e}^{- \frac{\tan^2 \theta_{\mathrm{h}}}{\alpha^2}}$$</p>
+<p>$$D(\mathrm{m}) = \frac{\chi^+(\mathrm{m} \cdot \mathrm{n})}{\pi \alpha^2 \cos^4 \theta_\mathrm{m}}\mathrm{e}^{- \frac{\tan^2 \theta_{\mathrm{m}}}{\alpha^2}}$$</p>
 <p>其中，</p>
 <p>$$\chi^+(x) = \begin{cases}
 1, & where \ x > 0 \newline
 0, & otherwise
 \end{cases}$$</p>
-<p>$\alpha$ 是表面的粗糙程度（$\alpha$ 越小则表面越光滑），$\mathrm{n}$ 是宏表面的法线，$\theta_\mathrm{h}$ 则表示半程向量 $\mathrm{h}$ 和法线 $\mathrm{n}$ 之间的夹角。这个公式相当复杂，但是它基本上是一个类似高斯分布的钟形曲线，区别在于这个函数定义在坡度空间（Slope Space），即其中的 $\tan^2 \theta_\mathrm{h}$ 部分。这里之所以不直接用 $\theta_\mathrm{h}$ 而需要加入一个 $\tan$ 是因为 $\theta_\mathrm{h}$ 的取值只有 $[0,\ 90^\circ]$，而高斯分布的定义域事实上是无穷大的，为了避免丢失这部分的能量，我们需要将变量的取值范围扩大，这里采用 $\tan$ 的目的就在此。我们知道，$\tan \theta$ 在 $\theta = 0$ 时值为 $0$，而随着 $\theta$ 增大到 $90^\circ$ 时会趋于无穷大，这就符合了我们的要求。</p>
-<p>Beckmann 模型类似高斯分布，那它自然也继承了高斯分布的一些性质。我们知道，高斯分布有一个三 $\sigma$ 法则（Three-sigma Rule of Thumb）<sup id=fnref:15><a href=#fn:15 class=footnote-ref role=doc-noteref>15</a></sup>，即尽管高斯分布的定义域是无穷大的，但在取值超过 $\pm 3 \sigma$ 的时候，其值会变得非常小（$\pm 3 \sigma$ 范围内占据了整个钟形曲线超过 99.7% 的面积）。这导致了基于 Beckmann 模型渲染的高光会出现边缘亮度衰减过快的感觉。</p>
+<p>$\alpha$ 是表面的粗糙程度（$\alpha$ 越小则表面越光滑），$\mathrm{n}$ 是宏表面的法线，$\theta_\mathrm{m}$ 则表示向量 $\mathrm{m}$ 和宏表面法线 $\mathrm{n}$ 之间的夹角。这个公式相当复杂，但是它基本上是一个类似高斯分布的钟形曲线，区别在于这个函数定义在坡度空间（Slope Space），即其中的 $\tan^2 \theta_\mathrm{m}$ 部分。这里之所以不直接用 $\theta_\mathrm{m}$ 而需要加入一个 $\tan$ 是因为 $\theta_\mathrm{m}$ 的取值只有 $[0,\ 90^\circ]$，而高斯分布的定义域事实上是无穷大的，为了避免丢失这部分的能量，我们需要将变量的取值范围扩大，这里采用 $\tan$ 的目的就在此。我们知道，$\tan \theta$ 在 $\theta = 0$ 时值为 $0$，而随着 $\theta$ 增大到 $90^\circ$ 时会趋于无穷大，这就符合了我们的要求。</p>
+<p>Beckmann 模型类似高斯分布，那它自然也继承了高斯分布的一些性质。我们知道，高斯分布有一个三 $\sigma$ 法则（Three-Sigma Rule of Thumb）<sup id=fnref:15><a href=#fn:15 class=footnote-ref role=doc-noteref>15</a></sup>，即尽管高斯分布的定义域是无穷大的，但在取值超过 $\pm 3 \sigma$ 的时候，其值会变得非常小（$\pm 3 \sigma$ 范围内占据了整个钟形曲线超过 99.7% 的面积）。这导致了基于 Beckmann 模型渲染的高光会出现边缘亮度衰减过快的感觉。</p>
 <p>GGX 模型解决了 Beckmann 模型的这个问题，其公式如下 <sup id=fnref:14><a href=#fn:14 class=footnote-ref role=doc-noteref>14</a></sup>：</p>
-<p>$$D(\mathrm{h}) = \frac{\alpha^2 \ \chi^+(\mathrm{h} \cdot \mathrm{n})}{\pi \cos^4 \theta_\mathrm{h} (\alpha^2 + \tan^2 \theta_\mathrm{h})^2}$$</p>
+<p>$$D(\mathrm{m}) = \frac{\alpha^2 \ \chi^+(\mathrm{m} \cdot \mathrm{n})}{\pi \cos^4 \theta_\mathrm{m} (\alpha^2 + \tan^2 \theta_\mathrm{m})^2}$$</p>
 <p>下图 <sup id=fnref:14><a href=#fn:14 class=footnote-ref role=doc-noteref>14</a></sup> 对比了 Beckmann 模型和 GGX 模型变化趋势的差别。从中我们可以看出 GGX 模型（绿色曲线）相比 Beckmann 模型（红色曲线）存在明显的长尾，即在超过一定的范围后，Beckmann 模型的能量已经几乎衰减到 $0$，而 GGX 模型则仍然有较为明显的能量存在：</p>
 <p><img src=/images/2021-09-05-16-20-08.png alt></p>
 <p>GGX 的长尾特性使得 GGX 能显著减缓高光边缘亮度的衰减。在 GGX 模型出现之前，为了模拟这样的效果，需要叠加多个 BRDF，而改用 GGX 之后，则只需要用一个 BRDF 即可实现了。下图 <sup id=fnref:12><a href=#fn:12 class=footnote-ref role=doc-noteref>12</a></sup> 对比了 Beckmann 模型和 GGX 模型的实际渲染效果，可以看到 GGX 能渲染出更加柔和自然的高光：</p>
 <p><img src=/images/2021-09-05-12-09-46.png alt></p>
 <h3 id=阴影遮蔽项>阴影遮蔽项</h3>
-<p>在讨论阴影遮蔽项 $G(\mathrm{i},\ \mathrm{o},\ \mathrm{h})$ 的计算之前，我们先来考虑一下这一项存在的意义。如果我们正对着看向场景中的一个球体，我们会看到一个圆。根据菲涅耳项的变化规律，我们知道，靠近圆心位置的表面法线和观察方向的夹角会接近于 $0^\circ$，此时反射比例应该是基准反射率 $R_0$，而靠近边缘位置的表面法线方向和观察方向的夹角就比较接近 $90^\circ$，反射比例应该是 $1$，因此我们理论上应该看到类似下图 <sup id=fnref:4><a href=#fn:4 class=footnote-ref role=doc-noteref>4</a></sup> 中的边缘发光效果：</p>
+<p>在讨论阴影遮蔽项 $G(\mathrm{i},\ \mathrm{o},\ \mathrm{m})$ 的计算之前，我们先来考虑一下这一项存在的意义。如果我们正对着看向场景中的一个球体，我们会看到一个圆。根据菲涅耳项的变化规律，我们知道，靠近圆心位置的表面法线和观察方向的夹角会接近于 $0^\circ$，此时反射比例应该是基准反射率 $R_0$，而靠近边缘位置的表面法线方向和观察方向的夹角就比较接近 $90^\circ$，反射比例应该是 $1$，因此我们理论上应该看到类似下图 <sup id=fnref:4><a href=#fn:4 class=footnote-ref role=doc-noteref>4</a></sup> 中的边缘发光效果：</p>
 <p><img src=/images/2021-09-05-12-30-12.png alt></p>
 <p>这样的发光效果显然与现实情况不相符，阴影遮蔽项存在的主要目的是为了中和菲涅耳项产生的这个影响。而这一项本身的定义也符合物理规律，它表达的是微表面在入射方向（阴影）和出射方向（遮蔽）的可见概率。我们可以想象，在微平面模型下，观察方向和表面法线的夹角越是接近 $90^\circ$，那么阴影和遮蔽的情况必然更加明显，而当我们垂直看向一个表面时，阴影遮蔽项应该几乎不产生作用。一个常用的阴影遮蔽函数为 Smith 遮蔽函数。Smith 遮蔽函数为了简化计算，将阴影项和遮蔽项分开考虑（事实上这两项本身应该是有关联的）使：</p>
-<p>$$G(\mathrm{i},\ \mathrm{o},\ \mathrm{h}) \approx G_1(\mathrm{i},\ \mathrm{h})\ G_1(\mathrm{o},\ \mathrm{h})$$</p>
+<p>$$G(\mathrm{i},\ \mathrm{o},\ \mathrm{m}) \approx G_1(\mathrm{i},\ \mathrm{m})\ G_1(\mathrm{o},\ \mathrm{m})$$</p>
 <p>这里的 $G_1$ 有如下的基本形式：</p>
-<p>$$G_1(\mathrm{v},\ \mathrm{h}) = \chi^+{\left( \frac{\mathrm{v} \cdot \mathrm{h}}{\mathrm{v} \cdot \mathrm{n}} \right)} \ \frac{1}{1 + \Lambda(\mathrm{v})}$$</p>
+<p>$$G_1(\mathrm{v},\ \mathrm{m}) = \chi^+{\left( \frac{\mathrm{v} \cdot \mathrm{m}}{\mathrm{v} \cdot \mathrm{n}} \right)} \ \frac{1}{1 + \Lambda(\mathrm{v})}$$</p>
 <p>这里的 $\chi^+$ 和法线分布项中的定义相同。</p>
 <p>阴影遮蔽的情况和法线分布情况存在明显的相关性，物体表面越粗糙，那么这个表面的微平面间的自遮挡情况就会越严重。因此 $G_1$ 函数的选择与法线分布函数有关。Beckmann 模型对应的 $G_1$ 具体为 <sup id=fnref:14><a href=#fn:14 class=footnote-ref role=doc-noteref>14</a></sup>：</p>
-<p>$$G_1(\mathrm{v},\ \mathrm{h}) = \chi^+{\left( \frac{\mathrm{v} \cdot \mathrm{h}}{\mathrm{v} \cdot \mathrm{n}} \right)} \ \frac{2}{1 + \mathrm{erf}(a) + \frac{1}{a \sqrt{\pi}} \mathrm{e}^{-a^2}}$$</p>
+<p>$$G_1(\mathrm{v},\ \mathrm{m}) = \chi^+{\left( \frac{\mathrm{v} \cdot \mathrm{m}}{\mathrm{v} \cdot \mathrm{n}} \right)} \ \frac{2}{1 + \mathrm{erf}(a) + \frac{1}{a \sqrt{\pi}} \mathrm{e}^{-a^2}}$$</p>
 <p>其中，</p>
 <p>$$\mathrm{erf}(x) = \frac{2}{\sqrt{\pi}} \int_{0}^{x} \mathrm{e}^{-x^2} \mathrm{d}x$$</p>
 <p>这个公式非常复杂，因此一般会使用如下的方法近似 <sup id=fnref:14><a href=#fn:14 class=footnote-ref role=doc-noteref>14</a></sup>：</p>
-<p>$$G_1(\mathrm{v},\ \mathrm{h}) \approx \chi^+{\left( \frac{\mathrm{v} \cdot \mathrm{h}}{\mathrm{v} \cdot \mathrm{n}} \right)} \begin{cases}
+<p>$$G_1(\mathrm{v},\ \mathrm{m}) \approx \chi^+{\left( \frac{\mathrm{v} \cdot \mathrm{m}}{\mathrm{v} \cdot \mathrm{n}} \right)} \begin{cases}
 \frac{3.535a + 2.181a^2}{1 + 2.276a + 2.577a^2}, & if \ a &lt; 1.6 \newline
 1, & otherwise
 \end{cases}$$</p>
 <p>其中，</p>
 <p>$$a = (\alpha \tan{\theta_v})^{-1}$$</p>
-<p>这里的 $\alpha$ 就是法线分布项中的 $\alpha$ 参数，$\theta_v$ 是 $\mathrm{v}$ 和 $\mathrm{n}$ 之间的夹角。</p>
+<p>这里的 $\alpha$ 就是法线分布项中的 $\alpha$ 参数，$\theta_v$ 是 $\mathrm{v}$ 和宏表面法线 $\mathrm{n}$ 之间的夹角。</p>
 <p>而 GGX 模型对应的 $G_1$ 具体为 <sup id=fnref:14><a href=#fn:14 class=footnote-ref role=doc-noteref>14</a></sup>：</p>
-<p>$$G_1(\mathrm{v},\ \mathrm{h}) = \chi^+{\left( \frac{\mathrm{v} \cdot \mathrm{h}}{\mathrm{v} \cdot \mathrm{n}} \right)} \ \frac{2}{1 + \sqrt{1 + a^2 \tan^2{\theta}}}$$</p>
+<p>$$G_1(\mathrm{v},\ \mathrm{m}) = \chi^+{\left( \frac{\mathrm{v} \cdot \mathrm{m}}{\mathrm{v} \cdot \mathrm{n}} \right)} \ \frac{2}{1 + \sqrt{1 + a^2 \tan^2{\theta}}}$$</p>
 <p>下图 <sup id=fnref:14><a href=#fn:14 class=footnote-ref role=doc-noteref>14</a></sup> 展示了两种模型对应的 $G_1$ 的区别，其中绿色的曲线是 Beckmann 模型对应的 $G_1$，红色曲线是 GGX 模型对应的 $G_1$。可以看到这两条曲线的形状和前面我们对阴影遮蔽项的分析相符合，在大多数角度下，$G_1(\mathrm{v})$ 的值都几乎为 $1$，而当角度开始接近 $\pm 90^\circ$ 时，$G_1(\mathrm{v})$ 的值会急剧衰减，避免了前面提到的边缘发光的问题。</p>
 <p><img src=/images/2021-09-05-16-16-11.png alt></p>
 <h2 id=总结>总结</h2>
