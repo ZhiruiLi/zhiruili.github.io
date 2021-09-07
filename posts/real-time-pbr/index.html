@@ -167,7 +167,7 @@ R(0) &= \left( \frac{n_1 - n_2}{n_1 + n_2} \right)^2
 <p>Beckmann 模型类似高斯分布，那它自然也继承了高斯分布的一些性质。我们知道，高斯分布有一个三 $\sigma$ 法则（Three-Sigma Rule of Thumb）<sup id=fnref:15><a href=#fn:15 class=footnote-ref role=doc-noteref>15</a></sup>，即尽管高斯分布的定义域是无穷大的，但在取值超过 $\pm 3 \sigma$ 的时候，其值会变得非常小（$\pm 3 \sigma$ 范围内占据了整个钟形曲线超过 99.7% 的面积）。这导致了基于 Beckmann 模型渲染的高光会出现边缘亮度衰减过快的感觉。</p>
 <p>GGX 模型解决了 Beckmann 模型的这个问题，其公式如下 <sup id=fnref:14><a href=#fn:14 class=footnote-ref role=doc-noteref>14</a></sup>：</p>
 <p>$$D(\mathrm{m}) = \frac{\alpha^2 \ \chi^+(\mathrm{m} \cdot \mathrm{n})}{\pi \cos^4 \theta_\mathrm{m} (\alpha^2 + \tan^2 \theta_\mathrm{m})^2}$$</p>
-<p>下图 <sup id=fnref:14><a href=#fn:14 class=footnote-ref role=doc-noteref>14</a></sup> 对比了 Beckmann 模型和 GGX 模型变化趋势的差别。从中我们可以看出 GGX 模型（绿色曲线）相比 Beckmann 模型（红色曲线）存在明显的长尾，即在超过一定的范围后，Beckmann 模型的能量已经几乎衰减到 $0$，而 GGX 模型则仍然有较为明显的能量存在：</p>
+<p>下图 <sup id=fnref:14><a href=#fn:14 class=footnote-ref role=doc-noteref>14</a></sup> 对比了 Beckmann 模型和 GGX 模型变化趋势的差别（$\alpha = 0.2$）。从中我们可以看出 GGX 模型（绿色曲线）相比 Beckmann 模型（红色曲线）存在明显的长尾，即在超过一定的范围后，Beckmann 模型的能量已经几乎衰减到 $0$，而 GGX 模型则仍然有较为明显的能量存在：</p>
 <p><img src=/images/2021-09-05-16-20-08.png alt></p>
 <p>GGX 的长尾特性使得 GGX 能显著减缓高光边缘亮度的衰减。在 GGX 模型出现之前，为了模拟这样的效果，需要叠加多个 BRDF，而改用 GGX 之后，则只需要用一个 BRDF 即可实现了。下图 <sup id=fnref:12><a href=#fn:12 class=footnote-ref role=doc-noteref>12</a></sup> 对比了 Beckmann 模型和 GGX 模型的实际渲染效果，可以看到 GGX 能渲染出更加柔和自然的高光：</p>
 <p><img src=/images/2021-09-05-12-09-46.png alt></p>
@@ -193,7 +193,7 @@ R(0) &= \left( \frac{n_1 - n_2}{n_1 + n_2} \right)^2
 <p>这里的 $\alpha$ 就是法线分布项中的 $\alpha$ 参数，$\theta_v$ 是 $\mathrm{v}$ 和宏表面法线 $\mathrm{n}$ 之间的夹角。</p>
 <p>而 GGX 模型对应的 $G_1$ 具体为 <sup id=fnref:14><a href=#fn:14 class=footnote-ref role=doc-noteref>14</a></sup>：</p>
 <p>$$G_1(\mathrm{v},\ \mathrm{m}) = \chi^+{\left( \frac{\mathrm{v} \cdot \mathrm{m}}{\mathrm{v} \cdot \mathrm{n}} \right)} \ \frac{2}{1 + \sqrt{1 + a^2 \tan^2{\theta}}}$$</p>
-<p>下图 <sup id=fnref:14><a href=#fn:14 class=footnote-ref role=doc-noteref>14</a></sup> 展示了两种模型对应的 $G_1$ 的区别，其中绿色的曲线是 Beckmann 模型对应的 $G_1$，红色曲线是 GGX 模型对应的 $G_1$。可以看到这两条曲线的形状和前面我们对阴影遮蔽项的分析相符合，在大多数角度下，$G_1(\mathrm{v})$ 的值都几乎为 $1$，而当角度开始接近 $\pm 90^\circ$ 时，$G_1(\mathrm{v})$ 的值会急剧衰减，避免了前面提到的边缘发光的问题。</p>
+<p>下图 <sup id=fnref:14><a href=#fn:14 class=footnote-ref role=doc-noteref>14</a></sup> 展示了两种模型对应的 $G_1$ 的区别（$\alpha = 0.2$），其中绿色的曲线是 Beckmann 模型对应的 $G_1$，红色曲线是 GGX 模型对应的 $G_1$。可以看到这两条曲线的形状和前面我们对阴影遮蔽项的分析相符合，在大多数角度下，$G_1(\mathrm{v})$ 的值都几乎为 $1$，而当角度开始接近 $\pm 90^\circ$ 时，$G_1(\mathrm{v})$ 的值会急剧衰减，避免了前面提到的边缘发光的问题。</p>
 <p><img src=/images/2021-09-05-16-16-11.png alt></p>
 <h2 id=总结>总结</h2>
 <p>将我们前面研究的 BRDF 代入反射方程，即可得出完整的 Cook-Torrance PBR 反射方程了：</p>
