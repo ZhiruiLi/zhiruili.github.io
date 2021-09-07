@@ -163,7 +163,7 @@ R(0) &= \left( \frac{n_1 - n_2}{n_1 + n_2} \right)^2
 1, & where \ x > 0 \newline
 0, & otherwise
 \end{cases}$$</p>
-<p>$\alpha$ 是表面的粗糙程度（$\alpha$ 越小则表面越光滑），$\mathrm{n}$ 是宏表面的法线，$\theta_\mathrm{m}$ 则表示向量 $\mathrm{m}$ 和宏表面法线 $\mathrm{n}$ 之间的夹角。这个公式相当复杂，但是它基本上是一个类似高斯分布的钟形曲线，区别在于这个函数定义在坡度空间（Slope Space），即其中的 $\tan^2 \theta_\mathrm{m}$ 部分。这里之所以不直接用 $\theta_\mathrm{m}$ 而需要加入一个 $\tan$ 是因为 $\theta_\mathrm{m}$ 的取值只有 $[0,\ 90^\circ]$，而高斯分布的定义域事实上是无穷大的，为了避免丢失这部分的能量，我们需要将变量的取值范围扩大，这里采用 $\tan$ 的目的就在此。我们知道，$\tan \theta$ 在 $\theta = 0$ 时值为 $0$，而随着 $\theta$ 增大到 $90^\circ$ 时会趋于无穷大，这就符合了我们的要求。</p>
+<p>$\alpha$ 是表面的粗糙程度（$\alpha$ 越小则表面越光滑），$\mathrm{n}$ 是宏表面的法线，$\theta_\mathrm{m}$ 则表示向量 $\mathrm{m}$ 和 $\mathrm{n}$ 之间的夹角。这个公式相当复杂，但是它基本上是一个类似高斯分布的钟形曲线，区别在于这个函数定义在坡度空间（Slope Space），即其中的 $\tan^2 \theta_\mathrm{m}$ 部分。这里之所以不直接用 $\theta_\mathrm{m}$ 而需要加入一个 $\tan$ 是因为 $\theta_\mathrm{m}$ 的取值只有 $[0,\ 90^\circ]$，而高斯分布的定义域事实上是无穷大的，为了避免丢失这部分的能量，我们需要将变量的取值范围扩大，这里采用 $\tan$ 的目的就在此。我们知道，$\tan \theta$ 在 $\theta = 0$ 时值为 $0$，而随着 $\theta$ 增大到 $90^\circ$ 时会趋于无穷大，这就符合了我们的要求。</p>
 <p>Beckmann 模型类似高斯分布，那它自然也继承了高斯分布的一些性质。我们知道，高斯分布有一个三 $\sigma$ 法则（Three-Sigma Rule of Thumb）<sup id=fnref:15><a href=#fn:15 class=footnote-ref role=doc-noteref>15</a></sup>，即尽管高斯分布的定义域是无穷大的，但在取值超过 $\pm 3 \sigma$ 的时候，其值会变得非常小（$\pm 3 \sigma$ 范围内占据了整个钟形曲线超过 99.7% 的面积）。这导致了基于 Beckmann 模型渲染的高光会出现边缘亮度衰减过快的感觉。</p>
 <p>GGX 模型解决了 Beckmann 模型的这个问题，其公式如下 <sup id=fnref:14><a href=#fn:14 class=footnote-ref role=doc-noteref>14</a></sup>：</p>
 <p>$$D(\mathrm{m}) = \frac{\alpha^2 \ \chi^+(\mathrm{m} \cdot \mathrm{n})}{\pi \cos^4 \theta_\mathrm{m} (\alpha^2 + \tan^2 \theta_\mathrm{m})^2}$$</p>
@@ -176,12 +176,12 @@ R(0) &= \left( \frac{n_1 - n_2}{n_1 + n_2} \right)^2
 <p><img src=/images/2021-09-05-12-30-12.png alt></p>
 <p>这样的发光效果显然与现实情况不相符，阴影遮蔽项存在的主要目的是为了中和菲涅耳项产生的这个影响。而这一项本身的定义也符合物理规律，它表达的是微表面在入射方向（阴影）和出射方向（遮蔽）的可见概率。我们可以想象，在微平面模型下，观察方向和表面法线的夹角越是接近 $90^\circ$，那么阴影和遮蔽的情况必然更加明显，而当我们垂直看向一个表面时，阴影遮蔽项应该几乎不产生作用。一个常用的阴影遮蔽函数为 Smith 遮蔽函数。Smith 遮蔽函数为了简化计算，将阴影项和遮蔽项分开考虑（事实上这两项本身应该是有关联的）使：</p>
 <p>$$G(\mathrm{i},\ \mathrm{o},\ \mathrm{m}) \approx G_1(\mathrm{i},\ \mathrm{m})\ G_1(\mathrm{o},\ \mathrm{m})$$</p>
-<p>这里的 $G_1$ 有如下的基本形式：</p>
+<p>这里的 $G_1$ 有如下的基本形式 <sup id=fnref:16><a href=#fn:16 class=footnote-ref role=doc-noteref>16</a></sup>：</p>
 <p>$$G_1(\mathrm{v},\ \mathrm{m}) = \chi^+{\left( \frac{\mathrm{v} \cdot \mathrm{m}}{\mathrm{v} \cdot \mathrm{n}} \right)} \ \frac{1}{1 + \Lambda(\mathrm{v})}$$</p>
 <p>这里的 $\chi^+$ 和法线分布项中的定义相同。</p>
 <p>阴影遮蔽的情况和法线分布情况存在明显的相关性，物体表面越粗糙，那么这个表面的微平面间的自遮挡情况就会越严重。因此 $G_1$ 函数的选择与法线分布函数有关。Beckmann 模型对应的 $G_1$ 具体为 <sup id=fnref:14><a href=#fn:14 class=footnote-ref role=doc-noteref>14</a></sup>：</p>
 <p>$$G_1(\mathrm{v},\ \mathrm{m}) = \chi^+{\left( \frac{\mathrm{v} \cdot \mathrm{m}}{\mathrm{v} \cdot \mathrm{n}} \right)} \ \frac{2}{1 + \mathrm{erf}(a) + \frac{1}{a \sqrt{\pi}} \mathrm{e}^{-a^2}}$$</p>
-<p>其中，</p>
+<p>其中 $\mathrm{erf} 是误差函数，其公式为：</p>
 <p>$$\mathrm{erf}(x) = \frac{2}{\sqrt{\pi}} \int_{0}^{x} \mathrm{e}^{-x^2} \mathrm{d}x$$</p>
 <p>这个公式非常复杂，因此一般会使用如下的方法近似 <sup id=fnref:14><a href=#fn:14 class=footnote-ref role=doc-noteref>14</a></sup>：</p>
 <p>$$G_1(\mathrm{v},\ \mathrm{m}) \approx \chi^+{\left( \frac{\mathrm{v} \cdot \mathrm{m}}{\mathrm{v} \cdot \mathrm{n}} \right)} \begin{cases}
@@ -248,6 +248,8 @@ R(0) &= \left( \frac{n_1 - n_2}{n_1 + n_2} \right)^2
 <li id=fn:15 role=doc-endnote>
 <p><a href=https://zh.wikipedia.org/wiki/68%E2%80%9395%E2%80%9399.7%E5%8E%9F%E5%89%87>68–95–99.7 原则 - Wikipedia</a>&#160;<a href=#fnref:15 class=footnote-backref role=doc-backlink>&#8617;&#xfe0e;</a></p>
 </li>
+<li id=fn:16 role=doc-endnote>
+&#160;<a href=#fnref:16 class=footnote-backref role=doc-backlink>&#8617;&#xfe0e;</a></li>
 </ol>
 </section>
 </div>
