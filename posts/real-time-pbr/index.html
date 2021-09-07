@@ -191,7 +191,7 @@ R(0) &= \left( \frac{n_1 - n_2}{n_1 + n_2} \right)^2
 <p>其中，</p>
 <p>$$a = (\alpha \tan{\theta_v})^{-1}$$</p>
 <p>这里的 $\alpha$ 就是法线分布项中的 $\alpha$ 参数，$\theta_v$ 是 $\mathrm{v}$ 和宏表面法线 $\mathrm{n}$ 之间的夹角。</p>
-<p>而 GGX 模型对应的 $G_1$ 具体为 <sup id=fnref:14><a href=#fn:14 class=footnote-ref role=doc-noteref>14</a></sup>：</p>
+<p>相较于 Beckmann 模型，GGX 模型对应的 $G_1$ 就简单许多了，其公式具体为 <sup id=fnref:14><a href=#fn:14 class=footnote-ref role=doc-noteref>14</a></sup>：</p>
 <p>$$G_1(\mathrm{v},\ \mathrm{m}) = \chi^+{\left( \frac{\mathrm{v} \cdot \mathrm{m}}{\mathrm{v} \cdot \mathrm{n}} \right)} \ \frac{2}{1 + \sqrt{1 + a^2 \tan^2{\theta}}}$$</p>
 <p>下图 <sup id=fnref:14><a href=#fn:14 class=footnote-ref role=doc-noteref>14</a></sup> 展示了两种模型对应的 $G_1$ 的区别（$\alpha = 0.2$），其中绿色的曲线是 Beckmann 模型对应的 $G_1$，红色曲线是 GGX 模型对应的 $G_1$。可以看到这两条曲线的形状和前面我们对阴影遮蔽项的分析相符合，在大多数角度下，$G_1(\mathrm{v})$ 的值都几乎为 $1$，而当角度开始接近 $\pm 90^\circ$ 时，$G_1(\mathrm{v})$ 的值会急剧衰减，避免了前面提到的边缘发光的问题。</p>
 <p><img src=/images/2021-09-05-16-16-11.png alt></p>
@@ -249,7 +249,8 @@ R(0) &= \left( \frac{n_1 - n_2}{n_1 + n_2} \right)^2
 <p><a href=https://zh.wikipedia.org/wiki/68%E2%80%9395%E2%80%9399.7%E5%8E%9F%E5%89%87>68–95–99.7 原则 - Wikipedia</a>&#160;<a href=#fnref:15 class=footnote-backref role=doc-backlink>&#8617;&#xfe0e;</a></p>
 </li>
 <li id=fn:16 role=doc-endnote>
-&#160;<a href=#fnref:16 class=footnote-backref role=doc-backlink>&#8617;&#xfe0e;</a></li>
+<p><a href=https://www.pbr-book.org/3ed-2018/Reflection_Models/Microfacet_Models#fragment-MicrofacetDistributionPublicMethods-1>Physically Based Rendering - Matt Pharr</a>&#160;<a href=#fnref:16 class=footnote-backref role=doc-backlink>&#8617;&#xfe0e;</a></p>
+</li>
 </ol>
 </section>
 </div>
