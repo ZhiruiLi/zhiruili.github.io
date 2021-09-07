@@ -192,12 +192,12 @@ R(0) &= \left( \frac{n_1 - n_2}{n_1 + n_2} \right)^2
 <p>$$a = (\alpha \tan{\theta_v})^{-1}$$</p>
 <p>这里的 $\alpha$ 就是法线分布项中的 $\alpha$ 参数，$\theta_v$ 是 $\mathrm{v}$ 和宏表面法线 $\mathrm{n}$ 之间的夹角。</p>
 <p>相较于 Beckmann 模型，GGX 模型对应的 $G_1$ 就简单许多了，其公式具体为 <sup id=fnref:14><a href=#fn:14 class=footnote-ref role=doc-noteref>14</a></sup>：</p>
-<p>$$G_1(\mathrm{v},\ \mathrm{m}) = \chi^+{\left( \frac{\mathrm{v} \cdot \mathrm{m}}{\mathrm{v} \cdot \mathrm{n}} \right)} \ \frac{2}{1 + \sqrt{1 + a^2 \tan^2{\theta}}}$$</p>
+<p>$$G_1(\mathrm{v},\ \mathrm{m}) = \chi^+{\left( \frac{\mathrm{v} \cdot \mathrm{m}}{\mathrm{v} \cdot \mathrm{n}} \right)} \ \frac{2}{1 + \sqrt{1 + a^2 \tan^2{\theta_v}}}$$</p>
 <p>下图 <sup id=fnref:14><a href=#fn:14 class=footnote-ref role=doc-noteref>14</a></sup> 展示了两种模型对应的 $G_1$ 的区别（$\alpha = 0.2$），其中绿色的曲线是 Beckmann 模型对应的 $G_1$，红色曲线是 GGX 模型对应的 $G_1$。可以看到这两条曲线的形状和前面我们对阴影遮蔽项的分析相符合，在大多数角度下，$G_1(\mathrm{v})$ 的值都几乎为 $1$，而当角度开始接近 $\pm 90^\circ$ 时，$G_1(\mathrm{v})$ 的值会急剧衰减，避免了前面提到的边缘发光的问题。</p>
 <p><img src=/images/2021-09-05-16-16-11.png alt></p>
 <h2 id=总结>总结</h2>
 <p>将我们前面研究的 BRDF 代入反射方程，即可得出完整的 Cook-Torrance PBR 反射方程了：</p>
-<p>$$L_o(\mathrm{x},\ \omega_o) = \int_{H^2} \left( k_d \frac{\rho}{\pi} + k_s \frac{F G D}{4 (\mathrm{n},\ \mathrm{i}) (\mathrm{n},\ \mathrm{o})} \right) \ L_i(\mathrm{x},\ \omega_i) \cos{}\theta_i \ \mathrm{d}\omega_i$$</p>
+<p>$$L_o(\mathrm{x},\ \omega_o) = \int_{H^2} \left( k_d \frac{\rho}{\pi} + k_s \frac{F G D}{4 (\mathrm{n},\ \mathrm{i}) (\mathrm{n},\ \mathrm{o})} \right) \ L_i(\mathrm{x},\ \omega_i) \cos{\theta_i} \ \mathrm{d}\omega_i$$</p>
 <p>在理解了渲染方程的物理基础以及 PBR BRDF 中各项的意义后，原本相当劝退的公式也就变得易于理解了。在实际工程中，PBR 材质的实现可能会有不同程度的修改，但基本形式是不变的。</p>
 <h2 id=参考资料>参考资料</h2>
 <section class=footnotes role=doc-endnotes>
