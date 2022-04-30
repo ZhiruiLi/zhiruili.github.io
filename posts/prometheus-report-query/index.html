@@ -1,97 +1,9 @@
-<!doctype html><html lang=cn>
-<head>
-<title>
-Prometheus 上报和查询 ::
-简易现代魔法 — Zhirui Li's Blog
-</title>
-<meta charset=utf-8>
-<meta name=viewport content="width=device-width,initial-scale=1">
-<meta name=description content="基本概念 采样样本 Prometheus 会定期去对数据进行采集，每一次采集的结果都是一次采样的样本（sample），这些数据会被存储为时间序列，也就是带有时间戳的">
-<meta name=keywords content="编程,计算机图形学,游戏开发">
-<meta name=robots content="noodp">
-<link rel=canonical href=/posts/prometheus-report-query/>
-<link rel=stylesheet href=/assets/style.css>
-<link rel=stylesheet href=/style.css>
-<link rel=apple-touch-icon-precomposed sizes=144x144 href=/img/apple-touch-icon-144-precomposed.png>
-<link rel="shortcut icon" href=/img/favicon.png>
-<link href=/assets/fonts/Inter-Italic.woff2 rel=preload type=font/woff2 as=font crossorigin>
-<link href=/assets/fonts/Inter-Regular.woff2 rel=preload type=font/woff2 as=font crossorigin>
-<link href=/assets/fonts/Inter-Medium.woff2 rel=preload type=font/woff2 as=font crossorigin>
-<link href=/assets/fonts/Inter-MediumItalic.woff2 rel=preload type=font/woff2 as=font crossorigin>
-<link href=/assets/fonts/Inter-Bold.woff2 rel=preload type=font/woff2 as=font crossorigin>
-<link href=/assets/fonts/Inter-BoldItalic.woff2 rel=preload type=font/woff2 as=font crossorigin>
-<meta name=twitter:card content="summary">
-<meta name=twitter:title content="Prometheus 上报和查询">
-<meta name=twitter:description content="Prometheus 是一个功能极为强大的监控告警系统，为了实现其灵活性，Prometheus 难免增加了复杂度，造成了一定的理解成本，本文记录了一下学习内容。">
-<meta property="og:title" content="Prometheus 上报和查询">
-<meta property="og:description" content="Prometheus 是一个功能极为强大的监控告警系统，为了实现其灵活性，Prometheus 难免增加了复杂度，造成了一定的理解成本，本文记录了一下学习内容。">
-<meta property="og:type" content="article">
-<meta property="og:url" content="/posts/prometheus-report-query/"><meta property="article:section" content="posts">
-<meta property="article:published_time" content="2020-10-02T00:00:00+00:00">
-<meta property="article:modified_time" content="2020-10-02T00:00:00+00:00"><meta property="og:site_name" content="简易现代魔法">
-<script>var posts=document.getElementById('posts-list');posts&&quicklink({el:posts,priority:!0})</script>
-<script>MathJax={tex:{inlineMath:[['$','$'],['\\(','\\)']]},svg:{fontCache:'global'}}</script>
-<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
-<script id=MathJax-script async src=https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js></script>
-</head>
-<body>
-<div class=container>
-<header class=header>
-<span class=header__inner>
-<a href=/ class=logo style=text-decoration:none>
-<span class=logo__mark><svg xmlns="http://www.w3.org/2000/svg" class="greater-icon" viewBox="0 0 44 44"><path fill="none" d="M15 8l14.729 14.382L15 35.367"/></svg>
-</span>
-<span class=logo__text>简易现代魔法</span>
-<span class=logo__cursor></span>
-</a>
-<span class=header__right>
-<nav class=menu>
-<ul class="menu__inner menu__inner--desktop">
-<li><a href=/archive>Archive</a></li>
-<li><a href=/tags>Tags</a></li>
-<li><a href=https://www.github.com/zhiruili>Github</a></li>
-<li><a href=/index.xml>RSS</a></li>
-</ul>
-<ul class="menu__inner menu__inner--mobile">
-<li><a href=/archive>Archive</a></li>
-<li><a href=/tags>Tags</a></li>
-<li><a href=https://www.github.com/zhiruili>Github</a></li>
-<li><a href=/index.xml>RSS</a></li>
-</ul>
-</nav>
-<span class=menu-trigger><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M0 0h24v24H0z" fill="none"/><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></svg>
-</span>
-<span class=theme-toggle><svg class="theme-toggler" width="24" height="24" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M22 41c10.4934.0 19-8.5066 19-19C41 11.5066 32.4934 3 22 3 11.5066 3 3 11.5066 3 22s8.5066 19 19 19zM7 22C7 13.7157 13.7157 7 22 7V37C13.7157 37 7 30.2843 7 22z"/></svg>
-</span>
-</span>
-</span>
-</header>
-<div class=content>
-<div class=post>
-<h1 class=post-title>Prometheus 上报和查询</h1>
-<div class=post-meta>
-<span class=post-date>
-2020-10-02
-</span>
-</div>
-<span class=post-tags>
-<a href=/tags/prometheus/>#Prometheus</a>&nbsp;
-</span>
-<div class=post-content>
-<h2 id=基本概念>基本概念</h2>
-<h3 id=采样样本>采样样本</h3>
-<p>Prometheus 会定期去对数据进行采集，每一次采集的结果都是一次采样的样本（sample），这些数据会被存储为时间序列，也就是带有时间戳的 value stream，这些 value stream 归属于自己的监控指标。</p>
-<p>这里采集样本包括了三部分：</p>
-<ul>
-<li>监控指标（metric）</li>
-<li>毫秒时间戳（timestamp）</li>
-<li>样本的值（value）</li>
-</ul>
-<h3 id=监控指标>监控指标</h3>
-<p>一个监控指标被表示为下面的格式：</p>
-<pre tabindex=0><code>metric_name { label_name_1=label_value_1, label_name_2=label_value_2, ... }
-</code></pre><p>这里的 <code>metric_name</code> 用于指明监控的内容，<code>label_value_x</code> 则用于声明这个监控内容中不同维度的值。用我们常见的二维坐标系举例，下面有一个二维坐标系，名称为「xxx 坐标系」，其中，有 <code>X</code>，<code>Y</code> 两个轴，上面有两个点，分别是 <code>A</code> 和 <code>B</code>，它们的坐标分别为 <code>(1, 3)</code> 和 <code>(2, 1)</code>：</p>
-<pre tabindex=0><code>xxx坐标系
+<!doctype html><html lang=cn><head><title>Prometheus 上报和查询 ::
+简易现代魔法 — Zhirui Li's Blog</title><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><meta name=description content="基本概念 采样样本 Prometheus 会定期去对数据进行采集，每一次采集的结果都是一次采样的样本（sample），这些数据会被存储为时间序列，也就是带有时间戳的"><meta name=keywords content="编程,计算机图形学,游戏开发"><meta name=robots content="noodp"><link rel=canonical href=/posts/prometheus-report-query/><link rel=stylesheet href=/assets/style.css><link rel=stylesheet href=/style.css><link rel=apple-touch-icon-precomposed sizes=144x144 href=/img/apple-touch-icon-144-precomposed.png><link rel="shortcut icon" href=/img/favicon.png><link href=/assets/fonts/Inter-Italic.woff2 rel=preload type=font/woff2 as=font crossorigin><link href=/assets/fonts/Inter-Regular.woff2 rel=preload type=font/woff2 as=font crossorigin><link href=/assets/fonts/Inter-Medium.woff2 rel=preload type=font/woff2 as=font crossorigin><link href=/assets/fonts/Inter-MediumItalic.woff2 rel=preload type=font/woff2 as=font crossorigin><link href=/assets/fonts/Inter-Bold.woff2 rel=preload type=font/woff2 as=font crossorigin><link href=/assets/fonts/Inter-BoldItalic.woff2 rel=preload type=font/woff2 as=font crossorigin><meta name=twitter:card content="summary"><meta name=twitter:title content="Prometheus 上报和查询"><meta name=twitter:description content="Prometheus 是一个功能极为强大的监控告警系统，为了实现其灵活性，Prometheus 难免增加了复杂度，造成了一定的理解成本，本文记录了一下学习内容。"><meta property="og:title" content="Prometheus 上报和查询"><meta property="og:description" content="Prometheus 是一个功能极为强大的监控告警系统，为了实现其灵活性，Prometheus 难免增加了复杂度，造成了一定的理解成本，本文记录了一下学习内容。"><meta property="og:type" content="article"><meta property="og:url" content="/posts/prometheus-report-query/"><meta property="article:section" content="posts"><meta property="article:published_time" content="2020-10-02T00:00:00+00:00"><meta property="article:modified_time" content="2020-10-02T00:00:00+00:00"><meta property="og:site_name" content="简易现代魔法"><script>var posts=document.getElementById("posts-list");posts&&quicklink({el:posts,priority:!0})</script><script>MathJax={tex:{inlineMath:[["$","$"],["\\(","\\)"]]},svg:{fontCache:"global"}}</script><script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script id=MathJax-script async src=https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js></script></head><body><div class=container><header class=header><span class=header__inner><a href=/ class=logo style=text-decoration:none><span class=logo__mark><svg xmlns="http://www.w3.org/2000/svg" class="greater-icon" viewBox="0 0 44 44"><path fill="none" d="M15 8l14.729 14.382L15 35.367"/></svg></span><span class=logo__text>简易现代魔法</span>
+<span class=logo__cursor></span></a>
+<span class=header__right><nav class=menu><ul class="menu__inner menu__inner--desktop"><li><a href=/archive>Archive</a></li><li><a href=/tags>Tags</a></li><li><a href=https://www.github.com/zhiruili>Github</a></li><li><a href=/index.xml>RSS</a></li></ul><ul class="menu__inner menu__inner--mobile"><li><a href=/archive>Archive</a></li><li><a href=/tags>Tags</a></li><li><a href=https://www.github.com/zhiruili>Github</a></li><li><a href=/index.xml>RSS</a></li></ul></nav><span class=menu-trigger><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M0 0h24v24H0z" fill="none"/><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></svg></span><span class=theme-toggle><svg class="theme-toggler" width="24" height="24" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M22 41c10.4934.0 19-8.5066 19-19C41 11.5066 32.4934 3 22 3 11.5066 3 3 11.5066 3 22s8.5066 19 19 19zM7 22C7 13.7157 13.7157 7 22 7V37C13.7157 37 7 30.2843 7 22z"/></svg></span></span></span></header><div class=content><div class=post><h1 class=post-title>Prometheus 上报和查询</h1><div class=post-meta><span class=post-date>2020-10-02</span></div><span class=post-tags><a href=/tags/prometheus/>#Prometheus</a>&nbsp;</span><div class=post-content><h2 id=基本概念>基本概念</h2><h3 id=采样样本>采样样本</h3><p>Prometheus 会定期去对数据进行采集，每一次采集的结果都是一次采样的样本（sample），这些数据会被存储为时间序列，也就是带有时间戳的 value stream，这些 value stream 归属于自己的监控指标。</p><p>这里采集样本包括了三部分：</p><ul><li>监控指标（metric）</li><li>毫秒时间戳（timestamp）</li><li>样本的值（value）</li></ul><h3 id=监控指标>监控指标</h3><p>一个监控指标被表示为下面的格式：</p><pre tabindex=0><code>metric_name { label_name_1=label_value_1, label_name_2=label_value_2, ... }
+</code></pre><p>这里的 <code>metric_name</code> 用于指明监控的内容，<code>label_value_x</code> 则用于声明这个监控内容中不同维度的值。用我们常见的二维坐标系举例，下面有一个二维坐标系，名称为「xxx 坐标系」，其中，有 <code>X</code>，<code>Y</code> 两个轴，上面有两个点，分别是 <code>A</code> 和 <code>B</code>，它们的坐标分别为 <code>(1, 3)</code> 和 <code>(2, 1)</code>：</p><pre tabindex=0><code>xxx坐标系
 
 Y
   ^
@@ -100,246 +12,129 @@ Y
   │     . B (2, 1)
   v
     &lt;-----------------&gt; X
-</code></pre><p>对应于 Prometheus，这里的 <code>metric_name</code> 就是 「xxx 坐标系」，<code>label_name_1</code> 就是 <code>X</code>，<code>label_name_2</code> 就是 <code>Y</code>。需要注意的是，这里的 <code>A</code> 和 <code>B</code> 两个点并不代表采样点，而是监控指标。我们可以想象在这个图中还存在一条虚拟的时间轴，分别从 <code>A</code> <code>B</code> 两点从屏幕外垂直屏幕进去，在这两条虚拟的时间轴上，每一个点就是一个采样点，采样点上会带一个毫秒时间戳和一个值，这个值就是样本的值。在 Prometheus 中，样本的值必须为 <code>float64</code> 类型的值。</p>
-<p>对于 Prometheus 而言，这里存在两个时间序列，分别为：</p>
-<pre tabindex=0><code>xxx坐标系{&quot;X&quot;=&quot;1&quot;,&quot;Y&quot;=&quot;3&quot;}
-xxx坐标系{&quot;X&quot;=&quot;2&quot;,&quot;Y&quot;=&quot;1&quot;}
-</code></pre><p>说到这里，我们不难意识到，当我们上报数据的时候，这里的标签值不可以用一个数量非常多的值（例如用户 ID），否则会造成时间序列数量的极度膨胀。</p>
-<h2 id=数据上报>数据上报</h2>
-<p>在 Prometheus 内部，所有的采样样本都是以时间序列的形式保存在时序数据库中，但为了方便理解和使用，Prometheus 定义了 4 种数据上报的类型，用户可以根据上报的数据内容选择合适的接口。下面以 <a href=https://godoc.org/github.com/prometheus/client_golang/prometheus>Go 的接口</a>为例说明这几种类型的区别和应用场景。</p>
-<h3 id=计数器-counter>计数器 Counter</h3>
-<p>和一般理解的计数器一样，Prometheus 的 counter 也是一个只增不减的值，Go 语言中的接口如下：</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=color:#66d9ef>type</span> <span style=color:#a6e22e>Counter</span> <span style=color:#66d9ef>interface</span> {
-    <span style=color:#a6e22e>Metric</span>
-    <span style=color:#a6e22e>Collector</span>
-
-    <span style=color:#75715e>// Inc increments the counter by 1. Use Add to increment it by arbitrary
-</span><span style=color:#75715e></span>    <span style=color:#75715e>// non-negative values.
-</span><span style=color:#75715e></span>    <span style=color:#a6e22e>Inc</span>()
-    <span style=color:#75715e>// Add adds the given value to the counter. It panics if the value is &lt;
-</span><span style=color:#75715e></span>    <span style=color:#75715e>// 0.
-</span><span style=color:#75715e></span>    <span style=color:#a6e22e>Add</span>(<span style=color:#66d9ef>float64</span>)
-}
-</code></pre></div><p>用户可以调用 <code>Inc</code> 接口进行上报数据 +1，也可以调用 <code>Add</code> 接口增加任意的值（必须为非负数）。</p>
-<p>如前所述，Prometheus 将数据拆分为不同监控指标名和不同的维度，我们上报的值具体属于哪个监控指标要如何指定呢？下面是官方的 example：</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=color:#a6e22e>httpReqs</span> <span style=color:#f92672>:=</span> <span style=color:#a6e22e>prometheus</span>.<span style=color:#a6e22e>NewCounterVec</span>(
-    <span style=color:#a6e22e>prometheus</span>.<span style=color:#a6e22e>CounterOpts</span>{
-        <span style=color:#a6e22e>Name</span>: <span style=color:#e6db74>&#34;http_requests_total&#34;</span>,
-        <span style=color:#a6e22e>Help</span>: <span style=color:#e6db74>&#34;How many HTTP requests processed, partitioned by status code and HTTP method.&#34;</span>,
-    },
-    []<span style=color:#66d9ef>string</span>{<span style=color:#e6db74>&#34;code&#34;</span>, <span style=color:#e6db74>&#34;method&#34;</span>},
-)
-<span style=color:#a6e22e>prometheus</span>.<span style=color:#a6e22e>MustRegister</span>(<span style=color:#a6e22e>httpReqs</span>)
-
-<span style=color:#a6e22e>httpReqs</span>.<span style=color:#a6e22e>WithLabelValues</span>(<span style=color:#e6db74>&#34;404&#34;</span>, <span style=color:#e6db74>&#34;POST&#34;</span>).<span style=color:#a6e22e>Add</span>(<span style=color:#ae81ff>42</span>)
-</code></pre></div><p>这里，我们指定的 <code>metric_name</code> 是 <code>http_requests_total</code>（<a href=https://prometheus.io/docs/practices/naming/>官方建议</a> counter 的 metric name 用 <code>_total</code> 结尾），分成两个维度，<code>code</code> 和 <code>method</code>，我们在 <code>(404, POST)</code> 这个维度上上报了一个 <code>42</code>。</p>
-<p>Counter 非常常见，也非常容易理解，常被用来监控类似「请求量」、「失败量」、「错误码出现次数」等场景。由于 counter 只增不减，所以我们不能用它来监控可能增可能减的数值（例如 goroutine 的数量），如果要监控这种数量，就应该用下面的 gauge。</p>
-<h3 id=测量仪表-gauge>测量仪表 Gauge</h3>
-<p>Gauge 的监控值可增可减，在 Go 语言中的接口如下：</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=color:#66d9ef>type</span> <span style=color:#a6e22e>Gauge</span> <span style=color:#66d9ef>interface</span> {
-    <span style=color:#a6e22e>Metric</span>
-    <span style=color:#a6e22e>Collector</span>
-
-    <span style=color:#75715e>// Set sets the Gauge to an arbitrary value.
-</span><span style=color:#75715e></span>    <span style=color:#a6e22e>Set</span>(<span style=color:#66d9ef>float64</span>)
-    <span style=color:#75715e>// Inc increments the Gauge by 1. Use Add to increment it by arbitrary
-</span><span style=color:#75715e></span>    <span style=color:#75715e>// values.
-</span><span style=color:#75715e></span>    <span style=color:#a6e22e>Inc</span>()
-    <span style=color:#75715e>// Dec decrements the Gauge by 1. Use Sub to decrement it by arbitrary
-</span><span style=color:#75715e></span>    <span style=color:#75715e>// values.
-</span><span style=color:#75715e></span>    <span style=color:#a6e22e>Dec</span>()
-    <span style=color:#75715e>// Add adds the given value to the Gauge. (The value can be negative,
-</span><span style=color:#75715e></span>    <span style=color:#75715e>// resulting in a decrease of the Gauge.)
-</span><span style=color:#75715e></span>    <span style=color:#a6e22e>Add</span>(<span style=color:#66d9ef>float64</span>)
-    <span style=color:#75715e>// Sub subtracts the given value from the Gauge. (The value can be
-</span><span style=color:#75715e></span>    <span style=color:#75715e>// negative, resulting in an increase of the Gauge.)
-</span><span style=color:#75715e></span>    <span style=color:#a6e22e>Sub</span>(<span style=color:#66d9ef>float64</span>)
-
-    <span style=color:#75715e>// SetToCurrentTime sets the Gauge to the current Unix time in seconds.
-</span><span style=color:#75715e></span>    <span style=color:#a6e22e>SetToCurrentTime</span>()
-}
-</code></pre></div><p>可以看到，相比起 <code>Counter</code> 这里的 <code>Gauge</code> 增加了 <code>Dec</code> 和 <code>Sub</code> 这样的减少数值的接口，同时提供了 <code>Set</code> 和 <code>SetToCurrentTime</code> 这样的直接设置数值的接口。相比起 counter 而言，gauge 的数值要更加灵活通用。我们可以用它来监控前面提到的「goroutine 的数量」或者是其他可增可减的值，例如「CPU 使用率」、「内存使用率」等。</p>
-<h3 id=直方图-histogram>直方图 Histogram</h3>
-<p>尽管我们能够通过 gauge 监控可增可减的值，并可以在查询时求出其一段时间内的平均值，但是对于一些场景而言，这个能力还是存在相当大的局限性。典型的场景是请求时延、响应数据量大小等，在这些场景中，平均值可能并不能很好地反映问题。</p>
-<p>举例而言，我们现在需要统计请求时延的长度，如果大部分时延都只有 100 毫秒，而少量有几秒，那么单纯的平均时延就会让我们难以确定实际的时延情况，我们并不是想知道平均时延是几百毫秒，而是想知道多大比例的请求时延是 100 毫秒，多大比例的是几百毫秒，多大比例的是超过一秒。</p>
-<p>Histogram 可以帮我们解决这个问题，它并不是记录一个值的变化情况，而是将被观测到的值划分进某一个区间中，这里称为桶（bucket）。下面是 Go 版本的接口，可以看到 <code>Histogram</code> 只有一个 <code>Observe</code> 方法：</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=color:#66d9ef>type</span> <span style=color:#a6e22e>Histogram</span> <span style=color:#66d9ef>interface</span> {
-    <span style=color:#a6e22e>Metric</span>
-    <span style=color:#a6e22e>Collector</span>
-
-    <span style=color:#75715e>// Observe adds a single observation to the histogram.
-</span><span style=color:#75715e></span>    <span style=color:#a6e22e>Observe</span>(<span style=color:#66d9ef>float64</span>)
-}
-</code></pre></div><p>与前面提到的两个上报模式不同，在 counter 中，一个 counter 对应了一个时间序列，我们创建一个 counter 然后用这个 counter 上报数据，它影响的时间序列是确定的，gauge 也是类似。而 Histogram 则会帮我们创建多个时间序列，当我们调用 <code>Observe</code> 的时候，被观测到的值会被放进预先划分好的桶中，每一个桶中并不记录被观测的值，而是对其进行计数。例如前面提到的情况，我们可能会给 0 ～ 100ms 划分一个桶，100ms ～ 1s 划分一个桶，1s 以上划分一个桶，那么，当我们上报一个值的时候，这三个桶中符合条件的桶的计数值就会增加。不过我们最后看到的并不是每一个桶的具体值，而是每个桶和前面所有桶的总和值，这个之后会再提到。这里先来看看如何声明桶的参数。桶的划分是在我们创建 <code>Histogram</code> 时指定的，官方例子如下：</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=color:#a6e22e>temps</span> <span style=color:#f92672>:=</span> <span style=color:#a6e22e>prometheus</span>.<span style=color:#a6e22e>NewHistogram</span>(<span style=color:#a6e22e>prometheus</span>.<span style=color:#a6e22e>HistogramOpts</span>{
-    <span style=color:#a6e22e>Name</span>:    <span style=color:#e6db74>&#34;pond_temperature_celsius&#34;</span>,
-    <span style=color:#a6e22e>Help</span>:    <span style=color:#e6db74>&#34;The temperature of the frog pond.&#34;</span>, <span style=color:#75715e>// Sorry, we can&#39;t measure how badly it smells.
-</span><span style=color:#75715e></span>    <span style=color:#a6e22e>Buckets</span>: <span style=color:#a6e22e>prometheus</span>.<span style=color:#a6e22e>LinearBuckets</span>(<span style=color:#ae81ff>20</span>, <span style=color:#ae81ff>5</span>, <span style=color:#ae81ff>5</span>),  <span style=color:#75715e>// 5 buckets, each 5 centigrade wide.
-</span><span style=color:#75715e></span>})
-
-<span style=color:#75715e>// Simulate some observations.
-</span><span style=color:#75715e></span><span style=color:#66d9ef>for</span> <span style=color:#a6e22e>i</span> <span style=color:#f92672>:=</span> <span style=color:#ae81ff>0</span>; <span style=color:#a6e22e>i</span> &lt; <span style=color:#ae81ff>1000</span>; <span style=color:#a6e22e>i</span><span style=color:#f92672>++</span> {
-    <span style=color:#a6e22e>temps</span>.<span style=color:#a6e22e>Observe</span>(<span style=color:#ae81ff>30</span> <span style=color:#f92672>+</span> <span style=color:#a6e22e>math</span>.<span style=color:#a6e22e>Floor</span>(<span style=color:#ae81ff>120</span><span style=color:#f92672>*</span><span style=color:#a6e22e>math</span>.<span style=color:#a6e22e>Sin</span>(float64(<span style=color:#a6e22e>i</span>)<span style=color:#f92672>*</span><span style=color:#ae81ff>0.1</span>))<span style=color:#f92672>/</span><span style=color:#ae81ff>10</span>)
-}
-
-<span style=color:#75715e>// Just for demonstration, let&#39;s check the state of the histogram by
-</span><span style=color:#75715e>// (ab)using its Write method (which is usually only used by Prometheus
-</span><span style=color:#75715e>// internally).
-</span><span style=color:#75715e></span><span style=color:#a6e22e>metric</span> <span style=color:#f92672>:=</span> <span style=color:#f92672>&amp;</span><span style=color:#a6e22e>dto</span>.<span style=color:#a6e22e>Metric</span>{}
-<span style=color:#a6e22e>temps</span>.<span style=color:#a6e22e>Write</span>(<span style=color:#a6e22e>metric</span>)
-<span style=color:#a6e22e>fmt</span>.<span style=color:#a6e22e>Println</span>(<span style=color:#a6e22e>proto</span>.<span style=color:#a6e22e>MarshalTextString</span>(<span style=color:#a6e22e>metric</span>))
-</code></pre></div><p>通过这样的方法，我们可以描绘出被观测值的分布情况。通过这个分布数据，我们还能算出类似「99% 的请求时延在多少以内」这样的数据。不过，当我们需要这样的数据时，需要对被观测数据有一定的先验知识才能真正使得计算结果比较准确。还是用刚刚提到的时延观测来举个极端一点的例子，假设我们将桶划分为 1ms、10ms、10s，那么我们得出的结果可能是 0% 的请求时延在 1ms 以内，0% 的请求时延在 10ms 以内，100% 的请求在 10s 以内，0% 的请求在 10s 以上，这样的结论显然没有什么意义，只有当我们对时延的长度本身有一个基本概念，并正确划分桶的大小时，我们才能更准确地计算出我们想要的结果。那假设我们就是对一个数据没有什么先验知识，那我们是否有更准确的方式计算出这个数据呢？Prometheus 给出的方法就是用 Summary。</p>
-<h3 id=概要-summary>概要 Summary</h3>
-<p>Summary 和 histogram 类似，也是用来观测数据的分布情况的，它的接口也和 histogram 一样：</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=color:#66d9ef>type</span> <span style=color:#a6e22e>Summary</span> <span style=color:#66d9ef>interface</span> {
-    <span style=color:#a6e22e>Metric</span>
-    <span style=color:#a6e22e>Collector</span>
-
-    <span style=color:#75715e>// Observe adds a single observation to the summary.
-</span><span style=color:#75715e></span>    <span style=color:#a6e22e>Observe</span>(<span style=color:#66d9ef>float64</span>)
-}
-</code></pre></div><p>但我们在创建一个 <code>Summary</code> 时，并不是像创建 <code>Histogram</code> 那样划分桶，而是直接划分我们所要计算的分位数区间，例如：</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=color:#a6e22e>temps</span> <span style=color:#f92672>:=</span> <span style=color:#a6e22e>prometheus</span>.<span style=color:#a6e22e>NewSummary</span>(<span style=color:#a6e22e>prometheus</span>.<span style=color:#a6e22e>SummaryOpts</span>{
-    <span style=color:#a6e22e>Name</span>:       <span style=color:#e6db74>&#34;pond_temperature_celsius&#34;</span>,
-    <span style=color:#a6e22e>Help</span>:       <span style=color:#e6db74>&#34;The temperature of the frog pond.&#34;</span>,
-    <span style=color:#a6e22e>Objectives</span>: <span style=color:#66d9ef>map</span>[<span style=color:#66d9ef>float64</span>]<span style=color:#66d9ef>float64</span>{<span style=color:#ae81ff>0.5</span>: <span style=color:#ae81ff>0.05</span>, <span style=color:#ae81ff>0.9</span>: <span style=color:#ae81ff>0.01</span>, <span style=color:#ae81ff>0.99</span>: <span style=color:#ae81ff>0.001</span>},
-})
-
-<span style=color:#75715e>// Simulate some observations.
-</span><span style=color:#75715e></span><span style=color:#66d9ef>for</span> <span style=color:#a6e22e>i</span> <span style=color:#f92672>:=</span> <span style=color:#ae81ff>0</span>; <span style=color:#a6e22e>i</span> &lt; <span style=color:#ae81ff>1000</span>; <span style=color:#a6e22e>i</span><span style=color:#f92672>++</span> {
-    <span style=color:#a6e22e>temps</span>.<span style=color:#a6e22e>Observe</span>(<span style=color:#ae81ff>30</span> <span style=color:#f92672>+</span> <span style=color:#a6e22e>math</span>.<span style=color:#a6e22e>Floor</span>(<span style=color:#ae81ff>120</span><span style=color:#f92672>*</span><span style=color:#a6e22e>math</span>.<span style=color:#a6e22e>Sin</span>(float64(<span style=color:#a6e22e>i</span>)<span style=color:#f92672>*</span><span style=color:#ae81ff>0.1</span>))<span style=color:#f92672>/</span><span style=color:#ae81ff>10</span>)
-}
-
-<span style=color:#75715e>// Just for demonstration, let&#39;s check the state of the summary by
-</span><span style=color:#75715e>// (ab)using its Write method (which is usually only used by Prometheus
-</span><span style=color:#75715e>// internally).
-</span><span style=color:#75715e></span><span style=color:#a6e22e>metric</span> <span style=color:#f92672>:=</span> <span style=color:#f92672>&amp;</span><span style=color:#a6e22e>dto</span>.<span style=color:#a6e22e>Metric</span>{}
-<span style=color:#a6e22e>temps</span>.<span style=color:#a6e22e>Write</span>(<span style=color:#a6e22e>metric</span>)
-<span style=color:#a6e22e>fmt</span>.<span style=color:#a6e22e>Println</span>(<span style=color:#a6e22e>proto</span>.<span style=color:#a6e22e>MarshalTextString</span>(<span style=color:#a6e22e>metric</span>))
-</code></pre></div><p>通过上面的 summary 上报，我们能够更加准确地获知 50% 的观测值，90% 的观测值以及 99% 的观测值，避免了前面 histogram 的问题。但 summary 的数据计算是由客户端进行的，会造成一定的性能损耗。</p>
-<p>更多 histogram 和 summary 的对比可以参考<a href=https://prometheus.io/docs/practices/histograms/>这一篇文章</a>。</p>
-<h2 id=数据查询>数据查询</h2>
-<p>Prometheus 定义了一个名为 PromQL 的 DSL 用来进行数据查询。常用的 Prometheus 数据可视化工具 Grafana 里面的面板就是通过 PromQL 来进行数据查询的。</p>
-<h3 id=瞬时向量-instant-vector>瞬时向量 Instant Vector</h3>
-<p>假设我们有一个对 HTTP 请求量的 counter 名为 <code>http_requests_total</code>，那么我们只需要在 Grafana 面板的 query editor 中输入 <code>http_requests_total</code> 就可以看到数据了。这个 <code>http_requests_total</code> 是一个瞬时向量，也就是说，这个数据是 Prometheus 采集数据的那一刻数据的值。对于 counter 数据，我们看到的会是一条不断增长的线（采集到的值只增不减）。</p>
-<p>之前提到了，我们可以通过标签来给一个监控指标划分维度，在上面绘制出的图里，所有的 标签的值会交叉成多个时间序列，也就是说，假设有一个取值为 <code>200</code> 或 <code>404</code> 的标签 <code>code</code> 和取值为 <code>GET</code> 或 <code>POST</code> 的标签 <code>method</code>，那么，图中会有四条线，分别为：</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-promql data-lang=promql>http_requests_total { <span style=color:#960050;background-color:#1e0010>code=200</span>, <span style=color:#960050;background-color:#1e0010>method=GET</span> }
-http_requests_total { <span style=color:#960050;background-color:#1e0010>code=200</span>, <span style=color:#960050;background-color:#1e0010>method=GET</span> }
-http_requests_total { <span style=color:#960050;background-color:#1e0010>code=404</span>, <span style=color:#960050;background-color:#1e0010>method=POST</span> }
-http_requests_total { <span style=color:#960050;background-color:#1e0010>code=404</span>, <span style=color:#960050;background-color:#1e0010>method=POST</span> }
-</code></pre></div><p>这里重申一下，当我们上报数据的时候，这里的标签值不可以用一个数量非常多的值（例如用户 ID），否则会造成时间序列数量的极度膨胀。</p>
-<p>假如我们只想看 <code>code</code> 为 <code>404</code> 的数据，那么我们可以用标签来对数据进行过滤：</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-promql data-lang=promql>http_requests_total { code<span style=color:#f92672>=</span>&#34;<span style=color:#e6db74>404</span>&#34; }
-</code></pre></div><p>显然，我们一开始写的 <code>http_requests_total</code> 就相当于 <code>http_requests_total {}</code>。这里的 <code>=</code> 表示完整匹配，对应地，不匹配用 <code>!=</code>，如果需要正则匹配，则用 <code>=~</code> 和 <code>!~</code>。我们这里也可以将其写为 Prometheus 的底层表示形式：</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-promql data-lang=promql>{ __name__<span style=color:#f92672>=</span>&#34;<span style=color:#e6db74>http_requests_total</span>&#34;, code<span style=color:#f92672>=</span>&#34;<span style=color:#e6db74>404</span>&#34; }
-</code></pre></div><p>这个写法比较少用，但是有时候不得不用，例如我们的监控指标名是 PromQL 的关键字的时候：</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-promql data-lang=promql><span style=color:#66d9ef>on</span> {}              <span style=color:#75715e># 错误，on 是关键字</span>
-{ __name__<span style=color:#f92672>=</span>&#34;<span style=color:#e6db74>on</span>&#34; }  <span style=color:#75715e># OK</span>
-</code></pre></div><p>另外，只使用标签而不使用监控指标名来进行匹配也是合法的，但如果不使用监控指标名，那么至少要存在一个标签匹配是不能匹配到空字符串的。</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-promql data-lang=promql>{job<span style=color:#f92672>=~</span>&#34;<span style=color:#e6db74>.*</span>&#34;}               <span style=color:#75715e># 错误，没有监控指标名，且会匹配到空字符串</span>
-
-{job<span style=color:#f92672>=~</span>&#34;<span style=color:#e6db74>.+</span>&#34;}               <span style=color:#75715e># OK，不会匹配到空字符串</span>
-{job<span style=color:#f92672>=~</span>&#34;<span style=color:#e6db74>.*</span>&#34;,method<span style=color:#f92672>=</span>&#34;<span style=color:#e6db74>get</span>&#34;}  <span style=color:#75715e># OK，虽然 job 会匹配到空字符串，但 method 不会</span>
-</code></pre></div><p>前面提到，histogram 和 summary 会产生多个时间序列，那么它们的时间序列要如何进行查询呢？事实上，Prometheus 会根据一定的规则来给这些时间序列命名，以 histgram 为例，假设存在一个监控 <code>mymetric</code>，设置了 1, 2, 3 bucket，且采集到了如下数据：</p>
-<table>
-<thead>
-<tr>
-<th>buckets</th>
-<th>observe</th>
-<th>write</th>
-<th>values</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>1</td>
-<td>2</td>
-<td>2</td>
-<td>0.2, 0.6</td>
-</tr>
-<tr>
-<td>2</td>
-<td>3</td>
-<td>5</td>
-<td>1.3, 1.5, 1.5</td>
-</tr>
-<tr>
-<td>3</td>
-<td>4</td>
-<td>9</td>
-<td>2.4, 2.6, 2.8, 2.9</td>
-</tr>
-</tbody>
-</table>
-<p>那么，可以得到这样的结果（注意 bucket 的结果向下包含）：</p>
-<pre tabindex=0><code>mymetric_bucket { le=&quot;1&quot; } = 2
-mymetric_bucket { le=&quot;2&quot; } = 5
-mymetric_bucket { le=&quot;3&quot; } = 9
-mymetric_bucket { le=&quot;+Inf&quot; } = 9
+</code></pre><p>对应于 Prometheus，这里的 <code>metric_name</code> 就是 「xxx 坐标系」，<code>label_name_1</code> 就是 <code>X</code>，<code>label_name_2</code> 就是 <code>Y</code>。需要注意的是，这里的 <code>A</code> 和 <code>B</code> 两个点并不代表采样点，而是监控指标。我们可以想象在这个图中还存在一条虚拟的时间轴，分别从 <code>A</code> <code>B</code> 两点从屏幕外垂直屏幕进去，在这两条虚拟的时间轴上，每一个点就是一个采样点，采样点上会带一个毫秒时间戳和一个值，这个值就是样本的值。在 Prometheus 中，样本的值必须为 <code>float64</code> 类型的值。</p><p>对于 Prometheus 而言，这里存在两个时间序列，分别为：</p><pre tabindex=0><code>xxx坐标系{&#34;X&#34;=&#34;1&#34;,&#34;Y&#34;=&#34;3&#34;}
+xxx坐标系{&#34;X&#34;=&#34;2&#34;,&#34;Y&#34;=&#34;1&#34;}
+</code></pre><p>说到这里，我们不难意识到，当我们上报数据的时候，这里的标签值不可以用一个数量非常多的值（例如用户 ID），否则会造成时间序列数量的极度膨胀。</p><h2 id=数据上报>数据上报</h2><p>在 Prometheus 内部，所有的采样样本都是以时间序列的形式保存在时序数据库中，但为了方便理解和使用，Prometheus 定义了 4 种数据上报的类型，用户可以根据上报的数据内容选择合适的接口。下面以 <a href=https://godoc.org/github.com/prometheus/client_golang/prometheus>Go 的接口</a>为例说明这几种类型的区别和应用场景。</p><h3 id=计数器-counter>计数器 Counter</h3><p>和一般理解的计数器一样，Prometheus 的 counter 也是一个只增不减的值，Go 语言中的接口如下：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=display:flex><span><span style=color:#66d9ef>type</span> <span style=color:#a6e22e>Counter</span> <span style=color:#66d9ef>interface</span> {
+</span></span><span style=display:flex><span>    <span style=color:#a6e22e>Metric</span>
+</span></span><span style=display:flex><span>    <span style=color:#a6e22e>Collector</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    <span style=color:#75715e>// Inc increments the counter by 1. Use Add to increment it by arbitrary
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>    <span style=color:#75715e>// non-negative values.
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>    <span style=color:#a6e22e>Inc</span>()
+</span></span><span style=display:flex><span>    <span style=color:#75715e>// Add adds the given value to the counter. It panics if the value is &lt;
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>    <span style=color:#75715e>// 0.
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>    <span style=color:#a6e22e>Add</span>(<span style=color:#66d9ef>float64</span>)
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><p>用户可以调用 <code>Inc</code> 接口进行上报数据 +1，也可以调用 <code>Add</code> 接口增加任意的值（必须为非负数）。</p><p>如前所述，Prometheus 将数据拆分为不同监控指标名和不同的维度，我们上报的值具体属于哪个监控指标要如何指定呢？下面是官方的 example：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=display:flex><span><span style=color:#a6e22e>httpReqs</span> <span style=color:#f92672>:=</span> <span style=color:#a6e22e>prometheus</span>.<span style=color:#a6e22e>NewCounterVec</span>(
+</span></span><span style=display:flex><span>    <span style=color:#a6e22e>prometheus</span>.<span style=color:#a6e22e>CounterOpts</span>{
+</span></span><span style=display:flex><span>        <span style=color:#a6e22e>Name</span>: <span style=color:#e6db74>&#34;http_requests_total&#34;</span>,
+</span></span><span style=display:flex><span>        <span style=color:#a6e22e>Help</span>: <span style=color:#e6db74>&#34;How many HTTP requests processed, partitioned by status code and HTTP method.&#34;</span>,
+</span></span><span style=display:flex><span>    },
+</span></span><span style=display:flex><span>    []<span style=color:#66d9ef>string</span>{<span style=color:#e6db74>&#34;code&#34;</span>, <span style=color:#e6db74>&#34;method&#34;</span>},
+</span></span><span style=display:flex><span>)
+</span></span><span style=display:flex><span><span style=color:#a6e22e>prometheus</span>.<span style=color:#a6e22e>MustRegister</span>(<span style=color:#a6e22e>httpReqs</span>)
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#a6e22e>httpReqs</span>.<span style=color:#a6e22e>WithLabelValues</span>(<span style=color:#e6db74>&#34;404&#34;</span>, <span style=color:#e6db74>&#34;POST&#34;</span>).<span style=color:#a6e22e>Add</span>(<span style=color:#ae81ff>42</span>)
+</span></span></code></pre></div><p>这里，我们指定的 <code>metric_name</code> 是 <code>http_requests_total</code>（<a href=https://prometheus.io/docs/practices/naming/>官方建议</a> counter 的 metric name 用 <code>_total</code> 结尾），分成两个维度，<code>code</code> 和 <code>method</code>，我们在 <code>(404, POST)</code> 这个维度上上报了一个 <code>42</code>。</p><p>Counter 非常常见，也非常容易理解，常被用来监控类似「请求量」、「失败量」、「错误码出现次数」等场景。由于 counter 只增不减，所以我们不能用它来监控可能增可能减的数值（例如 goroutine 的数量），如果要监控这种数量，就应该用下面的 gauge。</p><h3 id=测量仪表-gauge>测量仪表 Gauge</h3><p>Gauge 的监控值可增可减，在 Go 语言中的接口如下：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=display:flex><span><span style=color:#66d9ef>type</span> <span style=color:#a6e22e>Gauge</span> <span style=color:#66d9ef>interface</span> {
+</span></span><span style=display:flex><span>    <span style=color:#a6e22e>Metric</span>
+</span></span><span style=display:flex><span>    <span style=color:#a6e22e>Collector</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    <span style=color:#75715e>// Set sets the Gauge to an arbitrary value.
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>    <span style=color:#a6e22e>Set</span>(<span style=color:#66d9ef>float64</span>)
+</span></span><span style=display:flex><span>    <span style=color:#75715e>// Inc increments the Gauge by 1. Use Add to increment it by arbitrary
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>    <span style=color:#75715e>// values.
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>    <span style=color:#a6e22e>Inc</span>()
+</span></span><span style=display:flex><span>    <span style=color:#75715e>// Dec decrements the Gauge by 1. Use Sub to decrement it by arbitrary
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>    <span style=color:#75715e>// values.
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>    <span style=color:#a6e22e>Dec</span>()
+</span></span><span style=display:flex><span>    <span style=color:#75715e>// Add adds the given value to the Gauge. (The value can be negative,
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>    <span style=color:#75715e>// resulting in a decrease of the Gauge.)
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>    <span style=color:#a6e22e>Add</span>(<span style=color:#66d9ef>float64</span>)
+</span></span><span style=display:flex><span>    <span style=color:#75715e>// Sub subtracts the given value from the Gauge. (The value can be
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>    <span style=color:#75715e>// negative, resulting in an increase of the Gauge.)
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>    <span style=color:#a6e22e>Sub</span>(<span style=color:#66d9ef>float64</span>)
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    <span style=color:#75715e>// SetToCurrentTime sets the Gauge to the current Unix time in seconds.
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>    <span style=color:#a6e22e>SetToCurrentTime</span>()
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><p>可以看到，相比起 <code>Counter</code> 这里的 <code>Gauge</code> 增加了 <code>Dec</code> 和 <code>Sub</code> 这样的减少数值的接口，同时提供了 <code>Set</code> 和 <code>SetToCurrentTime</code> 这样的直接设置数值的接口。相比起 counter 而言，gauge 的数值要更加灵活通用。我们可以用它来监控前面提到的「goroutine 的数量」或者是其他可增可减的值，例如「CPU 使用率」、「内存使用率」等。</p><h3 id=直方图-histogram>直方图 Histogram</h3><p>尽管我们能够通过 gauge 监控可增可减的值，并可以在查询时求出其一段时间内的平均值，但是对于一些场景而言，这个能力还是存在相当大的局限性。典型的场景是请求时延、响应数据量大小等，在这些场景中，平均值可能并不能很好地反映问题。</p><p>举例而言，我们现在需要统计请求时延的长度，如果大部分时延都只有 100 毫秒，而少量有几秒，那么单纯的平均时延就会让我们难以确定实际的时延情况，我们并不是想知道平均时延是几百毫秒，而是想知道多大比例的请求时延是 100 毫秒，多大比例的是几百毫秒，多大比例的是超过一秒。</p><p>Histogram 可以帮我们解决这个问题，它并不是记录一个值的变化情况，而是将被观测到的值划分进某一个区间中，这里称为桶（bucket）。下面是 Go 版本的接口，可以看到 <code>Histogram</code> 只有一个 <code>Observe</code> 方法：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=display:flex><span><span style=color:#66d9ef>type</span> <span style=color:#a6e22e>Histogram</span> <span style=color:#66d9ef>interface</span> {
+</span></span><span style=display:flex><span>    <span style=color:#a6e22e>Metric</span>
+</span></span><span style=display:flex><span>    <span style=color:#a6e22e>Collector</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    <span style=color:#75715e>// Observe adds a single observation to the histogram.
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>    <span style=color:#a6e22e>Observe</span>(<span style=color:#66d9ef>float64</span>)
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><p>与前面提到的两个上报模式不同，在 counter 中，一个 counter 对应了一个时间序列，我们创建一个 counter 然后用这个 counter 上报数据，它影响的时间序列是确定的，gauge 也是类似。而 Histogram 则会帮我们创建多个时间序列，当我们调用 <code>Observe</code> 的时候，被观测到的值会被放进预先划分好的桶中，每一个桶中并不记录被观测的值，而是对其进行计数。例如前面提到的情况，我们可能会给 0 ～ 100ms 划分一个桶，100ms ～ 1s 划分一个桶，1s 以上划分一个桶，那么，当我们上报一个值的时候，这三个桶中符合条件的桶的计数值就会增加。不过我们最后看到的并不是每一个桶的具体值，而是每个桶和前面所有桶的总和值，这个之后会再提到。这里先来看看如何声明桶的参数。桶的划分是在我们创建 <code>Histogram</code> 时指定的，官方例子如下：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=display:flex><span><span style=color:#a6e22e>temps</span> <span style=color:#f92672>:=</span> <span style=color:#a6e22e>prometheus</span>.<span style=color:#a6e22e>NewHistogram</span>(<span style=color:#a6e22e>prometheus</span>.<span style=color:#a6e22e>HistogramOpts</span>{
+</span></span><span style=display:flex><span>    <span style=color:#a6e22e>Name</span>:    <span style=color:#e6db74>&#34;pond_temperature_celsius&#34;</span>,
+</span></span><span style=display:flex><span>    <span style=color:#a6e22e>Help</span>:    <span style=color:#e6db74>&#34;The temperature of the frog pond.&#34;</span>, <span style=color:#75715e>// Sorry, we can&#39;t measure how badly it smells.
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>    <span style=color:#a6e22e>Buckets</span>: <span style=color:#a6e22e>prometheus</span>.<span style=color:#a6e22e>LinearBuckets</span>(<span style=color:#ae81ff>20</span>, <span style=color:#ae81ff>5</span>, <span style=color:#ae81ff>5</span>),  <span style=color:#75715e>// 5 buckets, each 5 centigrade wide.
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>})
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#75715e>// Simulate some observations.
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span><span style=color:#66d9ef>for</span> <span style=color:#a6e22e>i</span> <span style=color:#f92672>:=</span> <span style=color:#ae81ff>0</span>; <span style=color:#a6e22e>i</span> &lt; <span style=color:#ae81ff>1000</span>; <span style=color:#a6e22e>i</span><span style=color:#f92672>++</span> {
+</span></span><span style=display:flex><span>    <span style=color:#a6e22e>temps</span>.<span style=color:#a6e22e>Observe</span>(<span style=color:#ae81ff>30</span> <span style=color:#f92672>+</span> <span style=color:#a6e22e>math</span>.<span style=color:#a6e22e>Floor</span>(<span style=color:#ae81ff>120</span><span style=color:#f92672>*</span><span style=color:#a6e22e>math</span>.<span style=color:#a6e22e>Sin</span>(float64(<span style=color:#a6e22e>i</span>)<span style=color:#f92672>*</span><span style=color:#ae81ff>0.1</span>))<span style=color:#f92672>/</span><span style=color:#ae81ff>10</span>)
+</span></span><span style=display:flex><span>}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#75715e>// Just for demonstration, let&#39;s check the state of the histogram by
+</span></span></span><span style=display:flex><span><span style=color:#75715e>// (ab)using its Write method (which is usually only used by Prometheus
+</span></span></span><span style=display:flex><span><span style=color:#75715e>// internally).
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span><span style=color:#a6e22e>metric</span> <span style=color:#f92672>:=</span> <span style=color:#f92672>&amp;</span><span style=color:#a6e22e>dto</span>.<span style=color:#a6e22e>Metric</span>{}
+</span></span><span style=display:flex><span><span style=color:#a6e22e>temps</span>.<span style=color:#a6e22e>Write</span>(<span style=color:#a6e22e>metric</span>)
+</span></span><span style=display:flex><span><span style=color:#a6e22e>fmt</span>.<span style=color:#a6e22e>Println</span>(<span style=color:#a6e22e>proto</span>.<span style=color:#a6e22e>MarshalTextString</span>(<span style=color:#a6e22e>metric</span>))
+</span></span></code></pre></div><p>通过这样的方法，我们可以描绘出被观测值的分布情况。通过这个分布数据，我们还能算出类似「99% 的请求时延在多少以内」这样的数据。不过，当我们需要这样的数据时，需要对被观测数据有一定的先验知识才能真正使得计算结果比较准确。还是用刚刚提到的时延观测来举个极端一点的例子，假设我们将桶划分为 1ms、10ms、10s，那么我们得出的结果可能是 0% 的请求时延在 1ms 以内，0% 的请求时延在 10ms 以内，100% 的请求在 10s 以内，0% 的请求在 10s 以上，这样的结论显然没有什么意义，只有当我们对时延的长度本身有一个基本概念，并正确划分桶的大小时，我们才能更准确地计算出我们想要的结果。那假设我们就是对一个数据没有什么先验知识，那我们是否有更准确的方式计算出这个数据呢？Prometheus 给出的方法就是用 Summary。</p><h3 id=概要-summary>概要 Summary</h3><p>Summary 和 histogram 类似，也是用来观测数据的分布情况的，它的接口也和 histogram 一样：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=display:flex><span><span style=color:#66d9ef>type</span> <span style=color:#a6e22e>Summary</span> <span style=color:#66d9ef>interface</span> {
+</span></span><span style=display:flex><span>    <span style=color:#a6e22e>Metric</span>
+</span></span><span style=display:flex><span>    <span style=color:#a6e22e>Collector</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    <span style=color:#75715e>// Observe adds a single observation to the summary.
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>    <span style=color:#a6e22e>Observe</span>(<span style=color:#66d9ef>float64</span>)
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><p>但我们在创建一个 <code>Summary</code> 时，并不是像创建 <code>Histogram</code> 那样划分桶，而是直接划分我们所要计算的分位数区间，例如：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=display:flex><span><span style=color:#a6e22e>temps</span> <span style=color:#f92672>:=</span> <span style=color:#a6e22e>prometheus</span>.<span style=color:#a6e22e>NewSummary</span>(<span style=color:#a6e22e>prometheus</span>.<span style=color:#a6e22e>SummaryOpts</span>{
+</span></span><span style=display:flex><span>    <span style=color:#a6e22e>Name</span>:       <span style=color:#e6db74>&#34;pond_temperature_celsius&#34;</span>,
+</span></span><span style=display:flex><span>    <span style=color:#a6e22e>Help</span>:       <span style=color:#e6db74>&#34;The temperature of the frog pond.&#34;</span>,
+</span></span><span style=display:flex><span>    <span style=color:#a6e22e>Objectives</span>: <span style=color:#66d9ef>map</span>[<span style=color:#66d9ef>float64</span>]<span style=color:#66d9ef>float64</span>{<span style=color:#ae81ff>0.5</span>: <span style=color:#ae81ff>0.05</span>, <span style=color:#ae81ff>0.9</span>: <span style=color:#ae81ff>0.01</span>, <span style=color:#ae81ff>0.99</span>: <span style=color:#ae81ff>0.001</span>},
+</span></span><span style=display:flex><span>})
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#75715e>// Simulate some observations.
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span><span style=color:#66d9ef>for</span> <span style=color:#a6e22e>i</span> <span style=color:#f92672>:=</span> <span style=color:#ae81ff>0</span>; <span style=color:#a6e22e>i</span> &lt; <span style=color:#ae81ff>1000</span>; <span style=color:#a6e22e>i</span><span style=color:#f92672>++</span> {
+</span></span><span style=display:flex><span>    <span style=color:#a6e22e>temps</span>.<span style=color:#a6e22e>Observe</span>(<span style=color:#ae81ff>30</span> <span style=color:#f92672>+</span> <span style=color:#a6e22e>math</span>.<span style=color:#a6e22e>Floor</span>(<span style=color:#ae81ff>120</span><span style=color:#f92672>*</span><span style=color:#a6e22e>math</span>.<span style=color:#a6e22e>Sin</span>(float64(<span style=color:#a6e22e>i</span>)<span style=color:#f92672>*</span><span style=color:#ae81ff>0.1</span>))<span style=color:#f92672>/</span><span style=color:#ae81ff>10</span>)
+</span></span><span style=display:flex><span>}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#75715e>// Just for demonstration, let&#39;s check the state of the summary by
+</span></span></span><span style=display:flex><span><span style=color:#75715e>// (ab)using its Write method (which is usually only used by Prometheus
+</span></span></span><span style=display:flex><span><span style=color:#75715e>// internally).
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span><span style=color:#a6e22e>metric</span> <span style=color:#f92672>:=</span> <span style=color:#f92672>&amp;</span><span style=color:#a6e22e>dto</span>.<span style=color:#a6e22e>Metric</span>{}
+</span></span><span style=display:flex><span><span style=color:#a6e22e>temps</span>.<span style=color:#a6e22e>Write</span>(<span style=color:#a6e22e>metric</span>)
+</span></span><span style=display:flex><span><span style=color:#a6e22e>fmt</span>.<span style=color:#a6e22e>Println</span>(<span style=color:#a6e22e>proto</span>.<span style=color:#a6e22e>MarshalTextString</span>(<span style=color:#a6e22e>metric</span>))
+</span></span></code></pre></div><p>通过上面的 summary 上报，我们能够更加准确地获知 50% 的观测值，90% 的观测值以及 99% 的观测值，避免了前面 histogram 的问题。但 summary 的数据计算是由客户端进行的，会造成一定的性能损耗。</p><p>更多 histogram 和 summary 的对比可以参考<a href=https://prometheus.io/docs/practices/histograms/>这一篇文章</a>。</p><h2 id=数据查询>数据查询</h2><p>Prometheus 定义了一个名为 PromQL 的 DSL 用来进行数据查询。常用的 Prometheus 数据可视化工具 Grafana 里面的面板就是通过 PromQL 来进行数据查询的。</p><h3 id=瞬时向量-instant-vector>瞬时向量 Instant Vector</h3><p>假设我们有一个对 HTTP 请求量的 counter 名为 <code>http_requests_total</code>，那么我们只需要在 Grafana 面板的 query editor 中输入 <code>http_requests_total</code> 就可以看到数据了。这个 <code>http_requests_total</code> 是一个瞬时向量，也就是说，这个数据是 Prometheus 采集数据的那一刻数据的值。对于 counter 数据，我们看到的会是一条不断增长的线（采集到的值只增不减）。</p><p>之前提到了，我们可以通过标签来给一个监控指标划分维度，在上面绘制出的图里，所有的 标签的值会交叉成多个时间序列，也就是说，假设有一个取值为 <code>200</code> 或 <code>404</code> 的标签 <code>code</code> 和取值为 <code>GET</code> 或 <code>POST</code> 的标签 <code>method</code>，那么，图中会有四条线，分别为：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-promql data-lang=promql><span style=display:flex><span>http_requests_total { <span style=color:#960050;background-color:#1e0010>code=200</span>, <span style=color:#960050;background-color:#1e0010>method=GET</span> }
+</span></span><span style=display:flex><span>http_requests_total { <span style=color:#960050;background-color:#1e0010>code=200</span>, <span style=color:#960050;background-color:#1e0010>method=GET</span> }
+</span></span><span style=display:flex><span>http_requests_total { <span style=color:#960050;background-color:#1e0010>code=404</span>, <span style=color:#960050;background-color:#1e0010>method=POST</span> }
+</span></span><span style=display:flex><span>http_requests_total { <span style=color:#960050;background-color:#1e0010>code=404</span>, <span style=color:#960050;background-color:#1e0010>method=POST</span> }
+</span></span></code></pre></div><p>这里重申一下，当我们上报数据的时候，这里的标签值不可以用一个数量非常多的值（例如用户 ID），否则会造成时间序列数量的极度膨胀。</p><p>假如我们只想看 <code>code</code> 为 <code>404</code> 的数据，那么我们可以用标签来对数据进行过滤：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-promql data-lang=promql><span style=display:flex><span>http_requests_total { code<span style=color:#f92672>=</span>&#34;<span style=color:#e6db74>404</span>&#34; }
+</span></span></code></pre></div><p>显然，我们一开始写的 <code>http_requests_total</code> 就相当于 <code>http_requests_total {}</code>。这里的 <code>=</code> 表示完整匹配，对应地，不匹配用 <code>!=</code>，如果需要正则匹配，则用 <code>=~</code> 和 <code>!~</code>。我们这里也可以将其写为 Prometheus 的底层表示形式：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-promql data-lang=promql><span style=display:flex><span>{ __name__<span style=color:#f92672>=</span>&#34;<span style=color:#e6db74>http_requests_total</span>&#34;, code<span style=color:#f92672>=</span>&#34;<span style=color:#e6db74>404</span>&#34; }
+</span></span></code></pre></div><p>这个写法比较少用，但是有时候不得不用，例如我们的监控指标名是 PromQL 的关键字的时候：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-promql data-lang=promql><span style=display:flex><span><span style=color:#66d9ef>on</span> {}              <span style=color:#75715e># 错误，on 是关键字</span>
+</span></span><span style=display:flex><span>{ __name__<span style=color:#f92672>=</span>&#34;<span style=color:#e6db74>on</span>&#34; }  <span style=color:#75715e># OK</span>
+</span></span></code></pre></div><p>另外，只使用标签而不使用监控指标名来进行匹配也是合法的，但如果不使用监控指标名，那么至少要存在一个标签匹配是不能匹配到空字符串的。</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-promql data-lang=promql><span style=display:flex><span>{job<span style=color:#f92672>=~</span>&#34;<span style=color:#e6db74>.*</span>&#34;}               <span style=color:#75715e># 错误，没有监控指标名，且会匹配到空字符串</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>{job<span style=color:#f92672>=~</span>&#34;<span style=color:#e6db74>.+</span>&#34;}               <span style=color:#75715e># OK，不会匹配到空字符串</span>
+</span></span><span style=display:flex><span>{job<span style=color:#f92672>=~</span>&#34;<span style=color:#e6db74>.*</span>&#34;,method<span style=color:#f92672>=</span>&#34;<span style=color:#e6db74>get</span>&#34;}  <span style=color:#75715e># OK，虽然 job 会匹配到空字符串，但 method 不会</span>
+</span></span></code></pre></div><p>前面提到，histogram 和 summary 会产生多个时间序列，那么它们的时间序列要如何进行查询呢？事实上，Prometheus 会根据一定的规则来给这些时间序列命名，以 histgram 为例，假设存在一个监控 <code>mymetric</code>，设置了 1, 2, 3 bucket，且采集到了如下数据：</p><table><thead><tr><th>buckets</th><th>observe</th><th>write</th><th>values</th></tr></thead><tbody><tr><td>1</td><td>2</td><td>2</td><td>0.2, 0.6</td></tr><tr><td>2</td><td>3</td><td>5</td><td>1.3, 1.5, 1.5</td></tr><tr><td>3</td><td>4</td><td>9</td><td>2.4, 2.6, 2.8, 2.9</td></tr></tbody></table><p>那么，可以得到这样的结果（注意 bucket 的结果向下包含）：</p><pre tabindex=0><code>mymetric_bucket { le=&#34;1&#34; } = 2
+mymetric_bucket { le=&#34;2&#34; } = 5
+mymetric_bucket { le=&#34;3&#34; } = 9
+mymetric_bucket { le=&#34;+Inf&#34; } = 9
 mymetric_count = 9
 mymetric_sum = 15.8
-</code></pre><p>如前所述，histogram 并没有存储数据采样点的值，只保留了总和和每一个区间的 counter。我们可以在 PromQL 中用 <code>histogram_quantile()</code> 函数来计算其值的分位数。由于 histogram 的分位数是在 PromQL 中指定的，因此它的灵活性比 summary 高（summary 只能获取上报时定下来的分位数）。</p>
-<h3 id=范围向量-range-vector>范围向量 Range Vector</h3>
-<p>前面提到我们用 <code>http_requests_total</code> 获取到单调递增的 HTTP 请求总数图像，但是这个对于我们而言并没有太大意义，我们希望看到的是类似「每分钟请求数量」这样的数据，PromQL 允许我们获取一段时间的数据，这个被称为范围向量。它的获取方式是在瞬时向量后面加一个中括号，里面填入需要的时间段长度，例如：</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-promql data-lang=promql>http_requests_total [<span style=color:#e6db74>1m</span>]
-</code></pre></div><p>这里获取的就是过去一分钟的 HTTP 请求总数。但是，当我们将这个语句输入 query editor 后，我们会看到一个错误</p>
-<blockquote>
-<p>invalid expression type &ldquo;range vector&rdquo; for range query, must be Scalar or instant Vector</p>
-</blockquote>
-<p>也就是说，范围向量是无法被直接绘制的。我们需要用内置的函数将其转换为一个瞬时向量后才能被绘制出来。例如我们想看到每 1 分钟的 HTTP 请求量，这个需求事实上是「查看一分钟范围内的变化量」，那么我们可以用 <code>increase</code> 函数：</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-promql data-lang=promql><span style=color:#66d9ef>increase</span><span style=color:#f92672>(</span>http_requests_total [<span style=color:#e6db74>1m</span>]<span style=color:#f92672>)</span>
-</code></pre></div><p>更多完整的函数介绍可以在<a href=https://prometheus.io/docs/prometheus/latest/querying/functions/>这里</a>找到。</p>
-<p>前面提到，假设有一个取值为 <code>200</code> 或 <code>404</code> 的标签 <code>code</code> 和取值为 <code>GET</code> 或 <code>POST</code> 的标签 <code>method</code>，图中会有四条线，分别为：</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-promql data-lang=promql>http_requests_total { <span style=color:#960050;background-color:#1e0010>code=200</span>, <span style=color:#960050;background-color:#1e0010>method=GET</span> }
-http_requests_total { <span style=color:#960050;background-color:#1e0010>code=200</span>, <span style=color:#960050;background-color:#1e0010>method=GET</span> }
-http_requests_total { <span style=color:#960050;background-color:#1e0010>code=404</span>, <span style=color:#960050;background-color:#1e0010>method=POST</span> }
-http_requests_total { <span style=color:#960050;background-color:#1e0010>code=404</span>, <span style=color:#960050;background-color:#1e0010>method=POST</span> }
-</code></pre></div><p>但我们希望的是查看每分钟的请求总量，此时，我们可以用 <code>sum</code> 操作符（注意这不是一个函数而是一个聚合操作符）将数据聚合起来：</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-promql data-lang=promql><span style=color:#66d9ef>sum</span><span style=color:#f92672>(</span><span style=color:#66d9ef>increase</span><span style=color:#f92672>(</span>http_requests_total [<span style=color:#e6db74>1m</span>]<span style=color:#f92672>))</span>
-</code></pre></div><p>上面的表达式可以将 4 条曲线合并为一条，让我们更清晰地看到请求总量的变化情况。但我们有时候还希望能够按照返回码来对数据进行归类，这个需求在希望观察错误码变化量的情况下非常常见。所有聚合操作符都可以跟 <code>by (labels)</code> 或 <code>without (labels)</code> 这样的后缀，用于针对某些标签进行操作。例如上面的需求就可以用这个表达式实现：</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-promql data-lang=promql><span style=color:#66d9ef>sum</span> <span style=color:#66d9ef>by</span> <span style=color:#f92672>(</span>code<span style=color:#f92672>)</span> <span style=color:#f92672>(</span><span style=color:#66d9ef>increase</span><span style=color:#f92672>(</span>http_requests_total [<span style=color:#e6db74>1m</span>]<span style=color:#f92672>))</span>
-</code></pre></div><p>这等价于：</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-promql data-lang=promql><span style=color:#66d9ef>sum</span> <span style=color:#66d9ef>without</span> <span style=color:#f92672>(</span>method<span style=color:#f92672>)</span> <span style=color:#f92672>(</span><span style=color:#66d9ef>increase</span><span style=color:#f92672>(</span>http_requests_total [<span style=color:#e6db74>1m</span>]<span style=color:#f92672>))</span>
-</code></pre></div><p>后缀可以紧跟 <code>sum</code>，也可以放到被操作的表达式后面：</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-promql data-lang=promql><span style=color:#66d9ef>sum</span> <span style=color:#f92672>(</span><span style=color:#66d9ef>increase</span><span style=color:#f92672>(</span>http_requests_total [<span style=color:#e6db74>1m</span>]<span style=color:#f92672>))</span> <span style=color:#66d9ef>by</span> <span style=color:#f92672>(</span>code<span style=color:#f92672>)</span>
-</code></pre></div><p>更多对操作符的介绍可以在<a href=https://prometheus.io/docs/prometheus/latest/querying/operators>这里</a>找到。另外，也可以在<a href=https://prometheus.io/docs/prometheus/latest/querying/examples/>这里</a>找到更多的使用例子。</p>
-<h2 id=总结>总结</h2>
-<p>Prometheus 基于时序数据库的查询实现了丰富复杂的语义，让用户能够灵活实现各种监控需求，为了能更好地表达自己的查询逻辑，我们需要先了解其中的基本语义，本文仅进行了较为简略的总结，更详细的可以参考<a href=https://prometheus.io/docs/prometheus/latest/getting_started/>官方文档</a>和<a href=https://prometheus.io/docs/practices/naming/>官方最佳实践</a>。</p>
-</div>
-<div class=pagination>
-<div class=pagination__title>
-<span class=pagination__title-h>Read other posts</span>
-<hr>
-</div>
-<div class=pagination__buttons>
-<span class="button previous">
-<a href=/posts/transformations/>
-<span class=button__icon>←</span>
-<span class=button__text>图形学入门（一）：坐标变换</span>
-</a>
-</span>
-<span class="button next">
-<a href=/posts/cpp-error-handling/>
-<span class=button__text>另一种 C++ 程序错误处理方式</span>
-<span class=button__icon>→</span>
-</a>
-</span>
-</div>
-</div>
-<div id=disqus_thread></div>
-<script type=application/javascript>var disqus_config=function(){};(function(){if(["localhost","127.0.0.1"].indexOf(window.location.hostname)!=-1){document.getElementById('disqus_thread').innerHTML='Disqus comments not available by default when the website is previewed locally.';return}var b=document,a=b.createElement('script');a.async=!0,a.src='//ZhiruiLi.disqus.com/embed.js',a.setAttribute('data-timestamp',+new Date),(b.head||b.body).appendChild(a)})()</script>
-<noscript>Please enable JavaScript to view the <a href=https://disqus.com/?ref_noscript>comments powered by Disqus.</a></noscript>
-<a href=https://disqus.com class=dsq-brlink>comments powered by <span class=logo-disqus>Disqus</span></a>
-</div>
-</div>
-<footer class=footer>
-<div class=footer__inner>
-<div class="copyright copyright--user"><p>本网站采用 <a href=https://creativecommons.org/licenses/by-sa/4.0/>CC BY-SA 4.0</a> 协议进行授权</p><p>© 2021 Zhirui Li. All rights reserved.</p></div>
-</div>
-</footer>
-<script src=/assets/main.js></script>
-<script src=/assets/prism.js></script><p style=color:#999>我的博客即将同步至腾讯云+社区，<a target=_blank href="https://cloud.tencent.com/developer/support-plan?invite_code=11dehb9vzutlx">邀请大家一同入驻</a>。</p>
-</div>
-<script type=application/javascript>var doNotTrack=!1;doNotTrack||(function(a,e,f,g,b,c,d){a.GoogleAnalyticsObject=b,a[b]=a[b]||function(){(a[b].q=a[b].q||[]).push(arguments)},a[b].l=1*new Date,c=e.createElement(f),d=e.getElementsByTagName(f)[0],c.async=1,c.src=g,d.parentNode.insertBefore(c,d)}(window,document,'script','https://www.google-analytics.com/analytics.js','ga'),ga('create','UA-80302213-1','auto'),ga('send','pageview'))</script>
-</body>
-</html>
+</code></pre><p>如前所述，histogram 并没有存储数据采样点的值，只保留了总和和每一个区间的 counter。我们可以在 PromQL 中用 <code>histogram_quantile()</code> 函数来计算其值的分位数。由于 histogram 的分位数是在 PromQL 中指定的，因此它的灵活性比 summary 高（summary 只能获取上报时定下来的分位数）。</p><h3 id=范围向量-range-vector>范围向量 Range Vector</h3><p>前面提到我们用 <code>http_requests_total</code> 获取到单调递增的 HTTP 请求总数图像，但是这个对于我们而言并没有太大意义，我们希望看到的是类似「每分钟请求数量」这样的数据，PromQL 允许我们获取一段时间的数据，这个被称为范围向量。它的获取方式是在瞬时向量后面加一个中括号，里面填入需要的时间段长度，例如：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-promql data-lang=promql><span style=display:flex><span>http_requests_total [<span style=color:#e6db74>1m</span>]
+</span></span></code></pre></div><p>这里获取的就是过去一分钟的 HTTP 请求总数。但是，当我们将这个语句输入 query editor 后，我们会看到一个错误</p><blockquote><p>invalid expression type &ldquo;range vector&rdquo; for range query, must be Scalar or instant Vector</p></blockquote><p>也就是说，范围向量是无法被直接绘制的。我们需要用内置的函数将其转换为一个瞬时向量后才能被绘制出来。例如我们想看到每 1 分钟的 HTTP 请求量，这个需求事实上是「查看一分钟范围内的变化量」，那么我们可以用 <code>increase</code> 函数：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-promql data-lang=promql><span style=display:flex><span><span style=color:#66d9ef>increase</span><span style=color:#f92672>(</span>http_requests_total [<span style=color:#e6db74>1m</span>]<span style=color:#f92672>)</span>
+</span></span></code></pre></div><p>更多完整的函数介绍可以在<a href=https://prometheus.io/docs/prometheus/latest/querying/functions/>这里</a>找到。</p><p>前面提到，假设有一个取值为 <code>200</code> 或 <code>404</code> 的标签 <code>code</code> 和取值为 <code>GET</code> 或 <code>POST</code> 的标签 <code>method</code>，图中会有四条线，分别为：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-promql data-lang=promql><span style=display:flex><span>http_requests_total { <span style=color:#960050;background-color:#1e0010>code=200</span>, <span style=color:#960050;background-color:#1e0010>method=GET</span> }
+</span></span><span style=display:flex><span>http_requests_total { <span style=color:#960050;background-color:#1e0010>code=200</span>, <span style=color:#960050;background-color:#1e0010>method=GET</span> }
+</span></span><span style=display:flex><span>http_requests_total { <span style=color:#960050;background-color:#1e0010>code=404</span>, <span style=color:#960050;background-color:#1e0010>method=POST</span> }
+</span></span><span style=display:flex><span>http_requests_total { <span style=color:#960050;background-color:#1e0010>code=404</span>, <span style=color:#960050;background-color:#1e0010>method=POST</span> }
+</span></span></code></pre></div><p>但我们希望的是查看每分钟的请求总量，此时，我们可以用 <code>sum</code> 操作符（注意这不是一个函数而是一个聚合操作符）将数据聚合起来：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-promql data-lang=promql><span style=display:flex><span><span style=color:#66d9ef>sum</span><span style=color:#f92672>(</span><span style=color:#66d9ef>increase</span><span style=color:#f92672>(</span>http_requests_total [<span style=color:#e6db74>1m</span>]<span style=color:#f92672>))</span>
+</span></span></code></pre></div><p>上面的表达式可以将 4 条曲线合并为一条，让我们更清晰地看到请求总量的变化情况。但我们有时候还希望能够按照返回码来对数据进行归类，这个需求在希望观察错误码变化量的情况下非常常见。所有聚合操作符都可以跟 <code>by (labels)</code> 或 <code>without (labels)</code> 这样的后缀，用于针对某些标签进行操作。例如上面的需求就可以用这个表达式实现：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-promql data-lang=promql><span style=display:flex><span><span style=color:#66d9ef>sum</span> <span style=color:#66d9ef>by</span> <span style=color:#f92672>(</span>code<span style=color:#f92672>)</span> <span style=color:#f92672>(</span><span style=color:#66d9ef>increase</span><span style=color:#f92672>(</span>http_requests_total [<span style=color:#e6db74>1m</span>]<span style=color:#f92672>))</span>
+</span></span></code></pre></div><p>这等价于：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-promql data-lang=promql><span style=display:flex><span><span style=color:#66d9ef>sum</span> <span style=color:#66d9ef>without</span> <span style=color:#f92672>(</span>method<span style=color:#f92672>)</span> <span style=color:#f92672>(</span><span style=color:#66d9ef>increase</span><span style=color:#f92672>(</span>http_requests_total [<span style=color:#e6db74>1m</span>]<span style=color:#f92672>))</span>
+</span></span></code></pre></div><p>后缀可以紧跟 <code>sum</code>，也可以放到被操作的表达式后面：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-promql data-lang=promql><span style=display:flex><span><span style=color:#66d9ef>sum</span> <span style=color:#f92672>(</span><span style=color:#66d9ef>increase</span><span style=color:#f92672>(</span>http_requests_total [<span style=color:#e6db74>1m</span>]<span style=color:#f92672>))</span> <span style=color:#66d9ef>by</span> <span style=color:#f92672>(</span>code<span style=color:#f92672>)</span>
+</span></span></code></pre></div><p>更多对操作符的介绍可以在<a href=https://prometheus.io/docs/prometheus/latest/querying/operators>这里</a>找到。另外，也可以在<a href=https://prometheus.io/docs/prometheus/latest/querying/examples/>这里</a>找到更多的使用例子。</p><h2 id=总结>总结</h2><p>Prometheus 基于时序数据库的查询实现了丰富复杂的语义，让用户能够灵活实现各种监控需求，为了能更好地表达自己的查询逻辑，我们需要先了解其中的基本语义，本文仅进行了较为简略的总结，更详细的可以参考<a href=https://prometheus.io/docs/prometheus/latest/getting_started/>官方文档</a>和<a href=https://prometheus.io/docs/practices/naming/>官方最佳实践</a>。</p></div><div class=pagination><div class=pagination__title><span class=pagination__title-h>Read other posts</span><hr></div><div class=pagination__buttons><span class="button previous"><a href=/posts/transformations/><span class=button__icon>←</span>
+<span class=button__text>图形学入门（一）：坐标变换</span></a></span>
+<span class="button next"><a href=/posts/cpp-error-handling/><span class=button__text>另一种 C++ 程序错误处理方式</span>
+<span class=button__icon>→</span></a></span></div></div><div id=disqus_thread></div><script type=application/javascript>window.disqus_config=function(){},function(){if(["localhost","127.0.0.1"].indexOf(window.location.hostname)!=-1){document.getElementById("disqus_thread").innerHTML="Disqus comments not available by default when the website is previewed locally.";return}var t=document,e=t.createElement("script");e.async=!0,e.src="//ZhiruiLi.disqus.com/embed.js",e.setAttribute("data-timestamp",+new Date),(t.head||t.body).appendChild(e)}()</script><noscript>Please enable JavaScript to view the <a href=https://disqus.com/?ref_noscript>comments powered by Disqus.</a></noscript><a href=https://disqus.com class=dsq-brlink>comments powered by <span class=logo-disqus>Disqus</span></a></div></div><footer class=footer><div class=footer__inner><div class="copyright copyright--user"><p>本网站采用 <a href=https://creativecommons.org/licenses/by-sa/4.0/>CC BY-SA 4.0</a> 协议进行授权</p><p>© 2021 Zhirui Li. All rights reserved.</p></div></div></footer><script src=/assets/main.js></script>
+<script src=/assets/prism.js></script><p style=color:#999>我的博客即将同步至腾讯云+社区，<a target=_blank href="https://cloud.tencent.com/developer/support-plan?invite_code=11dehb9vzutlx">邀请大家一同入驻</a>。</p></div><script type=application/javascript>var doNotTrack=!1;doNotTrack||(function(e,o,i,a,t,n,s){e.GoogleAnalyticsObject=t,e[t]=e[t]||function(){(e[t].q=e[t].q||[]).push(arguments)},e[t].l=1*new Date,n=o.createElement(i),s=o.getElementsByTagName(i)[0],n.async=1,n.src=a,s.parentNode.insertBefore(n,s)}(window,document,"script","https://www.google-analytics.com/analytics.js","ga"),ga("create","UA-80302213-1","auto"),ga("send","pageview"))</script></body></html>

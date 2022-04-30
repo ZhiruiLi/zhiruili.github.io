@@ -1,487 +1,316 @@
-<!doctype html><html lang=cn>
-<head>
-<title>
-实际工程中的 C++ 模板 ::
-简易现代魔法 — Zhirui Li's Blog
-</title>
-<meta charset=utf-8>
-<meta name=viewport content="width=device-width,initial-scale=1">
-<meta name=description content="C++ 的模板是 C++ 的一个重要的语言特性，我们使用的 STL 就是 Standard Template Library 的缩写，但是在很多情况下，开发者都对其敬而远之，有些团队甚至是直接在工程中禁用模板。">
-<meta name=keywords content="编程,计算机图形学,游戏开发">
-<meta name=robots content="noodp">
-<link rel=canonical href=/posts/real-world-cpp-template/>
-<link rel=stylesheet href=/assets/style.css>
-<link rel=stylesheet href=/style.css>
-<link rel=apple-touch-icon-precomposed sizes=144x144 href=/img/apple-touch-icon-144-precomposed.png>
-<link rel="shortcut icon" href=/img/favicon.png>
-<link href=/assets/fonts/Inter-Italic.woff2 rel=preload type=font/woff2 as=font crossorigin>
-<link href=/assets/fonts/Inter-Regular.woff2 rel=preload type=font/woff2 as=font crossorigin>
-<link href=/assets/fonts/Inter-Medium.woff2 rel=preload type=font/woff2 as=font crossorigin>
-<link href=/assets/fonts/Inter-MediumItalic.woff2 rel=preload type=font/woff2 as=font crossorigin>
-<link href=/assets/fonts/Inter-Bold.woff2 rel=preload type=font/woff2 as=font crossorigin>
-<link href=/assets/fonts/Inter-BoldItalic.woff2 rel=preload type=font/woff2 as=font crossorigin>
-<meta name=twitter:card content="summary">
-<meta name=twitter:title content="实际工程中的 C++ 模板">
-<meta name=twitter:description content="C++ 的模板是 C++ 的一个重要的语言特性，在这篇文章里，我将聊一下最近实际工程中的一些模板的应用，希望可以让更多人了解到模板并不是一个可怕的存在，以及一些常见的使用方式。">
-<meta property="og:title" content="实际工程中的 C++ 模板">
-<meta property="og:description" content="C++ 的模板是 C++ 的一个重要的语言特性，在这篇文章里，我将聊一下最近实际工程中的一些模板的应用，希望可以让更多人了解到模板并不是一个可怕的存在，以及一些常见的使用方式。">
-<meta property="og:type" content="article">
-<meta property="og:url" content="/posts/real-world-cpp-template/"><meta property="article:section" content="posts">
-<meta property="article:published_time" content="2019-09-17T00:00:00+00:00">
-<meta property="article:modified_time" content="2019-09-17T00:00:00+00:00"><meta property="og:site_name" content="简易现代魔法">
-<script>var posts=document.getElementById('posts-list');posts&&quicklink({el:posts,priority:!0})</script>
-<script>MathJax={tex:{inlineMath:[['$','$'],['\\(','\\)']]},svg:{fontCache:'global'}}</script>
-<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
-<script id=MathJax-script async src=https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js></script>
-</head>
-<body>
-<div class=container>
-<header class=header>
-<span class=header__inner>
-<a href=/ class=logo style=text-decoration:none>
-<span class=logo__mark><svg xmlns="http://www.w3.org/2000/svg" class="greater-icon" viewBox="0 0 44 44"><path fill="none" d="M15 8l14.729 14.382L15 35.367"/></svg>
-</span>
-<span class=logo__text>简易现代魔法</span>
-<span class=logo__cursor></span>
-</a>
-<span class=header__right>
-<nav class=menu>
-<ul class="menu__inner menu__inner--desktop">
-<li><a href=/archive>Archive</a></li>
-<li><a href=/tags>Tags</a></li>
-<li><a href=https://www.github.com/zhiruili>Github</a></li>
-<li><a href=/index.xml>RSS</a></li>
-</ul>
-<ul class="menu__inner menu__inner--mobile">
-<li><a href=/archive>Archive</a></li>
-<li><a href=/tags>Tags</a></li>
-<li><a href=https://www.github.com/zhiruili>Github</a></li>
-<li><a href=/index.xml>RSS</a></li>
-</ul>
-</nav>
-<span class=menu-trigger><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M0 0h24v24H0z" fill="none"/><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></svg>
-</span>
-<span class=theme-toggle><svg class="theme-toggler" width="24" height="24" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M22 41c10.4934.0 19-8.5066 19-19C41 11.5066 32.4934 3 22 3 11.5066 3 3 11.5066 3 22s8.5066 19 19 19zM7 22C7 13.7157 13.7157 7 22 7V37C13.7157 37 7 30.2843 7 22z"/></svg>
-</span>
-</span>
-</span>
-</header>
-<div class=content>
-<div class=post>
-<h1 class=post-title>实际工程中的 C++ 模板</h1>
-<div class=post-meta>
-<span class=post-date>
-2019-09-17
-</span>
-</div>
-<span class=post-tags>
-<a href=/tags/c++/>#C++</a>&nbsp;
-</span>
-<div class=post-content>
-<p>C++ 的模板是 C++ 的一个重要的语言特性，我们使用的 STL 就是 Standard Template Library 的缩写，但是在很多情况下，开发者都对其敬而远之，有些团队甚至是直接在工程中禁用模板。模板常被当作洪水猛兽的一个原因是许多人提起模板就要提 C++ 模板图灵完备，甚至还要再秀一段编译期排序，这种表现模板强大的方式不仅不会让人觉得模板有用，反而让人觉得模板难以理解而且不应该使用。在这篇文章里，我将聊一下最近实际工程中的一些模板的应用，希望可以让更多人了解到模板并不是一个可怕的存在，以及一些常见的使用方式。</p>
-<h2 id=按版本号过滤配置>按版本号过滤配置</h2>
-<p>我所在的项目组前后台的复杂配置现在都用 protobuf 进行承载，然后生成 Excel 进行配置，生成 C++ 代码进行加载。例如这样的 message：</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-protobuf data-lang=protobuf><span style=color:#66d9ef>message</span> <span style=color:#a6e22e>ConfigItem1</span> {<span style=color:#960050;background-color:#1e0010>
-</span><span style=color:#960050;background-color:#1e0010></span>  <span style=color:#66d9ef>int32</span> id <span style=color:#f92672>=</span> <span style=color:#ae81ff>1</span>;<span style=color:#960050;background-color:#1e0010>
-</span><span style=color:#960050;background-color:#1e0010></span>  <span style=color:#66d9ef>string</span> text <span style=color:#f92672>=</span> <span style=color:#ae81ff>2</span>;<span style=color:#960050;background-color:#1e0010>
-</span><span style=color:#960050;background-color:#1e0010></span>}<span style=color:#960050;background-color:#1e0010>
-</span><span style=color:#960050;background-color:#1e0010>
-</span><span style=color:#960050;background-color:#1e0010></span><span style=color:#66d9ef>message</span> <span style=color:#a6e22e>Config</span> {<span style=color:#960050;background-color:#1e0010>
-</span><span style=color:#960050;background-color:#1e0010></span>  <span style=color:#66d9ef>repeated</span> ConfigItem1 items1 <span style=color:#f92672>=</span> <span style=color:#ae81ff>1</span>;<span style=color:#960050;background-color:#1e0010>
-</span><span style=color:#960050;background-color:#1e0010></span>}<span style=color:#960050;background-color:#1e0010>
-</span></code></pre></div><p>这里的 <code>Config</code> 会被映射为一个 Excel，里面有一个表 <code>items1</code>，其中，这个表有两列，一列 <code>id</code>，一列 <code>text</code>。这个表的每一行都是一个具体的配置项。也就是我们可以这样获取配置：</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++>cout <span style=color:#f92672>&lt;&lt;</span> cfg.items1(<span style=color:#ae81ff>0</span>).id() <span style=color:#f92672>&lt;&lt;</span> <span style=color:#e6db74>&#34;: &#34;</span> <span style=color:#f92672>&lt;&lt;</span> cfg.items1(<span style=color:#ae81ff>0</span>).text();
-</code></pre></div><p>现在有个需求是这样的，在加载某些配置的时候，前台需要根据版本号进行配置的过滤，部分配置项只会在某些版本中可见，例如这样：</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-protobuf data-lang=protobuf><span style=color:#66d9ef>message</span> <span style=color:#a6e22e>VersionRange</span> {<span style=color:#960050;background-color:#1e0010>
-</span><span style=color:#960050;background-color:#1e0010></span>  <span style=color:#66d9ef>int32</span> lo <span style=color:#f92672>=</span> <span style=color:#ae81ff>1</span>;<span style=color:#960050;background-color:#1e0010>
-</span><span style=color:#960050;background-color:#1e0010></span>  <span style=color:#66d9ef>int32</span> hi <span style=color:#f92672>=</span> <span style=color:#ae81ff>2</span>;<span style=color:#960050;background-color:#1e0010>
-</span><span style=color:#960050;background-color:#1e0010></span>}<span style=color:#960050;background-color:#1e0010>
-</span><span style=color:#960050;background-color:#1e0010>
-</span><span style=color:#960050;background-color:#1e0010></span><span style=color:#66d9ef>message</span> <span style=color:#a6e22e>ConfigItem2</span> {<span style=color:#960050;background-color:#1e0010>
-</span><span style=color:#960050;background-color:#1e0010></span>  <span style=color:#66d9ef>repeated</span> VersionRange version_ranges <span style=color:#f92672>=</span> <span style=color:#ae81ff>1</span>;<span style=color:#960050;background-color:#1e0010>
-</span><span style=color:#960050;background-color:#1e0010></span>  <span style=color:#66d9ef>int32</span> id <span style=color:#f92672>=</span> <span style=color:#ae81ff>2</span>;<span style=color:#960050;background-color:#1e0010>
-</span><span style=color:#960050;background-color:#1e0010></span>  <span style=color:#66d9ef>int32</span> value <span style=color:#f92672>=</span> <span style=color:#ae81ff>3</span>;<span style=color:#960050;background-color:#1e0010>
-</span><span style=color:#960050;background-color:#1e0010></span>}<span style=color:#960050;background-color:#1e0010>
-</span><span style=color:#960050;background-color:#1e0010>
-</span><span style=color:#960050;background-color:#1e0010></span><span style=color:#66d9ef>message</span> <span style=color:#a6e22e>Config</span> {<span style=color:#960050;background-color:#1e0010>
-</span><span style=color:#960050;background-color:#1e0010></span>  <span style=color:#66d9ef>repeated</span> ConfigItem1 items1 <span style=color:#f92672>=</span> <span style=color:#ae81ff>1</span>;<span style=color:#960050;background-color:#1e0010>
-</span><span style=color:#960050;background-color:#1e0010></span>  <span style=color:#66d9ef>repeated</span> ConfigItem2 items2 <span style=color:#f92672>=</span> <span style=color:#ae81ff>2</span>;<span style=color:#960050;background-color:#1e0010>
-</span><span style=color:#960050;background-color:#1e0010></span>}<span style=color:#960050;background-color:#1e0010>
-</span></code></pre></div><p>加载的时候大概有这样的代码：</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style=color:#75715e>// 加载配置时进行过滤
-</span><span style=color:#75715e></span><span style=color:#66d9ef>for</span> (<span style=color:#66d9ef>auto</span> iter <span style=color:#f92672>=</span> cfg.items2().begin(); iter <span style=color:#f92672>!=</span> cfg.items2().end();) {
-  <span style=color:#66d9ef>if</span> (<span style=color:#f92672>!</span>IsAvailableVersion(<span style=color:#f92672>*</span>iter, ver)) {
-    iter <span style=color:#f92672>=</span> cfg.mutable_items2()<span style=color:#f92672>-&gt;</span>erase(iter);
-  } <span style=color:#66d9ef>else</span> {
-    iter<span style=color:#f92672>++</span>;
-  } 
-}
-</code></pre></div><p>这个 <code>IsAvailableVersion</code> 要怎么实现呢？我们当然可以对每个配置项类型都实现一个函数重载，但是我们也可以使用函数模板来生成这些代码，非常简单：</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style=color:#66d9ef>template</span><span style=color:#f92672>&lt;</span><span style=color:#66d9ef>class</span> <span style=color:#a6e22e>CfgItem</span><span style=color:#f92672>&gt;</span>
-<span style=color:#66d9ef>bool</span> IsAvailableVersion(CfgItem <span style=color:#66d9ef>const</span> <span style=color:#f92672>&amp;</span>item, <span style=color:#66d9ef>int</span> ver) {
-  <span style=color:#66d9ef>auto</span> <span style=color:#66d9ef>const</span> <span style=color:#f92672>&amp;</span>ranges <span style=color:#f92672>=</span> item.version_ranges();
-  <span style=color:#66d9ef>if</span> (std<span style=color:#f92672>::</span>begin(ranges) <span style=color:#f92672>==</span> std<span style=color:#f92672>::</span>end(ranges)) {
-    <span style=color:#66d9ef>return</span> true; <span style=color:#75715e>// 如果 version range 列表为空，默认返回 true
-</span><span style=color:#75715e></span>  }
-  <span style=color:#66d9ef>for</span> (<span style=color:#66d9ef>auto</span> <span style=color:#66d9ef>const</span><span style=color:#f92672>&amp;</span> range : ranges) {
-    <span style=color:#66d9ef>if</span> (ver <span style=color:#f92672>&gt;=</span> range.lo() <span style=color:#f92672>&amp;&amp;</span> ver <span style=color:#f92672>&lt;=</span> range.hi()) {
-      <span style=color:#66d9ef>return</span> true; <span style=color:#75715e>// 如果当前版本在范围内，就返回 true
-</span><span style=color:#75715e></span>    }
-  }
-  <span style=color:#66d9ef>return</span> false; <span style=color:#75715e>// 如果 version range 列表不为空，默认返回 false
-</span><span style=color:#75715e></span>}
-</code></pre></div><p>但这里有个问题，不是每一个配置项的类型里都有 <code>version_range</code> 字段，例如 <code>ConfigItem1</code> 就没有。这就导致了 <code>IsAvailableVersion</code> 不能对所有的配置项对象进行使用，这不利于我们统一 code gen 上面加载配置时进行过滤的代码。</p>
-<p>这时候，我们想要做的，是对 <code>IsAvailableVersion</code> 的类型参数进行限制，根据这个类型是否带有 <code>version_range</code> 字段来决定是否进行过滤：</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style=color:#66d9ef>template</span><span style=color:#f92672>&lt;</span><span style=color:#66d9ef>class</span> <span style=color:#a6e22e>CfgWithVerRange</span><span style=color:#f92672>&gt;</span>
-<span style=color:#66d9ef>bool</span> IsAvailableVersion(CfgWithVerRange <span style=color:#66d9ef>const</span> <span style=color:#f92672>&amp;</span>item, <span style=color:#66d9ef>int</span> ver) { <span style=color:#75715e>/* 实现同上 */</span> }
-
-<span style=color:#66d9ef>template</span><span style=color:#f92672>&lt;</span><span style=color:#66d9ef>class</span> <span style=color:#a6e22e>CfgWithoutVerRange</span><span style=color:#f92672>&gt;</span>
-<span style=color:#66d9ef>bool</span> IsAvailableVersion(CfgWithoutVerRange <span style=color:#66d9ef>const</span> <span style=color:#f92672>&amp;</span>item, <span style=color:#66d9ef>int</span> ver) { <span style=color:#66d9ef>return</span> true; }
-</code></pre></div><p>可惜编译器没法通过类型参数的名字明白我们的意图，因此我们需要用一些技巧达到我们的目的：</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style=color:#66d9ef>template</span><span style=color:#f92672>&lt;</span><span style=color:#66d9ef>class</span> <span style=color:#a6e22e>CfgItem</span>, <span style=color:#66d9ef>class</span> <span style=color:#960050;background-color:#1e0010>= </span><span style=color:#a6e22e>void</span><span style=color:#f92672>&gt;</span>
-<span style=color:#66d9ef>struct</span> <span style=color:#a6e22e>IsAvailableVersionHelper</span> {
-  <span style=color:#66d9ef>static</span> <span style=color:#66d9ef>bool</span> <span style=color:#a6e22e>Check</span>(CfgItem <span style=color:#66d9ef>const</span><span style=color:#f92672>&amp;</span>, <span style=color:#66d9ef>int</span>) { <span style=color:#66d9ef>return</span> true; }
-};
-
-<span style=color:#66d9ef>template</span><span style=color:#f92672>&lt;</span><span style=color:#66d9ef>class</span> <span style=color:#a6e22e>CfgItem</span><span style=color:#f92672>&gt;</span>
-<span style=color:#66d9ef>struct</span> <span style=color:#a6e22e>IsAvailableVersionHelper</span><span style=color:#f92672>&lt;</span>
-  CfgItem,
-  lib<span style=color:#f92672>::</span>void_t<span style=color:#f92672>&lt;</span>
-    <span style=color:#66d9ef>decltype</span>(std<span style=color:#f92672>::</span>begin(std<span style=color:#f92672>::</span>declval<span style=color:#f92672>&lt;</span>CfgItem<span style=color:#f92672>&gt;</span>().version_ranges())<span style=color:#f92672>-&gt;</span>lo()),
-    <span style=color:#66d9ef>decltype</span>(std<span style=color:#f92672>::</span>begin(std<span style=color:#f92672>::</span>declval<span style=color:#f92672>&lt;</span>CfgItem<span style=color:#f92672>&gt;</span>().version_ranges())<span style=color:#f92672>-&gt;</span>hi())
-  <span style=color:#f92672>&gt;</span>
-<span style=color:#f92672>&gt;</span> { <span style=color:#75715e>/* 实现同上 */</span> };
-
-<span style=color:#66d9ef>template</span><span style=color:#f92672>&lt;</span><span style=color:#66d9ef>class</span> <span style=color:#a6e22e>CfgItem</span><span style=color:#f92672>&gt;</span>
-<span style=color:#66d9ef>bool</span> IsAvailableVersion(CfgItem <span style=color:#66d9ef>const</span> <span style=color:#f92672>&amp;</span>item, <span style=color:#66d9ef>int</span> ver) {
-  <span style=color:#66d9ef>return</span> IsAvailableVersionHelper<span style=color:#f92672>&lt;</span>CfgItem<span style=color:#f92672>&gt;::</span>Check(item, ver);
-}
-</code></pre></div><p>这时候我们就可以放心地写 <code>IsAvailableVersion(*iter, ver)</code> 了，如果传入的是 <code>ConfigItem1</code>，则使用的是上面原始的实现，而 <code>ConfigItem2</code> 则使用的是下面特化的实现。</p>
-<p>这是如何做到的呢？我们知道，C++ 的模板有个规则是 SFINAE，这不是一个单词，而是 Substitution Failure Is Not An Error 的缩写，也就是说，编译器在基于模板生成代码时，如果将模板的类型参数置换为给定的类型时，如果失败，编译器不会报错，而是将这个结果从可选的集合里丢弃，并从剩下的中进行选择。</p>
-<p>当我们将 <code>ConfigItem1</code> 放入时，上面的版本能够正确替换，而下面的版本则因为 <code>ConfigItem1</code> 没有 <code>version_range</code> 字段而失败，此时，编译器会将这个失败的版本抛弃，由于只剩下原始版本了，因此选择了原始版本。</p>
-<p>这里的 <code>lib::void_t</code> 是什么？<code>std::void_t</code> 是 C++ 17 之后才在 STL 中提供的模板，它很简单也非常有用，功能是将任意的类型序列映射到 <code>void</code> 上，也就是忽略掉这些类型。由于我们在使用 C++ 11，因此需要自己实现一下：</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style=color:#75715e>// C++11 中这样简单实现可能会有 bug，参考 en.cppreference.com/w/cpp/types/void_t
-</span><span style=color:#75715e>// template&lt;class...&gt;
-</span><span style=color:#75715e>// using void_t = void;
-</span><span style=color:#75715e></span><span style=color:#66d9ef>template</span><span style=color:#f92672>&lt;</span><span style=color:#66d9ef>class</span><span style=color:#960050;background-color:#1e0010>... </span><span style=color:#a6e22e>Ts</span><span style=color:#f92672>&gt;</span> <span style=color:#66d9ef>struct</span> <span style=color:#a6e22e>make_void</span> { <span style=color:#66d9ef>using</span> type <span style=color:#f92672>=</span> <span style=color:#66d9ef>void</span>; };
-<span style=color:#66d9ef>template</span><span style=color:#f92672>&lt;</span><span style=color:#66d9ef>class</span><span style=color:#960050;background-color:#1e0010>... </span><span style=color:#a6e22e>Ts</span><span style=color:#f92672>&gt;</span> <span style=color:#66d9ef>using</span> void_t <span style=color:#f92672>=</span> <span style=color:#66d9ef>typename</span> make_void<span style=color:#f92672>&lt;</span>Ts...<span style=color:#f92672>&gt;::</span>type;
-</code></pre></div><p>这里使用 <code>void_t</code> 将多个类型声明忽略掉以适应 <code>template&lt;class CfgItem, class = void></code> 中的第二个类型参数：</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style=color:#66d9ef>decltype</span>(std<span style=color:#f92672>::</span>begin(std<span style=color:#f92672>::</span>declval<span style=color:#f92672>&lt;</span>CfgItem<span style=color:#f92672>&gt;</span>().version_ranges())<span style=color:#f92672>-&gt;</span>lo()),
-<span style=color:#66d9ef>decltype</span>(std<span style=color:#f92672>::</span>begin(std<span style=color:#f92672>::</span>declval<span style=color:#f92672>&lt;</span>CfgItem<span style=color:#f92672>&gt;</span>().version_ranges())<span style=color:#f92672>-&gt;</span>hi())
-</code></pre></div><p>虽然说这两个类型声明被忽略了，但是它们还是会参与替换，<code>decltype</code> 可以根据括号里的表达式计算出其类型，而 <code>std::declval&lt;T>()</code> 则相反，给定一个类型，它可以获得该类型的值，虽然这个值并不是有效的，但是在这个类型声明里我们可以用它来填写表达式。如果一个类型没有带 <code>version_ranges</code> 字段，则 <code>std::declval&lt;CfgItem>().version_ranges()</code> 会失败，如果这个 <code>version_range()</code> 返回的对象不支持 <code>std::begin</code>，则 <code>std::begin(...)</code> 会失败，若这个 <code>std::begin</code> 计算出来的迭代器不支持 <code>lo</code> 函数，则 <code>std::begin(...)->lo()</code> 会失败，这里的结合就确保了 <code>CfgItem</code> 类型必须有 <code>version_range</code>，且每一个 <code>version_range</code> 都是可迭代的，且每一个 range 都有 <code>lo</code> 成员。下面的 <code>hi</code> 也是类似的。当然，我们还可以通过 <code>std::is_same</code> 之类的 type trait 进一步确保 <code>lo</code> 和 <code>hi</code> 返回的类型，这个就不在此演示了，对于我们的需求而言，这样就足够了。</p>
-<p>那说回来，如果我们填入的是 <code>ConfigItem2</code> 会怎样？在这个时候，两个类型替换都会成功，但由于原始版本中，第二个类型参数是默认值 <code>void</code>，而特化版本中，则填入了自定义的一个类型 <code>lib::void_t...</code>，虽然这个类型最后计算出来的类型还是 <code>void</code>，但它依然是比原始版本更「特殊」的版本，因此编译器会选择这个版本，这就达到了我们的目的。</p>
-<h2 id=data-blob-操作辅助类>Data blob 操作辅助类</h2>
-<p>在公司中，我们有自己的 NoSQL 数据库服务，我们在使用的过程中常常有这样的模式：</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++>MyDataBlob data{};
-data.key1 <span style=color:#f92672>=</span> ...;
-data.key2 <span style=color:#f92672>=</span> ...;
-DbApi <span style=color:#a6e22e>api</span>(...);
-<span style=color:#66d9ef>int</span> <span style=color:#66d9ef>const</span> res <span style=color:#f92672>=</span> api.Get(<span style=color:#e6db74>&#34;tablename-x&#34;</span>, <span style=color:#f92672>&amp;</span>data, <span style=color:#66d9ef>sizeof</span>(data));
-<span style=color:#66d9ef>if</span> (res <span style=color:#f92672>==</span> RSP_ERROR <span style=color:#f92672>&amp;&amp;</span> api.GetDbErr() <span style=color:#f92672>==</span> NOT_EXIST) {
-  LOGDBG(...); <span style=color:#75715e>// 数据不存在，打印调试日志
-</span><span style=color:#75715e></span>} <span style=color:#66d9ef>else</span> <span style=color:#a6e22e>if</span> (res <span style=color:#f92672>!=</span> <span style=color:#ae81ff>0</span>) {
-  LOGERR(...); <span style=color:#75715e>// 其他错误，打印错误日志，返回错误
-</span><span style=color:#75715e></span>  <span style=color:#66d9ef>return</span> ERR_DB_GET_FAIL;
-} 
-<span style=color:#75715e>// 正常逻辑，使用 data ...
-</span></code></pre></div><p>这里先创建一个空白的数据对象，填入它的 key 值，然后调用 API 拉取数据。由于 DB 会将拉取不存在的数据这种情况也认为是一个错误，而数据不存在对于业务而言又往往不是一个错误，因此我们一般是要对这种情况单独进行处理。</p>
-<p>这种重复的工作显然可以抽象一个更加方便的 API 类型出来，希望能更轻松地进行使用。一个简单的想法是这样的：</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style=color:#66d9ef>template</span><span style=color:#f92672>&lt;</span><span style=color:#66d9ef>class</span> <span style=color:#a6e22e>Db</span><span style=color:#f92672>&gt;</span>
-<span style=color:#66d9ef>struct</span> <span style=color:#a6e22e>Result</span> {
-  <span style=color:#66d9ef>int</span> code{};
-  <span style=color:#66d9ef>int</span> subCode{};
-  Db data{};
-  
-  <span style=color:#66d9ef>bool</span> <span style=color:#a6e22e>IsError</span>() { <span style=color:#66d9ef>return</span> code <span style=color:#f92672>!=</span> <span style=color:#ae81ff>0</span> <span style=color:#f92672>&amp;&amp;</span> subCode <span style=color:#f92672>!=</span> NOT_EXIST; }
-  <span style=color:#66d9ef>bool</span> <span style=color:#a6e22e>NoExist</span>() { <span style=color:#66d9ef>return</span> code <span style=color:#f92672>!=</span> <span style=color:#ae81ff>0</span> <span style=color:#f92672>&amp;&amp;</span> subCode <span style=color:#f92672>==</span> NOT_EXIST; }
-}
-
-<span style=color:#66d9ef>template</span><span style=color:#f92672>&lt;</span><span style=color:#66d9ef>class</span> <span style=color:#a6e22e>Db</span><span style=color:#f92672>&gt;</span>
-<span style=color:#66d9ef>struct</span> <span style=color:#a6e22e>NewDbApi</span> {
-  Result <span style=color:#a6e22e>Get</span>() {
-    DbApi api(...);
-    Result res{};
-    res.data.SetKey(<span style=color:#f92672>???</span>); <span style=color:#75715e>// 1
-</span><span style=color:#75715e></span>    res.code <span style=color:#f92672>=</span> api.Get(res.data.TableName(), <span style=color:#f92672>&amp;</span>res.data, <span style=color:#66d9ef>sizeof</span>(res.data)); <span style=color:#75715e>// 2
-</span><span style=color:#75715e></span>    res.subCode <span style=color:#f92672>=</span> api.GetDbErr();
-    <span style=color:#66d9ef>if</span> (res.IsError()) {
-      LOGERR(...);
-    }
-    <span style=color:#66d9ef>return</span> res;
-  }
-}
-</code></pre></div><p>这里我们碰到了一点麻烦的问题，首先，在 1 处，这个 <code>data.SetKey()</code> 我们不知道应该怎么填。当然，我们可以像原先一样在外部自行设置 key，然后再将 <code>data</code> 传进来，但是我们更加希望能够免去这一个步骤，直接通过 <code>Get</code> 函数的参数传入对应的 key，然后转交给 <code>data</code>。但我们又不知道这个 <code>Db</code> 类型的 key 是什么，那我们该怎么办呢？也许我们可以这样做：</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style=color:#66d9ef>template</span><span style=color:#f92672>&lt;</span><span style=color:#66d9ef>class</span> <span style=color:#960050;background-color:#1e0010>... </span><span style=color:#a6e22e>Args</span><span style=color:#f92672>&gt;</span>
-Result Get(Args <span style=color:#f92672>&amp;&amp;</span>...args) {
-  ...
-  res.data.SetKey(std<span style=color:#f92672>::</span>forward<span style=color:#f92672>&lt;</span>Args<span style=color:#f92672>&gt;</span>(args)...); <span style=color:#75715e>// 1
-</span><span style=color:#75715e></span>  ...
-}
-</code></pre></div><p>呃……这确实可以实现我们要的效果，但是这个实现方法并不好，它带来了不必要的复杂度。最让人难受的一点是，我们丢失了 <code>data.SetKey</code> 所需参数的类型信息，这让调用者完全不知道这里应该填什么数据。为了解决这个问题，我们可以添加一层抽象，让 <code>Db</code> 类型告诉我们 key 的类型是什么：</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++>Result <span style=color:#a6e22e>Get</span>(<span style=color:#66d9ef>typename</span> Db<span style=color:#f92672>::</span>key_type <span style=color:#66d9ef>const</span> <span style=color:#f92672>&amp;</span>key) {
-  res.data.SetKey(key); <span style=color:#75715e>// 1
-</span><span style=color:#75715e></span>  ...
-}
-</code></pre></div><p>这样简单多了，<code>Get</code> 函数的调用者可以获知对应的 key 的类型。</p>
-<p>另外一个问题是，1 和 2 处我们直接调用了 <code>data</code> 的 <code>SetKey</code> 和 <code>TableName</code> 成员函数，但是我们的 <code>MyDataBlob</code> 是一个用另外一个工具基于 XML 描述生成出来的代码，主要实现的是序列化和反序列化功能，我们没法去通过修改这个工具来添加新的接口。所以我们只能使用 adapter 模式解决这个问题：</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style=color:#66d9ef>struct</span> <span style=color:#a6e22e>MyDataBlobAdapter</span> {
-  <span style=color:#66d9ef>using</span> key_type <span style=color:#f92672>=</span> ...;
-  <span style=color:#66d9ef>void</span> <span style=color:#a6e22e>SetKey</span>(key_type <span style=color:#66d9ef>const</span> <span style=color:#f92672>&amp;</span>) { ... }
-  std<span style=color:#f92672>::</span>string TableName() <span style=color:#66d9ef>const</span> { ... }
-  MyDataBlob myDataBlob{};
-}
-</code></pre></div><p>这就可以解决上面提到的问题了，给 <code>Get</code> 函数的实现提供了 <code>SetKey</code> 和 <code>TableName</code>。我们可以发现，<code>Result</code> 里的数据类型不再是 <code>MyDataBlob</code> 了，而是 <code>MyDataBlobAdapter</code>，使用者拿到了这个对象后，使用的方法不再是 <code>res.data</code> 而是 <code>res.data.myDataBlob</code> 了。这在大多数情况下不是什么大问题，但是，如果一个数据不只是被这一个接口操作，而是被多个接口操作那该怎么办呢？这时候，为了适配多个接口，我们可能需要多个 adapter。例如：</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++>NewDbApi<span style=color:#f92672>&lt;</span>MyDataBlobAdapter<span style=color:#f92672>&gt;</span> api1{};
-OtherAPI<span style=color:#f92672>&lt;</span>OtherAdapter<span style=color:#f92672>&gt;</span> api2{};
-
-Result res <span style=color:#f92672>=</span> api1.Get(...);
-OtherAdapter <span style=color:#a6e22e>other</span>(res.data.myDataBlob);
-api2.Modify(<span style=color:#f92672>&amp;</span>other);
-res.data.myDataBlob <span style=color:#f92672>=</span> other.myDataBlob;
-api1.Put(res.data);
-</code></pre></div><p>这不仅麻烦，而且会造成比较大的开销，在这里，为了适配两个接口，我们不得不进行两次数据的复制。我们能否做得更好呢？</p>
-<p>首先注意到 <code>TableName</code> 这个函数其实和对象无关，我们可以实现为一个静态的函数：</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style=color:#66d9ef>struct</span> <span style=color:#a6e22e>MyDataBlobAdapter</span> {
-  <span style=color:#66d9ef>static</span> std<span style=color:#f92672>::</span>string TableName() <span style=color:#66d9ef>const</span> { ... }
-  ...
-}
-</code></pre></div><p>所以上面 2 处的代码可以改为：</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++>res.code <span style=color:#f92672>=</span> api.Get(Db<span style=color:#f92672>::</span>TableName(), ...); <span style=color:#75715e>// 2
-</span></code></pre></div><p>类似地，对于 <code>SetKey</code>，我们也可以进行类似的改造，虽然它需要操作自己的成员变量，但是，我们可以将 <code>this</code> 指针手动传递一下，也就是这样：</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style=color:#66d9ef>struct</span> <span style=color:#a6e22e>MyDataBlobAdapter</span> {
-  <span style=color:#66d9ef>static</span> <span style=color:#66d9ef>void</span> <span style=color:#a6e22e>SetKey</span>(key_type <span style=color:#66d9ef>const</span> <span style=color:#f92672>&amp;</span>key, MyDataBlobAdapter <span style=color:#f92672>*</span>adapter) { ... }
-  ...
-}
-</code></pre></div><p>对于使用者，1 处的代码可以改为：</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++>Db<span style=color:#f92672>::</span>SetKey(key, <span style=color:#f92672>&amp;</span>res.data);
-</code></pre></div><p>这个时候，我们可以发现，这里 <code>SetKey</code> 的第二个参数根本不需要是 <code>MyDataBlobAdapter*</code>，我们可以直接将其换为 <code>MyDataBlob*</code>！同时，类似于 <code>key_type</code>，为了能告诉使用者这个数据的类型，我们加一个 <code>type</code> 类型声明，结果是这样：</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style=color:#66d9ef>struct</span> <span style=color:#a6e22e>MyDataBlobAdapter</span> {
-  <span style=color:#66d9ef>using</span> type <span style=color:#f92672>=</span> MyDataBlob;
-  <span style=color:#66d9ef>static</span> <span style=color:#66d9ef>void</span> <span style=color:#a6e22e>SetKey</span>(key_type <span style=color:#66d9ef>const</span> <span style=color:#f92672>&amp;</span>key, type <span style=color:#f92672>*</span>blob) { ... }
-  ...
-}
-</code></pre></div><p>这时我们重新回来看一下 <code>NewDbApi</code> 的实现：</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style=color:#66d9ef>template</span><span style=color:#f92672>&lt;</span><span style=color:#66d9ef>class</span> <span style=color:#a6e22e>Db</span><span style=color:#f92672>&gt;</span>
-<span style=color:#66d9ef>struct</span> <span style=color:#a6e22e>Result</span> {
-  <span style=color:#66d9ef>typename</span> Db<span style=color:#f92672>::</span>type data{};
-  ...
-}
-
-<span style=color:#66d9ef>template</span><span style=color:#f92672>&lt;</span><span style=color:#66d9ef>class</span> <span style=color:#a6e22e>Db</span><span style=color:#f92672>&gt;</span>
-<span style=color:#66d9ef>struct</span> <span style=color:#a6e22e>NewDbApi</span> {
-  Result <span style=color:#a6e22e>Get</span>(<span style=color:#66d9ef>typename</span> Db<span style=color:#f92672>::</span>key_type <span style=color:#66d9ef>const</span> <span style=color:#f92672>&amp;</span>k, <span style=color:#66d9ef>typename</span> Db<span style=color:#f92672>::</span>type <span style=color:#f92672>*</span>db) {
-    ...
-    Db<span style=color:#f92672>::</span>SetKey(k, db); <span style=color:#75715e>// 1
-</span><span style=color:#75715e></span>    res.code <span style=color:#f92672>=</span> api.Get(Db<span style=color:#f92672>::</span>TableName(), <span style=color:#f92672>&amp;</span>res.data, <span style=color:#66d9ef>sizeof</span>(res.data)); <span style=color:#75715e>// 2
-</span><span style=color:#75715e></span>    ...
-  }
-}
-</code></pre></div><p>使用的时候，只需要这样写：</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++>NewDbApi<span style=color:#f92672>&lt;</span>MyDataBlobAdapter<span style=color:#f92672>&gt;</span> api1{};
-OtherAPI<span style=color:#f92672>&lt;</span>OtherAdapter<span style=color:#f92672>&gt;</span> api2{};
-
-Result res <span style=color:#f92672>=</span> api1.Get(...);
-api2.Modify(<span style=color:#f92672>&amp;</span>res.data);
-api1.Put(res.data);
-</code></pre></div><p>这样一来，我们就实现了既能直接操作数据，又避免给原始类型添加新接口，而且还做到了足够的泛化灵活，甚至不需要用到虚函数导致性能损失。</p>
-<p>不过，这种形式的实现有个小缺点，这里的 <code>Db</code> 类型的约束非常不明确，对于使用者而言，可能会碰到非常难读的编译错误，这可能是许多人害怕模板的另一个原因。到 C++ 20，我们才能用上 Concept，能够直接指名模板参数的约束，但现实情况是，我们可能将长期被锁在 C++ 11 里，在这种情况下，我们也可以尽力去给使用者清晰的提示：</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style=color:#75715e>// 示例:
-</span><span style=color:#75715e>// struct LegalDb {
-</span><span style=color:#75715e>//   struct type;
-</span><span style=color:#75715e>//   struct key_type;
-</span><span style=color:#75715e>//   static void SetKey(key_type const &amp;key, type *db);
-</span><span style=color:#75715e>//   static std::string TableName();
-</span><span style=color:#75715e>// }
-</span><span style=color:#75715e></span><span style=color:#66d9ef>template</span><span style=color:#f92672>&lt;</span><span style=color:#66d9ef>class</span> <span style=color:#a6e22e>Db</span><span style=color:#f92672>&gt;</span>
-<span style=color:#66d9ef>struct</span> <span style=color:#a6e22e>NewDbApi</span> {
-  ...
-  <span style=color:#66d9ef>static_assert</span>(IsLegalDb<span style=color:#f92672>&lt;</span>Db<span style=color:#f92672>&gt;::</span>value,
-                <span style=color:#e6db74>&#34;Db must match requirements of LegalDb, see comments above&#34;</span>);
-}
-</code></pre></div><p>这样一来，一旦使用者填入了不合法的类型，编译期立刻就能收到上面的提示，并且可以基于示例来了解应该如何实现这个类型。这个 <code>IsLegalDb</code> 的实现也用到了 SFINAE，大致可以实现为这样：</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style=color:#66d9ef>template</span><span style=color:#f92672>&lt;</span><span style=color:#66d9ef>class</span> <span style=color:#a6e22e>T</span>, <span style=color:#66d9ef>class</span> <span style=color:#960050;background-color:#1e0010>= </span><span style=color:#a6e22e>void</span><span style=color:#f92672>&gt;</span>
-<span style=color:#66d9ef>struct</span> <span style=color:#a6e22e>IsLegalDb</span><span style=color:#f92672>:</span> std<span style=color:#f92672>::</span>false_type {}; <span style=color:#75715e>// 3
-</span><span style=color:#75715e></span>
-<span style=color:#66d9ef>template</span><span style=color:#f92672>&lt;</span><span style=color:#66d9ef>class</span> <span style=color:#a6e22e>T</span><span style=color:#f92672>&gt;</span>
-<span style=color:#66d9ef>struct</span> <span style=color:#a6e22e>IsLegalDb</span><span style=color:#f92672>&lt;</span>T,
-  lib<span style=color:#f92672>::</span>void_t<span style=color:#f92672>&lt;</span>
-    <span style=color:#66d9ef>typename</span> T<span style=color:#f92672>::</span>type,
-    <span style=color:#66d9ef>typename</span> T<span style=color:#f92672>::</span>key_type,
-    <span style=color:#66d9ef>decltype</span>(T<span style=color:#f92672>::</span>SetKey(std<span style=color:#f92672>::</span>declval<span style=color:#f92672>&lt;</span><span style=color:#66d9ef>typename</span> T<span style=color:#f92672>::</span>key_type <span style=color:#66d9ef>const</span> <span style=color:#f92672>&amp;&gt;</span>(),
-                       std<span style=color:#f92672>::</span>declval<span style=color:#f92672>&lt;</span><span style=color:#66d9ef>typename</span> T<span style=color:#f92672>::</span>type <span style=color:#f92672>*&gt;</span>())),
-    <span style=color:#66d9ef>typename</span> std<span style=color:#f92672>::</span>enable_if<span style=color:#f92672>&lt;</span>
-      std<span style=color:#f92672>::</span>is_convertible<span style=color:#f92672>&lt;</span><span style=color:#66d9ef>decltype</span>(T<span style=color:#f92672>::</span>TableName()), std<span style=color:#f92672>::</span>string<span style=color:#f92672>&gt;::</span>value<span style=color:#f92672>&gt;</span>
-    <span style=color:#f92672>&gt;::</span>type <span style=color:#75715e>// 4
-</span><span style=color:#75715e></span><span style=color:#f92672>&gt;:</span> std<span style=color:#f92672>::</span>true_type {}; <span style=color:#75715e>// 5
-</span></code></pre></div><p>这里也用到了前面实现的 <code>void_t</code>，总体思路是类似的，也是基于类型声明来让编译器选择我们想要的模板实现，这里可能和上一个例子不太一样的有两点。第一是我们这里的类型在 3 和 5 处继承了 <code>std::true_type</code> 和 <code>std::false_type</code>，这两个类型可以认为是类型级别的 <code>true</code> 和 <code>false</code>，在头文件 <code>&lt;type_traits></code> 里有很多 <code>is_</code> 开头的模板就是基于这两个类的，如果一个类型符合它的约束，它就是 <code>true_type</code> 否则就是 <code>false_type</code>。这里用到的 <code>std::is_convertible</code> 就是这样的 type trait，它判定的是第一个类型参数能被转换为第二个类型参数。我们可以用 <code>value</code> 成员的来获得它们对应的 <code>bool</code> 值。这里用到了另一个基础工具是 <code>std::enable_if</code>，它可以接受一个编译期计算出来的 <code>bool</code> 值，如果这个值为 <code>true</code>，那么我们就能获得其 <code>type</code> 成员类型，否则就获取不到，可能直接用一个简单实现来说明更加方便：</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style=color:#66d9ef>template</span><span style=color:#f92672>&lt;</span><span style=color:#66d9ef>bool</span> B, <span style=color:#66d9ef>class</span> <span style=color:#a6e22e>T</span> <span style=color:#f92672>=</span> <span style=color:#66d9ef>void</span><span style=color:#f92672>&gt;</span>
-<span style=color:#66d9ef>struct</span> <span style=color:#a6e22e>enable_if</span> {};
- 
-<span style=color:#66d9ef>template</span><span style=color:#f92672>&lt;</span><span style=color:#66d9ef>class</span> <span style=color:#a6e22e>T</span><span style=color:#f92672>&gt;</span>
-<span style=color:#66d9ef>struct</span> <span style=color:#a6e22e>enable_if</span><span style=color:#f92672>&lt;</span>true, T<span style=color:#f92672>&gt;</span> { <span style=color:#66d9ef>using</span> type <span style=color:#f92672>=</span> T; };
-</code></pre></div><p>所以说，4 处的代码的实现了如果 <code>std::is_convertible</code> 判定为 <code>true</code>，那么 <code>std::enable_if</code> 里就会有 <code>type</code>，那么模板的类型置换就会成功，否则则是失败，这就实现了我们想要的判定 <code>T::TableName()</code> 返回类型可以转换为 <code>std::string</code> 的效果。</p>
-<p><code>IsLegalDb</code> 的实现相对而言可能会有点麻烦，但是它可以带来清晰的错误提示，是一个很好的文档，因此对于一个有特定约束的模板类型参数，尤其是无法从名字上直接看出来约束内容的模板类型参数，最好配套加上这样一个检查，配合注释说明，给使用者明确的约束，以方便使用者实现合法的类型。</p>
-<h2 id=强类型别名>强类型别名</h2>
-<p>我们经常会碰到一个函数带有几个类型相同的参数的情况。以扑克牌举例，一种表示方式是基于花色和数字的表示，使用一个 <code>uint8_t</code> 表示花色，同时一个 <code>uint8_t</code> 表示数字，另一种是直接基于牌编码的方式，也就是将牌从 0 编号到 54，只需要一个 <code>uint8_t</code> 就能实现。那么，如果不同地方使用到了不同的表示方式，就需要有类似这样的转换函数：</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style=color:#66d9ef>uint8_t</span> <span style=color:#a6e22e>ConvertCardToCode</span>(<span style=color:#66d9ef>uint8_t</span> shape, <span style=color:#66d9ef>uint8_t</span> number);
-</code></pre></div><p>这个函数本身是没什么问题，但在使用的时候经常一不小心就写歪了：</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style=color:#66d9ef>auto</span> <span style=color:#66d9ef>const</span> num <span style=color:#f92672>=</span> <span style=color:#66d9ef>uint8_t</span>(<span style=color:#ae81ff>13</span>);
-<span style=color:#66d9ef>auto</span> <span style=color:#66d9ef>const</span> shp <span style=color:#f92672>=</span> <span style=color:#66d9ef>uint8_t</span>(<span style=color:#ae81ff>2</span>);
-<span style=color:#66d9ef>auto</span> <span style=color:#66d9ef>const</span> code <span style=color:#f92672>=</span> ConvertCardToCode(num, shp); <span style=color:#75715e>// num 和 shp 的位置写反了
-</span></code></pre></div><p>我们可以通过类型别名声明来使得函数类型更加明晰：</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style=color:#66d9ef>using</span> CardCode <span style=color:#f92672>=</span> <span style=color:#66d9ef>uint8_t</span>;
-<span style=color:#66d9ef>using</span> Shape <span style=color:#f92672>=</span> <span style=color:#66d9ef>uint8_t</span>;
-<span style=color:#66d9ef>using</span> Number <span style=color:#f92672>=</span> <span style=color:#66d9ef>uint8_t</span>;
-
-CardCode <span style=color:#a6e22e>ConvertCardToCode</span>(Shape shape, Number number);
-</code></pre></div><p>这个写法看起来很不错，但是在函数调用处，我们仍然无法避免出现这种情况：</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style=color:#66d9ef>auto</span> <span style=color:#66d9ef>const</span> num <span style=color:#f92672>=</span> Number(<span style=color:#ae81ff>13</span>);
-<span style=color:#66d9ef>auto</span> <span style=color:#66d9ef>const</span> shp <span style=color:#f92672>=</span> Shape(<span style=color:#ae81ff>2</span>);
-<span style=color:#66d9ef>auto</span> <span style=color:#66d9ef>const</span> code <span style=color:#f92672>=</span> ConvertCardToCode(num, shp); <span style=color:#75715e>// 仍然能正常编译
-</span></code></pre></div><p>虽然我们声明了类型别名，但是这个类型别名的本质上还是原来的类型，我们仍然无法避免出现前面的错误。在 Go 语言中，「type alias」（<code>type T = xxx</code>）和「type definition」（<code>type T xxx</code>）是两种不同的语法，如果我们使用前者，则依然会遇到上面说的这个问题，但如果我们使用后者，则可以让编译器帮我们避免它：</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=color:#66d9ef>type</span> <span style=color:#a6e22e>CardCode</span> <span style=color:#66d9ef>uint8</span>;
-<span style=color:#66d9ef>type</span> <span style=color:#a6e22e>Shape</span> <span style=color:#66d9ef>uint8</span>;
-<span style=color:#66d9ef>type</span> <span style=color:#a6e22e>Number</span> <span style=color:#66d9ef>uint8</span>;
-
-<span style=color:#66d9ef>func</span> <span style=color:#a6e22e>ConvertCardToCode</span>(<span style=color:#a6e22e>shape</span> <span style=color:#a6e22e>Shape</span>, <span style=color:#a6e22e>number</span> <span style=color:#a6e22e>Number</span>) <span style=color:#a6e22e>CardCode</span> { <span style=color:#75715e>/*...*/</span> }
-</code></pre></div><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=color:#a6e22e>num</span> <span style=color:#f92672>:=</span> <span style=color:#a6e22e>Number</span>(<span style=color:#ae81ff>13</span>)
-<span style=color:#a6e22e>shp</span> <span style=color:#f92672>:=</span> <span style=color:#a6e22e>Shape</span>(<span style=color:#ae81ff>2</span>)
-<span style=color:#a6e22e>code</span> <span style=color:#f92672>:=</span> <span style=color:#a6e22e>ConvertCardToCode</span>(<span style=color:#a6e22e>num</span>, <span style=color:#a6e22e>shp</span>); <span style=color:#75715e>// 编译失败
-</span></code></pre></div><p>这样的强类型别名非常好，使得函数签名本来就成为了注释的一部分，想要在 C++ 中实现类似的效果，我们可以不是用 <code>using</code> 起别名而是直接将类型包裹一层：</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style=color:#66d9ef>struct</span> <span style=color:#a6e22e>Shape</span> {
-  Shape() <span style=color:#f92672>=</span> <span style=color:#66d9ef>default</span>;
-  <span style=color:#66d9ef>explicit</span> <span style=color:#a6e22e>Shape</span>(<span style=color:#66d9ef>uint8_t</span> val)<span style=color:#f92672>:</span> v{val} {}
-  <span style=color:#66d9ef>uint8_t</span> v;
-};
-
-<span style=color:#66d9ef>struct</span> <span style=color:#a6e22e>Number</span> {
-  Number() <span style=color:#f92672>=</span> <span style=color:#66d9ef>default</span>;
-  <span style=color:#66d9ef>explicit</span> <span style=color:#a6e22e>Number</span>(<span style=color:#66d9ef>uint8_t</span> val)<span style=color:#f92672>:</span> v{val} {}
-  <span style=color:#66d9ef>uint8_t</span> v{};
-};
-
-<span style=color:#66d9ef>using</span> CardCode <span style=color:#f92672>=</span> <span style=color:#66d9ef>uint8_t</span>;
-
-CardCode <span style=color:#a6e22e>ConvertCardToCode</span>(Shape shape, Number number);
-</code></pre></div><p>此时，函数调用者如果传错了参数，就完全没法编译通过了：</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style=color:#66d9ef>auto</span> <span style=color:#66d9ef>const</span> num <span style=color:#f92672>=</span> Number(<span style=color:#ae81ff>13</span>);
-<span style=color:#66d9ef>auto</span> <span style=color:#66d9ef>const</span> shp <span style=color:#f92672>=</span> Shape(<span style=color:#ae81ff>2</span>);
-<span style=color:#66d9ef>auto</span> <span style=color:#66d9ef>const</span> code <span style=color:#f92672>=</span> ConvertCardToCode(num, shp); <span style=color:#75715e>// 编译出错
-</span></code></pre></div><p>可以发现这两个类型是很类似的，我们会考虑用模板来使得这个过程更加便利：</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style=color:#66d9ef>template</span><span style=color:#f92672>&lt;</span><span style=color:#66d9ef>class</span> <span style=color:#a6e22e>T</span><span style=color:#f92672>&gt;</span>
-<span style=color:#66d9ef>struct</span> <span style=color:#a6e22e>StrongAlias</span> {
-  StrongAlias() <span style=color:#f92672>=</span> <span style=color:#66d9ef>default</span>;
-  <span style=color:#66d9ef>explicit</span> <span style=color:#a6e22e>StrongAlias</span>(T val)<span style=color:#f92672>:</span> v{std<span style=color:#f92672>::</span>move(val)} {}
-  T v{};
-};
-
-<span style=color:#66d9ef>using</span> Shape <span style=color:#f92672>=</span> StrongAlias<span style=color:#f92672>&lt;</span><span style=color:#66d9ef>uint8_t</span><span style=color:#f92672>&gt;</span>;
-<span style=color:#66d9ef>using</span> Number <span style=color:#f92672>=</span> StrongAlias<span style=color:#f92672>&lt;</span><span style=color:#66d9ef>uint8_t</span><span style=color:#f92672>&gt;</span>;
-<span style=color:#66d9ef>using</span> CardCode <span style=color:#f92672>=</span> <span style=color:#66d9ef>uint8_t</span>;
-CardCode <span style=color:#a6e22e>ConvertCardToCode</span>(Shape shape, Number number);
-</code></pre></div><p>但很可惜的是，这样并不能达到我们想要的效果，因为 <code>StrongAlias&lt;uint8_t></code> 和 <code>StrongAlias&lt;uint8_t></code> 是同一个类型，所以使用 <code>using</code> 来声明的 <code>Shape</code> 和 <code>Number</code> 也依然是同一个类型。因此我们需要用另一个标记将两个类型完全区分开来，我们可以在类型参数列表里加多一个类型参数来做到这一点，这个类型参数的唯一作用就是用来实现类型的区分：</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style=color:#66d9ef>template</span><span style=color:#f92672>&lt;</span><span style=color:#66d9ef>class</span> <span style=color:#a6e22e>T</span>, <span style=color:#66d9ef>class</span> <span style=color:#a6e22e>Tag</span><span style=color:#f92672>&gt;</span>
-<span style=color:#66d9ef>struct</span> <span style=color:#a6e22e>StrongAlias</span> {
-  StrongAlias() <span style=color:#f92672>=</span> <span style=color:#66d9ef>default</span>;
-  <span style=color:#66d9ef>explicit</span> <span style=color:#a6e22e>StrongAlias</span>(T val)<span style=color:#f92672>:</span> v{std<span style=color:#f92672>::</span>move(val)} {}
-  T v{};
-};
-
-<span style=color:#66d9ef>using</span> Shape <span style=color:#f92672>=</span> StrongAlias<span style=color:#f92672>&lt;</span><span style=color:#66d9ef>uint8_t</span>, <span style=color:#66d9ef>struct</span> <span style=color:#a6e22e>ShapeTag</span><span style=color:#f92672>&gt;</span>;
-<span style=color:#66d9ef>using</span> Number <span style=color:#f92672>=</span> StrongAlias<span style=color:#f92672>&lt;</span><span style=color:#66d9ef>uint8_t</span>, <span style=color:#66d9ef>struct</span> <span style=color:#a6e22e>NumberTag</span><span style=color:#f92672>&gt;</span>;
-<span style=color:#66d9ef>using</span> CardCode <span style=color:#f92672>=</span> <span style=color:#66d9ef>uint8_t</span>;
-CardCode <span style=color:#a6e22e>ConvertCardToCode</span>(Shape shape, Number number);
-</code></pre></div><p>这个实现已经很实用了，但是我们可以让它更好用一点，目前而言它的不足之处在于，我们包裹的类型往往是一些基础类型，这些基础类型自带了一些操作符，比如我们之前想比较两张牌是否相等的时候可以写：</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style=color:#66d9ef>if</span> (card1.shape <span style=color:#f92672>==</span> card2.shape <span style=color:#f92672>&amp;&amp;</span> card1.number <span style=color:#f92672>==</span> card2.number) { ... }
-</code></pre></div><p>但现在需要写：</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style=color:#66d9ef>if</span> (card1.shape.v <span style=color:#f92672>==</span> card2.shape.v <span style=color:#f92672>&amp;&amp;</span> card1.number.v <span style=color:#f92672>==</span> card2.number.v) { ... }
-</code></pre></div><p>更为麻烦的是，如果我们想将类型别名作为 <code>std::map</code> 的 key 时就会直接报错：</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style=color:#75715e>// using Number = uint8_t;
-</span><span style=color:#75715e></span>std<span style=color:#f92672>::</span>map<span style=color:#f92672>&lt;</span>Number, <span style=color:#66d9ef>int</span><span style=color:#f92672>&gt;</span> cardNumCount{}; <span style=color:#75715e>// 编译通过
-</span></code></pre></div><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style=color:#75715e>// using Number = StrongAlias&lt;uint8_t, struct NumberTag&gt;;
-</span><span style=color:#75715e></span>std<span style=color:#f92672>::</span>map<span style=color:#f92672>&lt;</span>Number, <span style=color:#66d9ef>int</span><span style=color:#f92672>&gt;</span> cardNumCount{}; <span style=color:#75715e>// 编译出错
-</span></code></pre></div><p>这是因为 <code>std::map</code> 要求 key 能够使用 <code>&lt;</code> 进行比较，而当我们直接使用 <code>using</code> 起类型别名时，这个 <code>&lt;</code> 就是 <code>uint8_t</code> 的 <code>&lt;</code>，而 <code>StrongAlias&lt;uint8_t, struct NumberTag></code> 则没有这个运算符。我们当然可以对每一个类型别名都自己实现一次所需的运算符，但我们还可以做得更加简单：</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style=color:#66d9ef>template</span><span style=color:#f92672>&lt;</span><span style=color:#66d9ef>class</span> <span style=color:#a6e22e>T</span>, <span style=color:#66d9ef>class</span> <span style=color:#a6e22e>Tag</span>, <span style=color:#66d9ef>template</span><span style=color:#f92672>&lt;</span><span style=color:#66d9ef>class</span><span style=color:#f92672>&gt;</span> <span style=color:#66d9ef>class</span> <span style=color:#a6e22e>Op</span><span style=color:#f92672>&gt;</span>
-<span style=color:#66d9ef>struct</span> <span style=color:#a6e22e>StrongAliasType</span><span style=color:#f92672>:</span> <span style=color:#66d9ef>public</span> Op<span style=color:#f92672>&lt;</span>StrongAliasType<span style=color:#f92672>&lt;</span>T, Tag, Op<span style=color:#f92672>&gt;&gt;</span> {
-    StrongAliasType() <span style=color:#f92672>=</span> <span style=color:#66d9ef>default</span>;
-    <span style=color:#66d9ef>explicit</span> <span style=color:#a6e22e>StrongAliasType</span>(T <span style=color:#66d9ef>const</span> <span style=color:#f92672>&amp;</span>value)<span style=color:#f92672>:</span> v(value) {}
-    T v{};
-};
-
-<span style=color:#66d9ef>template</span><span style=color:#f92672>&lt;</span><span style=color:#66d9ef>class</span> <span style=color:#a6e22e>T</span><span style=color:#f92672>&gt;</span>
-<span style=color:#66d9ef>struct</span> <span style=color:#a6e22e>Lt</span> { 
-  <span style=color:#66d9ef>bool</span> <span style=color:#66d9ef>operator</span><span style=color:#f92672>&lt;</span>(T <span style=color:#66d9ef>const</span> <span style=color:#f92672>&amp;</span>other) <span style=color:#66d9ef>const</span> { 
-    <span style=color:#66d9ef>return</span> <span style=color:#66d9ef>static_cast</span><span style=color:#f92672>&lt;</span>T <span style=color:#66d9ef>const</span> <span style=color:#f92672>&amp;&gt;</span>(<span style=color:#f92672>*</span><span style=color:#66d9ef>this</span>).v <span style=color:#f92672>&lt;</span> other.v; 
-  } 
-};
-</code></pre></div><p>这里用到了一个 C++ 里的一个惯用法——奇异递归模板模式，这个模式里派生类被作为基类的模板参数，这个声明看着有点吓人，但是它实现的效果是很妙的：</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style=color:#66d9ef>using</span> Number <span style=color:#f92672>=</span> StrongAlias<span style=color:#f92672>&lt;</span><span style=color:#66d9ef>uint8_t</span>, <span style=color:#66d9ef>struct</span> <span style=color:#a6e22e>NumberTag</span>, Lt<span style=color:#f92672>&gt;</span>;
-</code></pre></div><p>可以看到 <code>StrongAlias&lt;uint8_t, struct NumberTag, Lt></code> 本身继承了 <code>Lt&lt;StrongAlias&lt;uint8_t, struct NumberTag, Lt>></code>，这意味着 <code>Number</code> 就继承了 <code>Lt</code> 中的 <code>&lt;</code> 运算符，而 <code>Lt</code> 的 <code>&lt;</code> 实现中，使用了 <code>T::v</code> 的 <code>&lt;</code> 运算符进行比较，因此 <code>Number</code> 就可以使用 <code>uint8_t</code> 的 <code>&lt;</code> 运算符了。</p>
-<p>当然，有时候我们可能不止需要这一个运算符，所以 <code>Op</code> 可能不止一个，要想要支持更多运算符，这里可以使用模板参数包来实现，使用 <code>...</code> 来标识一个参数包，然后再用 <code>...</code> 展开：</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style=color:#66d9ef>template</span><span style=color:#f92672>&lt;</span><span style=color:#66d9ef>class</span> <span style=color:#a6e22e>T</span>, <span style=color:#66d9ef>class</span> <span style=color:#a6e22e>Tag</span>, <span style=color:#66d9ef>template</span><span style=color:#f92672>&lt;</span><span style=color:#66d9ef>class</span><span style=color:#f92672>&gt;</span> <span style=color:#66d9ef>class</span><span style=color:#960050;background-color:#1e0010>... </span><span style=color:#a6e22e>Ops</span><span style=color:#f92672>&gt;</span>
-<span style=color:#66d9ef>struct</span> <span style=color:#a6e22e>StrongAliasType</span><span style=color:#f92672>:</span> <span style=color:#66d9ef>public</span> Ops<span style=color:#f92672>&lt;</span>StrongAliasType<span style=color:#f92672>&lt;</span>T, Tag, Ops...<span style=color:#f92672>&gt;&gt;</span>... {
-    StrongAliasType() <span style=color:#f92672>=</span> <span style=color:#66d9ef>default</span>;
-    <span style=color:#66d9ef>explicit</span> <span style=color:#a6e22e>StrongAliasType</span>(T <span style=color:#66d9ef>const</span> <span style=color:#f92672>&amp;</span>value)<span style=color:#f92672>:</span> v(value) {}
-    T v{};
-};
-</code></pre></div><p>这里的 <code>StrongAliasType</code> 继承了类型参数中的每一个 <code>Ops</code>。然后，类似上面 <code>Lt</code> 的实现，我们可以实现一组这样的运算符模板：</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style=color:#66d9ef>template</span><span style=color:#f92672>&lt;</span><span style=color:#66d9ef>class</span> <span style=color:#a6e22e>T</span><span style=color:#f92672>&gt;</span>
-<span style=color:#66d9ef>struct</span> <span style=color:#a6e22e>Eq</span> { <span style=color:#66d9ef>bool</span> <span style=color:#66d9ef>operator</span><span style=color:#f92672>==</span>(T <span style=color:#66d9ef>const</span> <span style=color:#f92672>&amp;</span>other) <span style=color:#66d9ef>const</span> { <span style=color:#75715e>/*...*/</span> } };
-
-<span style=color:#66d9ef>template</span><span style=color:#f92672>&lt;</span><span style=color:#66d9ef>class</span> <span style=color:#a6e22e>T</span><span style=color:#f92672>&gt;</span>
-<span style=color:#66d9ef>struct</span> <span style=color:#a6e22e>Ne</span> { <span style=color:#66d9ef>bool</span> <span style=color:#66d9ef>operator</span><span style=color:#f92672>!=</span>(T <span style=color:#66d9ef>const</span> <span style=color:#f92672>&amp;</span>other) <span style=color:#66d9ef>const</span> { <span style=color:#75715e>/*...*/</span> } };
-
-<span style=color:#66d9ef>template</span><span style=color:#f92672>&lt;</span><span style=color:#66d9ef>class</span> <span style=color:#a6e22e>T</span><span style=color:#f92672>&gt;</span>
-<span style=color:#66d9ef>struct</span> <span style=color:#a6e22e>Lt</span> { <span style=color:#66d9ef>bool</span> <span style=color:#66d9ef>operator</span><span style=color:#f92672>&lt;</span>(T <span style=color:#66d9ef>const</span> <span style=color:#f92672>&amp;</span>other) <span style=color:#66d9ef>const</span> { <span style=color:#75715e>/*...*/</span> } };
-
-<span style=color:#66d9ef>template</span><span style=color:#f92672>&lt;</span><span style=color:#66d9ef>class</span> <span style=color:#a6e22e>T</span><span style=color:#f92672>&gt;</span>
-<span style=color:#66d9ef>struct</span> <span style=color:#a6e22e>Le</span> { <span style=color:#66d9ef>bool</span> <span style=color:#66d9ef>operator</span><span style=color:#f92672>&lt;=</span>(T <span style=color:#66d9ef>const</span> <span style=color:#f92672>&amp;</span>other) <span style=color:#66d9ef>const</span> { <span style=color:#75715e>/*...*/</span> } };
-
-<span style=color:#66d9ef>template</span><span style=color:#f92672>&lt;</span><span style=color:#66d9ef>class</span> <span style=color:#a6e22e>T</span><span style=color:#f92672>&gt;</span>
-<span style=color:#66d9ef>struct</span> <span style=color:#a6e22e>Gt</span> { <span style=color:#66d9ef>bool</span> <span style=color:#66d9ef>operator</span><span style=color:#f92672>&gt;</span>(T <span style=color:#66d9ef>const</span> <span style=color:#f92672>&amp;</span>other) <span style=color:#66d9ef>const</span> { <span style=color:#75715e>/*...*/</span> } };
-
-<span style=color:#66d9ef>template</span><span style=color:#f92672>&lt;</span><span style=color:#66d9ef>class</span> <span style=color:#a6e22e>T</span><span style=color:#f92672>&gt;</span>
-<span style=color:#66d9ef>struct</span> <span style=color:#a6e22e>Ge</span> { <span style=color:#66d9ef>bool</span> <span style=color:#66d9ef>operator</span><span style=color:#f92672>&gt;=</span>(T <span style=color:#66d9ef>const</span> <span style=color:#f92672>&amp;</span>other) <span style=color:#66d9ef>const</span> { <span style=color:#75715e>/*...*/</span> } };
-</code></pre></div><p>有了这些运算符模板，使用者就可以按需选择自己需要的来进行使用了，例如：</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style=color:#66d9ef>using</span> Number <span style=color:#f92672>=</span> StrongAlias<span style=color:#f92672>&lt;</span><span style=color:#66d9ef>uint8_t</span>, <span style=color:#66d9ef>struct</span> <span style=color:#a6e22e>NumberTag</span>, Eq, Ne, Lt, Le, Gt, Ge<span style=color:#f92672>&gt;</span>;
-</code></pre></div><p>这样，我们就拥有了更加好用的强类型别名了。</p>
-<h2 id=小结>小结</h2>
-<p>在这篇文章里，我们看到了在实际工程中 C++ 模板的一些应用。很显然，这些功能脱离了模板的能力是非常难以实现的。对于 C++ 开发者而言，不应该盲目地拒绝模板，而是应该将它应用在正确的地方，以获得更好的性能和更清晰可靠的代码。</p>
-</div>
-<div class=pagination>
-<div class=pagination__title>
-<span class=pagination__title-h>Read other posts</span>
-<hr>
-</div>
-<div class=pagination__buttons>
-<span class="button previous">
-<a href=/posts/cpp-error-handling/>
-<span class=button__icon>←</span>
-<span class=button__text>另一种 C++ 程序错误处理方式</span>
-</a>
-</span>
-<span class="button next">
-<a href=/posts/golang-design-study/>
-<span class=button__text>从并发模型看 Go 的语言设计</span>
-<span class=button__icon>→</span>
-</a>
-</span>
-</div>
-</div>
-<div id=disqus_thread></div>
-<script type=application/javascript>var disqus_config=function(){};(function(){if(["localhost","127.0.0.1"].indexOf(window.location.hostname)!=-1){document.getElementById('disqus_thread').innerHTML='Disqus comments not available by default when the website is previewed locally.';return}var b=document,a=b.createElement('script');a.async=!0,a.src='//ZhiruiLi.disqus.com/embed.js',a.setAttribute('data-timestamp',+new Date),(b.head||b.body).appendChild(a)})()</script>
-<noscript>Please enable JavaScript to view the <a href=https://disqus.com/?ref_noscript>comments powered by Disqus.</a></noscript>
-<a href=https://disqus.com class=dsq-brlink>comments powered by <span class=logo-disqus>Disqus</span></a>
-</div>
-</div>
-<footer class=footer>
-<div class=footer__inner>
-<div class="copyright copyright--user"><p>本网站采用 <a href=https://creativecommons.org/licenses/by-sa/4.0/>CC BY-SA 4.0</a> 协议进行授权</p><p>© 2021 Zhirui Li. All rights reserved.</p></div>
-</div>
-</footer>
-<script src=/assets/main.js></script>
-<script src=/assets/prism.js></script><p style=color:#999>我的博客即将同步至腾讯云+社区，<a target=_blank href="https://cloud.tencent.com/developer/support-plan?invite_code=11dehb9vzutlx">邀请大家一同入驻</a>。</p>
-</div>
-<script type=application/javascript>var doNotTrack=!1;doNotTrack||(function(a,e,f,g,b,c,d){a.GoogleAnalyticsObject=b,a[b]=a[b]||function(){(a[b].q=a[b].q||[]).push(arguments)},a[b].l=1*new Date,c=e.createElement(f),d=e.getElementsByTagName(f)[0],c.async=1,c.src=g,d.parentNode.insertBefore(c,d)}(window,document,'script','https://www.google-analytics.com/analytics.js','ga'),ga('create','UA-80302213-1','auto'),ga('send','pageview'))</script>
-</body>
-</html>
+<!doctype html><html lang=cn><head><title>实际工程中的 C++ 模板 ::
+简易现代魔法 — Zhirui Li's Blog</title><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><meta name=description content="C++ 的模板是 C++ 的一个重要的语言特性，我们使用的 STL 就是 Standard Template Library 的缩写，但是在很多情况下，开发者都对其敬而远之，有些团队甚至是直接在工程中禁用模板。"><meta name=keywords content="编程,计算机图形学,游戏开发"><meta name=robots content="noodp"><link rel=canonical href=/posts/real-world-cpp-template/><link rel=stylesheet href=/assets/style.css><link rel=stylesheet href=/style.css><link rel=apple-touch-icon-precomposed sizes=144x144 href=/img/apple-touch-icon-144-precomposed.png><link rel="shortcut icon" href=/img/favicon.png><link href=/assets/fonts/Inter-Italic.woff2 rel=preload type=font/woff2 as=font crossorigin><link href=/assets/fonts/Inter-Regular.woff2 rel=preload type=font/woff2 as=font crossorigin><link href=/assets/fonts/Inter-Medium.woff2 rel=preload type=font/woff2 as=font crossorigin><link href=/assets/fonts/Inter-MediumItalic.woff2 rel=preload type=font/woff2 as=font crossorigin><link href=/assets/fonts/Inter-Bold.woff2 rel=preload type=font/woff2 as=font crossorigin><link href=/assets/fonts/Inter-BoldItalic.woff2 rel=preload type=font/woff2 as=font crossorigin><meta name=twitter:card content="summary"><meta name=twitter:title content="实际工程中的 C++ 模板"><meta name=twitter:description content="C++ 的模板是 C++ 的一个重要的语言特性，在这篇文章里，我将聊一下最近实际工程中的一些模板的应用，希望可以让更多人了解到模板并不是一个可怕的存在，以及一些常见的使用方式。"><meta property="og:title" content="实际工程中的 C++ 模板"><meta property="og:description" content="C++ 的模板是 C++ 的一个重要的语言特性，在这篇文章里，我将聊一下最近实际工程中的一些模板的应用，希望可以让更多人了解到模板并不是一个可怕的存在，以及一些常见的使用方式。"><meta property="og:type" content="article"><meta property="og:url" content="/posts/real-world-cpp-template/"><meta property="article:section" content="posts"><meta property="article:published_time" content="2019-09-17T00:00:00+00:00"><meta property="article:modified_time" content="2019-09-17T00:00:00+00:00"><meta property="og:site_name" content="简易现代魔法"><script>var posts=document.getElementById("posts-list");posts&&quicklink({el:posts,priority:!0})</script><script>MathJax={tex:{inlineMath:[["$","$"],["\\(","\\)"]]},svg:{fontCache:"global"}}</script><script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script id=MathJax-script async src=https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js></script></head><body><div class=container><header class=header><span class=header__inner><a href=/ class=logo style=text-decoration:none><span class=logo__mark><svg xmlns="http://www.w3.org/2000/svg" class="greater-icon" viewBox="0 0 44 44"><path fill="none" d="M15 8l14.729 14.382L15 35.367"/></svg></span><span class=logo__text>简易现代魔法</span>
+<span class=logo__cursor></span></a>
+<span class=header__right><nav class=menu><ul class="menu__inner menu__inner--desktop"><li><a href=/archive>Archive</a></li><li><a href=/tags>Tags</a></li><li><a href=https://www.github.com/zhiruili>Github</a></li><li><a href=/index.xml>RSS</a></li></ul><ul class="menu__inner menu__inner--mobile"><li><a href=/archive>Archive</a></li><li><a href=/tags>Tags</a></li><li><a href=https://www.github.com/zhiruili>Github</a></li><li><a href=/index.xml>RSS</a></li></ul></nav><span class=menu-trigger><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M0 0h24v24H0z" fill="none"/><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></svg></span><span class=theme-toggle><svg class="theme-toggler" width="24" height="24" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M22 41c10.4934.0 19-8.5066 19-19C41 11.5066 32.4934 3 22 3 11.5066 3 3 11.5066 3 22s8.5066 19 19 19zM7 22C7 13.7157 13.7157 7 22 7V37C13.7157 37 7 30.2843 7 22z"/></svg></span></span></span></header><div class=content><div class=post><h1 class=post-title>实际工程中的 C++ 模板</h1><div class=post-meta><span class=post-date>2019-09-17</span></div><span class=post-tags><a href=/tags/c++/>#C++</a>&nbsp;</span><div class=post-content><p>C++ 的模板是 C++ 的一个重要的语言特性，我们使用的 STL 就是 Standard Template Library 的缩写，但是在很多情况下，开发者都对其敬而远之，有些团队甚至是直接在工程中禁用模板。模板常被当作洪水猛兽的一个原因是许多人提起模板就要提 C++ 模板图灵完备，甚至还要再秀一段编译期排序，这种表现模板强大的方式不仅不会让人觉得模板有用，反而让人觉得模板难以理解而且不应该使用。在这篇文章里，我将聊一下最近实际工程中的一些模板的应用，希望可以让更多人了解到模板并不是一个可怕的存在，以及一些常见的使用方式。</p><h2 id=按版本号过滤配置>按版本号过滤配置</h2><p>我所在的项目组前后台的复杂配置现在都用 protobuf 进行承载，然后生成 Excel 进行配置，生成 C++ 代码进行加载。例如这样的 message：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-protobuf data-lang=protobuf><span style=display:flex><span><span style=color:#66d9ef>message</span> <span style=color:#a6e22e>ConfigItem1</span> {<span style=color:#960050;background-color:#1e0010>
+</span></span></span><span style=display:flex><span><span style=color:#960050;background-color:#1e0010></span>  <span style=color:#66d9ef>int32</span> id <span style=color:#f92672>=</span> <span style=color:#ae81ff>1</span>;<span style=color:#960050;background-color:#1e0010>
+</span></span></span><span style=display:flex><span><span style=color:#960050;background-color:#1e0010></span>  <span style=color:#66d9ef>string</span> text <span style=color:#f92672>=</span> <span style=color:#ae81ff>2</span>;<span style=color:#960050;background-color:#1e0010>
+</span></span></span><span style=display:flex><span><span style=color:#960050;background-color:#1e0010></span>}<span style=color:#960050;background-color:#1e0010>
+</span></span></span><span style=display:flex><span><span style=color:#960050;background-color:#1e0010>
+</span></span></span><span style=display:flex><span><span style=color:#960050;background-color:#1e0010></span><span style=color:#66d9ef>message</span> <span style=color:#a6e22e>Config</span> {<span style=color:#960050;background-color:#1e0010>
+</span></span></span><span style=display:flex><span><span style=color:#960050;background-color:#1e0010></span>  <span style=color:#66d9ef>repeated</span> ConfigItem1 items1 <span style=color:#f92672>=</span> <span style=color:#ae81ff>1</span>;<span style=color:#960050;background-color:#1e0010>
+</span></span></span><span style=display:flex><span><span style=color:#960050;background-color:#1e0010></span>}<span style=color:#960050;background-color:#1e0010>
+</span></span></span></code></pre></div><p>这里的 <code>Config</code> 会被映射为一个 Excel，里面有一个表 <code>items1</code>，其中，这个表有两列，一列 <code>id</code>，一列 <code>text</code>。这个表的每一行都是一个具体的配置项。也就是我们可以这样获取配置：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style=display:flex><span>cout <span style=color:#f92672>&lt;&lt;</span> cfg.items1(<span style=color:#ae81ff>0</span>).id() <span style=color:#f92672>&lt;&lt;</span> <span style=color:#e6db74>&#34;: &#34;</span> <span style=color:#f92672>&lt;&lt;</span> cfg.items1(<span style=color:#ae81ff>0</span>).text();
+</span></span></code></pre></div><p>现在有个需求是这样的，在加载某些配置的时候，前台需要根据版本号进行配置的过滤，部分配置项只会在某些版本中可见，例如这样：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-protobuf data-lang=protobuf><span style=display:flex><span><span style=color:#66d9ef>message</span> <span style=color:#a6e22e>VersionRange</span> {<span style=color:#960050;background-color:#1e0010>
+</span></span></span><span style=display:flex><span><span style=color:#960050;background-color:#1e0010></span>  <span style=color:#66d9ef>int32</span> lo <span style=color:#f92672>=</span> <span style=color:#ae81ff>1</span>;<span style=color:#960050;background-color:#1e0010>
+</span></span></span><span style=display:flex><span><span style=color:#960050;background-color:#1e0010></span>  <span style=color:#66d9ef>int32</span> hi <span style=color:#f92672>=</span> <span style=color:#ae81ff>2</span>;<span style=color:#960050;background-color:#1e0010>
+</span></span></span><span style=display:flex><span><span style=color:#960050;background-color:#1e0010></span>}<span style=color:#960050;background-color:#1e0010>
+</span></span></span><span style=display:flex><span><span style=color:#960050;background-color:#1e0010>
+</span></span></span><span style=display:flex><span><span style=color:#960050;background-color:#1e0010></span><span style=color:#66d9ef>message</span> <span style=color:#a6e22e>ConfigItem2</span> {<span style=color:#960050;background-color:#1e0010>
+</span></span></span><span style=display:flex><span><span style=color:#960050;background-color:#1e0010></span>  <span style=color:#66d9ef>repeated</span> VersionRange version_ranges <span style=color:#f92672>=</span> <span style=color:#ae81ff>1</span>;<span style=color:#960050;background-color:#1e0010>
+</span></span></span><span style=display:flex><span><span style=color:#960050;background-color:#1e0010></span>  <span style=color:#66d9ef>int32</span> id <span style=color:#f92672>=</span> <span style=color:#ae81ff>2</span>;<span style=color:#960050;background-color:#1e0010>
+</span></span></span><span style=display:flex><span><span style=color:#960050;background-color:#1e0010></span>  <span style=color:#66d9ef>int32</span> value <span style=color:#f92672>=</span> <span style=color:#ae81ff>3</span>;<span style=color:#960050;background-color:#1e0010>
+</span></span></span><span style=display:flex><span><span style=color:#960050;background-color:#1e0010></span>}<span style=color:#960050;background-color:#1e0010>
+</span></span></span><span style=display:flex><span><span style=color:#960050;background-color:#1e0010>
+</span></span></span><span style=display:flex><span><span style=color:#960050;background-color:#1e0010></span><span style=color:#66d9ef>message</span> <span style=color:#a6e22e>Config</span> {<span style=color:#960050;background-color:#1e0010>
+</span></span></span><span style=display:flex><span><span style=color:#960050;background-color:#1e0010></span>  <span style=color:#66d9ef>repeated</span> ConfigItem1 items1 <span style=color:#f92672>=</span> <span style=color:#ae81ff>1</span>;<span style=color:#960050;background-color:#1e0010>
+</span></span></span><span style=display:flex><span><span style=color:#960050;background-color:#1e0010></span>  <span style=color:#66d9ef>repeated</span> ConfigItem2 items2 <span style=color:#f92672>=</span> <span style=color:#ae81ff>2</span>;<span style=color:#960050;background-color:#1e0010>
+</span></span></span><span style=display:flex><span><span style=color:#960050;background-color:#1e0010></span>}<span style=color:#960050;background-color:#1e0010>
+</span></span></span></code></pre></div><p>加载的时候大概有这样的代码：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style=display:flex><span><span style=color:#75715e>// 加载配置时进行过滤
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span><span style=color:#66d9ef>for</span> (<span style=color:#66d9ef>auto</span> iter <span style=color:#f92672>=</span> cfg.items2().begin(); iter <span style=color:#f92672>!=</span> cfg.items2().end();) {
+</span></span><span style=display:flex><span>  <span style=color:#66d9ef>if</span> (<span style=color:#f92672>!</span>IsAvailableVersion(<span style=color:#f92672>*</span>iter, ver)) {
+</span></span><span style=display:flex><span>    iter <span style=color:#f92672>=</span> cfg.mutable_items2()<span style=color:#f92672>-&gt;</span>erase(iter);
+</span></span><span style=display:flex><span>  } <span style=color:#66d9ef>else</span> {
+</span></span><span style=display:flex><span>    iter<span style=color:#f92672>++</span>;
+</span></span><span style=display:flex><span>  } 
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><p>这个 <code>IsAvailableVersion</code> 要怎么实现呢？我们当然可以对每个配置项类型都实现一个函数重载，但是我们也可以使用函数模板来生成这些代码，非常简单：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style=display:flex><span><span style=color:#66d9ef>template</span><span style=color:#f92672>&lt;</span><span style=color:#66d9ef>class</span> <span style=color:#a6e22e>CfgItem</span><span style=color:#f92672>&gt;</span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>bool</span> IsAvailableVersion(CfgItem <span style=color:#66d9ef>const</span> <span style=color:#f92672>&amp;</span>item, <span style=color:#66d9ef>int</span> ver) {
+</span></span><span style=display:flex><span>  <span style=color:#66d9ef>auto</span> <span style=color:#66d9ef>const</span> <span style=color:#f92672>&amp;</span>ranges <span style=color:#f92672>=</span> item.version_ranges();
+</span></span><span style=display:flex><span>  <span style=color:#66d9ef>if</span> (std<span style=color:#f92672>::</span>begin(ranges) <span style=color:#f92672>==</span> std<span style=color:#f92672>::</span>end(ranges)) {
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>return</span> true; <span style=color:#75715e>// 如果 version range 列表为空，默认返回 true
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>  }
+</span></span><span style=display:flex><span>  <span style=color:#66d9ef>for</span> (<span style=color:#66d9ef>auto</span> <span style=color:#66d9ef>const</span><span style=color:#f92672>&amp;</span> range : ranges) {
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>if</span> (ver <span style=color:#f92672>&gt;=</span> range.lo() <span style=color:#f92672>&amp;&amp;</span> ver <span style=color:#f92672>&lt;=</span> range.hi()) {
+</span></span><span style=display:flex><span>      <span style=color:#66d9ef>return</span> true; <span style=color:#75715e>// 如果当前版本在范围内，就返回 true
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>    }
+</span></span><span style=display:flex><span>  }
+</span></span><span style=display:flex><span>  <span style=color:#66d9ef>return</span> false; <span style=color:#75715e>// 如果 version range 列表不为空，默认返回 false
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>}
+</span></span></code></pre></div><p>但这里有个问题，不是每一个配置项的类型里都有 <code>version_range</code> 字段，例如 <code>ConfigItem1</code> 就没有。这就导致了 <code>IsAvailableVersion</code> 不能对所有的配置项对象进行使用，这不利于我们统一 code gen 上面加载配置时进行过滤的代码。</p><p>这时候，我们想要做的，是对 <code>IsAvailableVersion</code> 的类型参数进行限制，根据这个类型是否带有 <code>version_range</code> 字段来决定是否进行过滤：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style=display:flex><span><span style=color:#66d9ef>template</span><span style=color:#f92672>&lt;</span><span style=color:#66d9ef>class</span> <span style=color:#a6e22e>CfgWithVerRange</span><span style=color:#f92672>&gt;</span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>bool</span> IsAvailableVersion(CfgWithVerRange <span style=color:#66d9ef>const</span> <span style=color:#f92672>&amp;</span>item, <span style=color:#66d9ef>int</span> ver) { <span style=color:#75715e>/* 实现同上 */</span> }
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>template</span><span style=color:#f92672>&lt;</span><span style=color:#66d9ef>class</span> <span style=color:#a6e22e>CfgWithoutVerRange</span><span style=color:#f92672>&gt;</span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>bool</span> IsAvailableVersion(CfgWithoutVerRange <span style=color:#66d9ef>const</span> <span style=color:#f92672>&amp;</span>item, <span style=color:#66d9ef>int</span> ver) { <span style=color:#66d9ef>return</span> true; }
+</span></span></code></pre></div><p>可惜编译器没法通过类型参数的名字明白我们的意图，因此我们需要用一些技巧达到我们的目的：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style=display:flex><span><span style=color:#66d9ef>template</span><span style=color:#f92672>&lt;</span><span style=color:#66d9ef>class</span> <span style=color:#a6e22e>CfgItem</span>, <span style=color:#66d9ef>class</span> <span style=color:#960050;background-color:#1e0010>= </span><span style=color:#a6e22e>void</span><span style=color:#f92672>&gt;</span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>struct</span> <span style=color:#a6e22e>IsAvailableVersionHelper</span> {
+</span></span><span style=display:flex><span>  <span style=color:#66d9ef>static</span> <span style=color:#66d9ef>bool</span> <span style=color:#a6e22e>Check</span>(CfgItem <span style=color:#66d9ef>const</span><span style=color:#f92672>&amp;</span>, <span style=color:#66d9ef>int</span>) { <span style=color:#66d9ef>return</span> true; }
+</span></span><span style=display:flex><span>};
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>template</span><span style=color:#f92672>&lt;</span><span style=color:#66d9ef>class</span> <span style=color:#a6e22e>CfgItem</span><span style=color:#f92672>&gt;</span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>struct</span> <span style=color:#a6e22e>IsAvailableVersionHelper</span><span style=color:#f92672>&lt;</span>
+</span></span><span style=display:flex><span>  CfgItem,
+</span></span><span style=display:flex><span>  lib<span style=color:#f92672>::</span>void_t<span style=color:#f92672>&lt;</span>
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>decltype</span>(std<span style=color:#f92672>::</span>begin(std<span style=color:#f92672>::</span>declval<span style=color:#f92672>&lt;</span>CfgItem<span style=color:#f92672>&gt;</span>().version_ranges())<span style=color:#f92672>-&gt;</span>lo()),
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>decltype</span>(std<span style=color:#f92672>::</span>begin(std<span style=color:#f92672>::</span>declval<span style=color:#f92672>&lt;</span>CfgItem<span style=color:#f92672>&gt;</span>().version_ranges())<span style=color:#f92672>-&gt;</span>hi())
+</span></span><span style=display:flex><span>  <span style=color:#f92672>&gt;</span>
+</span></span><span style=display:flex><span><span style=color:#f92672>&gt;</span> { <span style=color:#75715e>/* 实现同上 */</span> };
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>template</span><span style=color:#f92672>&lt;</span><span style=color:#66d9ef>class</span> <span style=color:#a6e22e>CfgItem</span><span style=color:#f92672>&gt;</span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>bool</span> IsAvailableVersion(CfgItem <span style=color:#66d9ef>const</span> <span style=color:#f92672>&amp;</span>item, <span style=color:#66d9ef>int</span> ver) {
+</span></span><span style=display:flex><span>  <span style=color:#66d9ef>return</span> IsAvailableVersionHelper<span style=color:#f92672>&lt;</span>CfgItem<span style=color:#f92672>&gt;::</span>Check(item, ver);
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><p>这时候我们就可以放心地写 <code>IsAvailableVersion(*iter, ver)</code> 了，如果传入的是 <code>ConfigItem1</code>，则使用的是上面原始的实现，而 <code>ConfigItem2</code> 则使用的是下面特化的实现。</p><p>这是如何做到的呢？我们知道，C++ 的模板有个规则是 SFINAE，这不是一个单词，而是 Substitution Failure Is Not An Error 的缩写，也就是说，编译器在基于模板生成代码时，如果将模板的类型参数置换为给定的类型时，如果失败，编译器不会报错，而是将这个结果从可选的集合里丢弃，并从剩下的中进行选择。</p><p>当我们将 <code>ConfigItem1</code> 放入时，上面的版本能够正确替换，而下面的版本则因为 <code>ConfigItem1</code> 没有 <code>version_range</code> 字段而失败，此时，编译器会将这个失败的版本抛弃，由于只剩下原始版本了，因此选择了原始版本。</p><p>这里的 <code>lib::void_t</code> 是什么？<code>std::void_t</code> 是 C++ 17 之后才在 STL 中提供的模板，它很简单也非常有用，功能是将任意的类型序列映射到 <code>void</code> 上，也就是忽略掉这些类型。由于我们在使用 C++ 11，因此需要自己实现一下：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style=display:flex><span><span style=color:#75715e>// C++11 中这样简单实现可能会有 bug，参考 en.cppreference.com/w/cpp/types/void_t
+</span></span></span><span style=display:flex><span><span style=color:#75715e>// template&lt;class...&gt;
+</span></span></span><span style=display:flex><span><span style=color:#75715e>// using void_t = void;
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span><span style=color:#66d9ef>template</span><span style=color:#f92672>&lt;</span><span style=color:#66d9ef>class</span><span style=color:#960050;background-color:#1e0010>... </span><span style=color:#a6e22e>Ts</span><span style=color:#f92672>&gt;</span> <span style=color:#66d9ef>struct</span> <span style=color:#a6e22e>make_void</span> { <span style=color:#66d9ef>using</span> type <span style=color:#f92672>=</span> <span style=color:#66d9ef>void</span>; };
+</span></span><span style=display:flex><span><span style=color:#66d9ef>template</span><span style=color:#f92672>&lt;</span><span style=color:#66d9ef>class</span><span style=color:#960050;background-color:#1e0010>... </span><span style=color:#a6e22e>Ts</span><span style=color:#f92672>&gt;</span> <span style=color:#66d9ef>using</span> void_t <span style=color:#f92672>=</span> <span style=color:#66d9ef>typename</span> make_void<span style=color:#f92672>&lt;</span>Ts...<span style=color:#f92672>&gt;::</span>type;
+</span></span></code></pre></div><p>这里使用 <code>void_t</code> 将多个类型声明忽略掉以适应 <code>template&lt;class CfgItem, class = void></code> 中的第二个类型参数：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style=display:flex><span><span style=color:#66d9ef>decltype</span>(std<span style=color:#f92672>::</span>begin(std<span style=color:#f92672>::</span>declval<span style=color:#f92672>&lt;</span>CfgItem<span style=color:#f92672>&gt;</span>().version_ranges())<span style=color:#f92672>-&gt;</span>lo()),
+</span></span><span style=display:flex><span><span style=color:#66d9ef>decltype</span>(std<span style=color:#f92672>::</span>begin(std<span style=color:#f92672>::</span>declval<span style=color:#f92672>&lt;</span>CfgItem<span style=color:#f92672>&gt;</span>().version_ranges())<span style=color:#f92672>-&gt;</span>hi())
+</span></span></code></pre></div><p>虽然说这两个类型声明被忽略了，但是它们还是会参与替换，<code>decltype</code> 可以根据括号里的表达式计算出其类型，而 <code>std::declval&lt;T>()</code> 则相反，给定一个类型，它可以获得该类型的值，虽然这个值并不是有效的，但是在这个类型声明里我们可以用它来填写表达式。如果一个类型没有带 <code>version_ranges</code> 字段，则 <code>std::declval&lt;CfgItem>().version_ranges()</code> 会失败，如果这个 <code>version_range()</code> 返回的对象不支持 <code>std::begin</code>，则 <code>std::begin(...)</code> 会失败，若这个 <code>std::begin</code> 计算出来的迭代器不支持 <code>lo</code> 函数，则 <code>std::begin(...)->lo()</code> 会失败，这里的结合就确保了 <code>CfgItem</code> 类型必须有 <code>version_range</code>，且每一个 <code>version_range</code> 都是可迭代的，且每一个 range 都有 <code>lo</code> 成员。下面的 <code>hi</code> 也是类似的。当然，我们还可以通过 <code>std::is_same</code> 之类的 type trait 进一步确保 <code>lo</code> 和 <code>hi</code> 返回的类型，这个就不在此演示了，对于我们的需求而言，这样就足够了。</p><p>那说回来，如果我们填入的是 <code>ConfigItem2</code> 会怎样？在这个时候，两个类型替换都会成功，但由于原始版本中，第二个类型参数是默认值 <code>void</code>，而特化版本中，则填入了自定义的一个类型 <code>lib::void_t...</code>，虽然这个类型最后计算出来的类型还是 <code>void</code>，但它依然是比原始版本更「特殊」的版本，因此编译器会选择这个版本，这就达到了我们的目的。</p><h2 id=data-blob-操作辅助类>Data blob 操作辅助类</h2><p>在公司中，我们有自己的 NoSQL 数据库服务，我们在使用的过程中常常有这样的模式：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style=display:flex><span>MyDataBlob data{};
+</span></span><span style=display:flex><span>data.key1 <span style=color:#f92672>=</span> ...;
+</span></span><span style=display:flex><span>data.key2 <span style=color:#f92672>=</span> ...;
+</span></span><span style=display:flex><span>DbApi <span style=color:#a6e22e>api</span>(...);
+</span></span><span style=display:flex><span><span style=color:#66d9ef>int</span> <span style=color:#66d9ef>const</span> res <span style=color:#f92672>=</span> api.Get(<span style=color:#e6db74>&#34;tablename-x&#34;</span>, <span style=color:#f92672>&amp;</span>data, <span style=color:#66d9ef>sizeof</span>(data));
+</span></span><span style=display:flex><span><span style=color:#66d9ef>if</span> (res <span style=color:#f92672>==</span> RSP_ERROR <span style=color:#f92672>&amp;&amp;</span> api.GetDbErr() <span style=color:#f92672>==</span> NOT_EXIST) {
+</span></span><span style=display:flex><span>  LOGDBG(...); <span style=color:#75715e>// 数据不存在，打印调试日志
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>} <span style=color:#66d9ef>else</span> <span style=color:#a6e22e>if</span> (res <span style=color:#f92672>!=</span> <span style=color:#ae81ff>0</span>) {
+</span></span><span style=display:flex><span>  LOGERR(...); <span style=color:#75715e>// 其他错误，打印错误日志，返回错误
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>  <span style=color:#66d9ef>return</span> ERR_DB_GET_FAIL;
+</span></span><span style=display:flex><span>} 
+</span></span><span style=display:flex><span><span style=color:#75715e>// 正常逻辑，使用 data ...
+</span></span></span></code></pre></div><p>这里先创建一个空白的数据对象，填入它的 key 值，然后调用 API 拉取数据。由于 DB 会将拉取不存在的数据这种情况也认为是一个错误，而数据不存在对于业务而言又往往不是一个错误，因此我们一般是要对这种情况单独进行处理。</p><p>这种重复的工作显然可以抽象一个更加方便的 API 类型出来，希望能更轻松地进行使用。一个简单的想法是这样的：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style=display:flex><span><span style=color:#66d9ef>template</span><span style=color:#f92672>&lt;</span><span style=color:#66d9ef>class</span> <span style=color:#a6e22e>Db</span><span style=color:#f92672>&gt;</span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>struct</span> <span style=color:#a6e22e>Result</span> {
+</span></span><span style=display:flex><span>  <span style=color:#66d9ef>int</span> code{};
+</span></span><span style=display:flex><span>  <span style=color:#66d9ef>int</span> subCode{};
+</span></span><span style=display:flex><span>  Db data{};
+</span></span><span style=display:flex><span>  
+</span></span><span style=display:flex><span>  <span style=color:#66d9ef>bool</span> <span style=color:#a6e22e>IsError</span>() { <span style=color:#66d9ef>return</span> code <span style=color:#f92672>!=</span> <span style=color:#ae81ff>0</span> <span style=color:#f92672>&amp;&amp;</span> subCode <span style=color:#f92672>!=</span> NOT_EXIST; }
+</span></span><span style=display:flex><span>  <span style=color:#66d9ef>bool</span> <span style=color:#a6e22e>NoExist</span>() { <span style=color:#66d9ef>return</span> code <span style=color:#f92672>!=</span> <span style=color:#ae81ff>0</span> <span style=color:#f92672>&amp;&amp;</span> subCode <span style=color:#f92672>==</span> NOT_EXIST; }
+</span></span><span style=display:flex><span>}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>template</span><span style=color:#f92672>&lt;</span><span style=color:#66d9ef>class</span> <span style=color:#a6e22e>Db</span><span style=color:#f92672>&gt;</span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>struct</span> <span style=color:#a6e22e>NewDbApi</span> {
+</span></span><span style=display:flex><span>  Result <span style=color:#a6e22e>Get</span>() {
+</span></span><span style=display:flex><span>    DbApi api(...);
+</span></span><span style=display:flex><span>    Result res{};
+</span></span><span style=display:flex><span>    res.data.SetKey(<span style=color:#f92672>???</span>); <span style=color:#75715e>// 1
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>    res.code <span style=color:#f92672>=</span> api.Get(res.data.TableName(), <span style=color:#f92672>&amp;</span>res.data, <span style=color:#66d9ef>sizeof</span>(res.data)); <span style=color:#75715e>// 2
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>    res.subCode <span style=color:#f92672>=</span> api.GetDbErr();
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>if</span> (res.IsError()) {
+</span></span><span style=display:flex><span>      LOGERR(...);
+</span></span><span style=display:flex><span>    }
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>return</span> res;
+</span></span><span style=display:flex><span>  }
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><p>这里我们碰到了一点麻烦的问题，首先，在 1 处，这个 <code>data.SetKey()</code> 我们不知道应该怎么填。当然，我们可以像原先一样在外部自行设置 key，然后再将 <code>data</code> 传进来，但是我们更加希望能够免去这一个步骤，直接通过 <code>Get</code> 函数的参数传入对应的 key，然后转交给 <code>data</code>。但我们又不知道这个 <code>Db</code> 类型的 key 是什么，那我们该怎么办呢？也许我们可以这样做：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style=display:flex><span><span style=color:#66d9ef>template</span><span style=color:#f92672>&lt;</span><span style=color:#66d9ef>class</span> <span style=color:#960050;background-color:#1e0010>... </span><span style=color:#a6e22e>Args</span><span style=color:#f92672>&gt;</span>
+</span></span><span style=display:flex><span>Result Get(Args <span style=color:#f92672>&amp;&amp;</span>...args) {
+</span></span><span style=display:flex><span>  ...
+</span></span><span style=display:flex><span>  res.data.SetKey(std<span style=color:#f92672>::</span>forward<span style=color:#f92672>&lt;</span>Args<span style=color:#f92672>&gt;</span>(args)...); <span style=color:#75715e>// 1
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>  ...
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><p>呃……这确实可以实现我们要的效果，但是这个实现方法并不好，它带来了不必要的复杂度。最让人难受的一点是，我们丢失了 <code>data.SetKey</code> 所需参数的类型信息，这让调用者完全不知道这里应该填什么数据。为了解决这个问题，我们可以添加一层抽象，让 <code>Db</code> 类型告诉我们 key 的类型是什么：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style=display:flex><span>Result <span style=color:#a6e22e>Get</span>(<span style=color:#66d9ef>typename</span> Db<span style=color:#f92672>::</span>key_type <span style=color:#66d9ef>const</span> <span style=color:#f92672>&amp;</span>key) {
+</span></span><span style=display:flex><span>  res.data.SetKey(key); <span style=color:#75715e>// 1
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>  ...
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><p>这样简单多了，<code>Get</code> 函数的调用者可以获知对应的 key 的类型。</p><p>另外一个问题是，1 和 2 处我们直接调用了 <code>data</code> 的 <code>SetKey</code> 和 <code>TableName</code> 成员函数，但是我们的 <code>MyDataBlob</code> 是一个用另外一个工具基于 XML 描述生成出来的代码，主要实现的是序列化和反序列化功能，我们没法去通过修改这个工具来添加新的接口。所以我们只能使用 adapter 模式解决这个问题：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style=display:flex><span><span style=color:#66d9ef>struct</span> <span style=color:#a6e22e>MyDataBlobAdapter</span> {
+</span></span><span style=display:flex><span>  <span style=color:#66d9ef>using</span> key_type <span style=color:#f92672>=</span> ...;
+</span></span><span style=display:flex><span>  <span style=color:#66d9ef>void</span> <span style=color:#a6e22e>SetKey</span>(key_type <span style=color:#66d9ef>const</span> <span style=color:#f92672>&amp;</span>) { ... }
+</span></span><span style=display:flex><span>  std<span style=color:#f92672>::</span>string TableName() <span style=color:#66d9ef>const</span> { ... }
+</span></span><span style=display:flex><span>  MyDataBlob myDataBlob{};
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><p>这就可以解决上面提到的问题了，给 <code>Get</code> 函数的实现提供了 <code>SetKey</code> 和 <code>TableName</code>。我们可以发现，<code>Result</code> 里的数据类型不再是 <code>MyDataBlob</code> 了，而是 <code>MyDataBlobAdapter</code>，使用者拿到了这个对象后，使用的方法不再是 <code>res.data</code> 而是 <code>res.data.myDataBlob</code> 了。这在大多数情况下不是什么大问题，但是，如果一个数据不只是被这一个接口操作，而是被多个接口操作那该怎么办呢？这时候，为了适配多个接口，我们可能需要多个 adapter。例如：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style=display:flex><span>NewDbApi<span style=color:#f92672>&lt;</span>MyDataBlobAdapter<span style=color:#f92672>&gt;</span> api1{};
+</span></span><span style=display:flex><span>OtherAPI<span style=color:#f92672>&lt;</span>OtherAdapter<span style=color:#f92672>&gt;</span> api2{};
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>Result res <span style=color:#f92672>=</span> api1.Get(...);
+</span></span><span style=display:flex><span>OtherAdapter <span style=color:#a6e22e>other</span>(res.data.myDataBlob);
+</span></span><span style=display:flex><span>api2.Modify(<span style=color:#f92672>&amp;</span>other);
+</span></span><span style=display:flex><span>res.data.myDataBlob <span style=color:#f92672>=</span> other.myDataBlob;
+</span></span><span style=display:flex><span>api1.Put(res.data);
+</span></span></code></pre></div><p>这不仅麻烦，而且会造成比较大的开销，在这里，为了适配两个接口，我们不得不进行两次数据的复制。我们能否做得更好呢？</p><p>首先注意到 <code>TableName</code> 这个函数其实和对象无关，我们可以实现为一个静态的函数：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style=display:flex><span><span style=color:#66d9ef>struct</span> <span style=color:#a6e22e>MyDataBlobAdapter</span> {
+</span></span><span style=display:flex><span>  <span style=color:#66d9ef>static</span> std<span style=color:#f92672>::</span>string TableName() <span style=color:#66d9ef>const</span> { ... }
+</span></span><span style=display:flex><span>  ...
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><p>所以上面 2 处的代码可以改为：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style=display:flex><span>res.code <span style=color:#f92672>=</span> api.Get(Db<span style=color:#f92672>::</span>TableName(), ...); <span style=color:#75715e>// 2
+</span></span></span></code></pre></div><p>类似地，对于 <code>SetKey</code>，我们也可以进行类似的改造，虽然它需要操作自己的成员变量，但是，我们可以将 <code>this</code> 指针手动传递一下，也就是这样：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style=display:flex><span><span style=color:#66d9ef>struct</span> <span style=color:#a6e22e>MyDataBlobAdapter</span> {
+</span></span><span style=display:flex><span>  <span style=color:#66d9ef>static</span> <span style=color:#66d9ef>void</span> <span style=color:#a6e22e>SetKey</span>(key_type <span style=color:#66d9ef>const</span> <span style=color:#f92672>&amp;</span>key, MyDataBlobAdapter <span style=color:#f92672>*</span>adapter) { ... }
+</span></span><span style=display:flex><span>  ...
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><p>对于使用者，1 处的代码可以改为：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style=display:flex><span>Db<span style=color:#f92672>::</span>SetKey(key, <span style=color:#f92672>&amp;</span>res.data);
+</span></span></code></pre></div><p>这个时候，我们可以发现，这里 <code>SetKey</code> 的第二个参数根本不需要是 <code>MyDataBlobAdapter*</code>，我们可以直接将其换为 <code>MyDataBlob*</code>！同时，类似于 <code>key_type</code>，为了能告诉使用者这个数据的类型，我们加一个 <code>type</code> 类型声明，结果是这样：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style=display:flex><span><span style=color:#66d9ef>struct</span> <span style=color:#a6e22e>MyDataBlobAdapter</span> {
+</span></span><span style=display:flex><span>  <span style=color:#66d9ef>using</span> type <span style=color:#f92672>=</span> MyDataBlob;
+</span></span><span style=display:flex><span>  <span style=color:#66d9ef>static</span> <span style=color:#66d9ef>void</span> <span style=color:#a6e22e>SetKey</span>(key_type <span style=color:#66d9ef>const</span> <span style=color:#f92672>&amp;</span>key, type <span style=color:#f92672>*</span>blob) { ... }
+</span></span><span style=display:flex><span>  ...
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><p>这时我们重新回来看一下 <code>NewDbApi</code> 的实现：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style=display:flex><span><span style=color:#66d9ef>template</span><span style=color:#f92672>&lt;</span><span style=color:#66d9ef>class</span> <span style=color:#a6e22e>Db</span><span style=color:#f92672>&gt;</span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>struct</span> <span style=color:#a6e22e>Result</span> {
+</span></span><span style=display:flex><span>  <span style=color:#66d9ef>typename</span> Db<span style=color:#f92672>::</span>type data{};
+</span></span><span style=display:flex><span>  ...
+</span></span><span style=display:flex><span>}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>template</span><span style=color:#f92672>&lt;</span><span style=color:#66d9ef>class</span> <span style=color:#a6e22e>Db</span><span style=color:#f92672>&gt;</span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>struct</span> <span style=color:#a6e22e>NewDbApi</span> {
+</span></span><span style=display:flex><span>  Result <span style=color:#a6e22e>Get</span>(<span style=color:#66d9ef>typename</span> Db<span style=color:#f92672>::</span>key_type <span style=color:#66d9ef>const</span> <span style=color:#f92672>&amp;</span>k, <span style=color:#66d9ef>typename</span> Db<span style=color:#f92672>::</span>type <span style=color:#f92672>*</span>db) {
+</span></span><span style=display:flex><span>    ...
+</span></span><span style=display:flex><span>    Db<span style=color:#f92672>::</span>SetKey(k, db); <span style=color:#75715e>// 1
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>    res.code <span style=color:#f92672>=</span> api.Get(Db<span style=color:#f92672>::</span>TableName(), <span style=color:#f92672>&amp;</span>res.data, <span style=color:#66d9ef>sizeof</span>(res.data)); <span style=color:#75715e>// 2
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>    ...
+</span></span><span style=display:flex><span>  }
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><p>使用的时候，只需要这样写：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style=display:flex><span>NewDbApi<span style=color:#f92672>&lt;</span>MyDataBlobAdapter<span style=color:#f92672>&gt;</span> api1{};
+</span></span><span style=display:flex><span>OtherAPI<span style=color:#f92672>&lt;</span>OtherAdapter<span style=color:#f92672>&gt;</span> api2{};
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>Result res <span style=color:#f92672>=</span> api1.Get(...);
+</span></span><span style=display:flex><span>api2.Modify(<span style=color:#f92672>&amp;</span>res.data);
+</span></span><span style=display:flex><span>api1.Put(res.data);
+</span></span></code></pre></div><p>这样一来，我们就实现了既能直接操作数据，又避免给原始类型添加新接口，而且还做到了足够的泛化灵活，甚至不需要用到虚函数导致性能损失。</p><p>不过，这种形式的实现有个小缺点，这里的 <code>Db</code> 类型的约束非常不明确，对于使用者而言，可能会碰到非常难读的编译错误，这可能是许多人害怕模板的另一个原因。到 C++ 20，我们才能用上 Concept，能够直接指名模板参数的约束，但现实情况是，我们可能将长期被锁在 C++ 11 里，在这种情况下，我们也可以尽力去给使用者清晰的提示：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style=display:flex><span><span style=color:#75715e>// 示例:
+</span></span></span><span style=display:flex><span><span style=color:#75715e>// struct LegalDb {
+</span></span></span><span style=display:flex><span><span style=color:#75715e>//   struct type;
+</span></span></span><span style=display:flex><span><span style=color:#75715e>//   struct key_type;
+</span></span></span><span style=display:flex><span><span style=color:#75715e>//   static void SetKey(key_type const &amp;key, type *db);
+</span></span></span><span style=display:flex><span><span style=color:#75715e>//   static std::string TableName();
+</span></span></span><span style=display:flex><span><span style=color:#75715e>// }
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span><span style=color:#66d9ef>template</span><span style=color:#f92672>&lt;</span><span style=color:#66d9ef>class</span> <span style=color:#a6e22e>Db</span><span style=color:#f92672>&gt;</span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>struct</span> <span style=color:#a6e22e>NewDbApi</span> {
+</span></span><span style=display:flex><span>  ...
+</span></span><span style=display:flex><span>  <span style=color:#66d9ef>static_assert</span>(IsLegalDb<span style=color:#f92672>&lt;</span>Db<span style=color:#f92672>&gt;::</span>value,
+</span></span><span style=display:flex><span>                <span style=color:#e6db74>&#34;Db must match requirements of LegalDb, see comments above&#34;</span>);
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><p>这样一来，一旦使用者填入了不合法的类型，编译期立刻就能收到上面的提示，并且可以基于示例来了解应该如何实现这个类型。这个 <code>IsLegalDb</code> 的实现也用到了 SFINAE，大致可以实现为这样：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style=display:flex><span><span style=color:#66d9ef>template</span><span style=color:#f92672>&lt;</span><span style=color:#66d9ef>class</span> <span style=color:#a6e22e>T</span>, <span style=color:#66d9ef>class</span> <span style=color:#960050;background-color:#1e0010>= </span><span style=color:#a6e22e>void</span><span style=color:#f92672>&gt;</span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>struct</span> <span style=color:#a6e22e>IsLegalDb</span><span style=color:#f92672>:</span> std<span style=color:#f92672>::</span>false_type {}; <span style=color:#75715e>// 3
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>template</span><span style=color:#f92672>&lt;</span><span style=color:#66d9ef>class</span> <span style=color:#a6e22e>T</span><span style=color:#f92672>&gt;</span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>struct</span> <span style=color:#a6e22e>IsLegalDb</span><span style=color:#f92672>&lt;</span>T,
+</span></span><span style=display:flex><span>  lib<span style=color:#f92672>::</span>void_t<span style=color:#f92672>&lt;</span>
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>typename</span> T<span style=color:#f92672>::</span>type,
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>typename</span> T<span style=color:#f92672>::</span>key_type,
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>decltype</span>(T<span style=color:#f92672>::</span>SetKey(std<span style=color:#f92672>::</span>declval<span style=color:#f92672>&lt;</span><span style=color:#66d9ef>typename</span> T<span style=color:#f92672>::</span>key_type <span style=color:#66d9ef>const</span> <span style=color:#f92672>&amp;&gt;</span>(),
+</span></span><span style=display:flex><span>                       std<span style=color:#f92672>::</span>declval<span style=color:#f92672>&lt;</span><span style=color:#66d9ef>typename</span> T<span style=color:#f92672>::</span>type <span style=color:#f92672>*&gt;</span>())),
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>typename</span> std<span style=color:#f92672>::</span>enable_if<span style=color:#f92672>&lt;</span>
+</span></span><span style=display:flex><span>      std<span style=color:#f92672>::</span>is_convertible<span style=color:#f92672>&lt;</span><span style=color:#66d9ef>decltype</span>(T<span style=color:#f92672>::</span>TableName()), std<span style=color:#f92672>::</span>string<span style=color:#f92672>&gt;::</span>value<span style=color:#f92672>&gt;</span>
+</span></span><span style=display:flex><span>    <span style=color:#f92672>&gt;::</span>type <span style=color:#75715e>// 4
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span><span style=color:#f92672>&gt;:</span> std<span style=color:#f92672>::</span>true_type {}; <span style=color:#75715e>// 5
+</span></span></span></code></pre></div><p>这里也用到了前面实现的 <code>void_t</code>，总体思路是类似的，也是基于类型声明来让编译器选择我们想要的模板实现，这里可能和上一个例子不太一样的有两点。第一是我们这里的类型在 3 和 5 处继承了 <code>std::true_type</code> 和 <code>std::false_type</code>，这两个类型可以认为是类型级别的 <code>true</code> 和 <code>false</code>，在头文件 <code>&lt;type_traits></code> 里有很多 <code>is_</code> 开头的模板就是基于这两个类的，如果一个类型符合它的约束，它就是 <code>true_type</code> 否则就是 <code>false_type</code>。这里用到的 <code>std::is_convertible</code> 就是这样的 type trait，它判定的是第一个类型参数能被转换为第二个类型参数。我们可以用 <code>value</code> 成员的来获得它们对应的 <code>bool</code> 值。这里用到了另一个基础工具是 <code>std::enable_if</code>，它可以接受一个编译期计算出来的 <code>bool</code> 值，如果这个值为 <code>true</code>，那么我们就能获得其 <code>type</code> 成员类型，否则就获取不到，可能直接用一个简单实现来说明更加方便：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style=display:flex><span><span style=color:#66d9ef>template</span><span style=color:#f92672>&lt;</span><span style=color:#66d9ef>bool</span> B, <span style=color:#66d9ef>class</span> <span style=color:#a6e22e>T</span> <span style=color:#f92672>=</span> <span style=color:#66d9ef>void</span><span style=color:#f92672>&gt;</span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>struct</span> <span style=color:#a6e22e>enable_if</span> {};
+</span></span><span style=display:flex><span> 
+</span></span><span style=display:flex><span><span style=color:#66d9ef>template</span><span style=color:#f92672>&lt;</span><span style=color:#66d9ef>class</span> <span style=color:#a6e22e>T</span><span style=color:#f92672>&gt;</span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>struct</span> <span style=color:#a6e22e>enable_if</span><span style=color:#f92672>&lt;</span>true, T<span style=color:#f92672>&gt;</span> { <span style=color:#66d9ef>using</span> type <span style=color:#f92672>=</span> T; };
+</span></span></code></pre></div><p>所以说，4 处的代码的实现了如果 <code>std::is_convertible</code> 判定为 <code>true</code>，那么 <code>std::enable_if</code> 里就会有 <code>type</code>，那么模板的类型置换就会成功，否则则是失败，这就实现了我们想要的判定 <code>T::TableName()</code> 返回类型可以转换为 <code>std::string</code> 的效果。</p><p><code>IsLegalDb</code> 的实现相对而言可能会有点麻烦，但是它可以带来清晰的错误提示，是一个很好的文档，因此对于一个有特定约束的模板类型参数，尤其是无法从名字上直接看出来约束内容的模板类型参数，最好配套加上这样一个检查，配合注释说明，给使用者明确的约束，以方便使用者实现合法的类型。</p><h2 id=强类型别名>强类型别名</h2><p>我们经常会碰到一个函数带有几个类型相同的参数的情况。以扑克牌举例，一种表示方式是基于花色和数字的表示，使用一个 <code>uint8_t</code> 表示花色，同时一个 <code>uint8_t</code> 表示数字，另一种是直接基于牌编码的方式，也就是将牌从 0 编号到 54，只需要一个 <code>uint8_t</code> 就能实现。那么，如果不同地方使用到了不同的表示方式，就需要有类似这样的转换函数：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style=display:flex><span><span style=color:#66d9ef>uint8_t</span> <span style=color:#a6e22e>ConvertCardToCode</span>(<span style=color:#66d9ef>uint8_t</span> shape, <span style=color:#66d9ef>uint8_t</span> number);
+</span></span></code></pre></div><p>这个函数本身是没什么问题，但在使用的时候经常一不小心就写歪了：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style=display:flex><span><span style=color:#66d9ef>auto</span> <span style=color:#66d9ef>const</span> num <span style=color:#f92672>=</span> <span style=color:#66d9ef>uint8_t</span>(<span style=color:#ae81ff>13</span>);
+</span></span><span style=display:flex><span><span style=color:#66d9ef>auto</span> <span style=color:#66d9ef>const</span> shp <span style=color:#f92672>=</span> <span style=color:#66d9ef>uint8_t</span>(<span style=color:#ae81ff>2</span>);
+</span></span><span style=display:flex><span><span style=color:#66d9ef>auto</span> <span style=color:#66d9ef>const</span> code <span style=color:#f92672>=</span> ConvertCardToCode(num, shp); <span style=color:#75715e>// num 和 shp 的位置写反了
+</span></span></span></code></pre></div><p>我们可以通过类型别名声明来使得函数类型更加明晰：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style=display:flex><span><span style=color:#66d9ef>using</span> CardCode <span style=color:#f92672>=</span> <span style=color:#66d9ef>uint8_t</span>;
+</span></span><span style=display:flex><span><span style=color:#66d9ef>using</span> Shape <span style=color:#f92672>=</span> <span style=color:#66d9ef>uint8_t</span>;
+</span></span><span style=display:flex><span><span style=color:#66d9ef>using</span> Number <span style=color:#f92672>=</span> <span style=color:#66d9ef>uint8_t</span>;
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>CardCode <span style=color:#a6e22e>ConvertCardToCode</span>(Shape shape, Number number);
+</span></span></code></pre></div><p>这个写法看起来很不错，但是在函数调用处，我们仍然无法避免出现这种情况：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style=display:flex><span><span style=color:#66d9ef>auto</span> <span style=color:#66d9ef>const</span> num <span style=color:#f92672>=</span> Number(<span style=color:#ae81ff>13</span>);
+</span></span><span style=display:flex><span><span style=color:#66d9ef>auto</span> <span style=color:#66d9ef>const</span> shp <span style=color:#f92672>=</span> Shape(<span style=color:#ae81ff>2</span>);
+</span></span><span style=display:flex><span><span style=color:#66d9ef>auto</span> <span style=color:#66d9ef>const</span> code <span style=color:#f92672>=</span> ConvertCardToCode(num, shp); <span style=color:#75715e>// 仍然能正常编译
+</span></span></span></code></pre></div><p>虽然我们声明了类型别名，但是这个类型别名的本质上还是原来的类型，我们仍然无法避免出现前面的错误。在 Go 语言中，「type alias」（<code>type T = xxx</code>）和「type definition」（<code>type T xxx</code>）是两种不同的语法，如果我们使用前者，则依然会遇到上面说的这个问题，但如果我们使用后者，则可以让编译器帮我们避免它：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=display:flex><span><span style=color:#66d9ef>type</span> <span style=color:#a6e22e>CardCode</span> <span style=color:#66d9ef>uint8</span>;
+</span></span><span style=display:flex><span><span style=color:#66d9ef>type</span> <span style=color:#a6e22e>Shape</span> <span style=color:#66d9ef>uint8</span>;
+</span></span><span style=display:flex><span><span style=color:#66d9ef>type</span> <span style=color:#a6e22e>Number</span> <span style=color:#66d9ef>uint8</span>;
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>func</span> <span style=color:#a6e22e>ConvertCardToCode</span>(<span style=color:#a6e22e>shape</span> <span style=color:#a6e22e>Shape</span>, <span style=color:#a6e22e>number</span> <span style=color:#a6e22e>Number</span>) <span style=color:#a6e22e>CardCode</span> { <span style=color:#75715e>/*...*/</span> }
+</span></span></code></pre></div><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=display:flex><span><span style=color:#a6e22e>num</span> <span style=color:#f92672>:=</span> <span style=color:#a6e22e>Number</span>(<span style=color:#ae81ff>13</span>)
+</span></span><span style=display:flex><span><span style=color:#a6e22e>shp</span> <span style=color:#f92672>:=</span> <span style=color:#a6e22e>Shape</span>(<span style=color:#ae81ff>2</span>)
+</span></span><span style=display:flex><span><span style=color:#a6e22e>code</span> <span style=color:#f92672>:=</span> <span style=color:#a6e22e>ConvertCardToCode</span>(<span style=color:#a6e22e>num</span>, <span style=color:#a6e22e>shp</span>); <span style=color:#75715e>// 编译失败
+</span></span></span></code></pre></div><p>这样的强类型别名非常好，使得函数签名本来就成为了注释的一部分，想要在 C++ 中实现类似的效果，我们可以不是用 <code>using</code> 起别名而是直接将类型包裹一层：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style=display:flex><span><span style=color:#66d9ef>struct</span> <span style=color:#a6e22e>Shape</span> {
+</span></span><span style=display:flex><span>  Shape() <span style=color:#f92672>=</span> <span style=color:#66d9ef>default</span>;
+</span></span><span style=display:flex><span>  <span style=color:#66d9ef>explicit</span> <span style=color:#a6e22e>Shape</span>(<span style=color:#66d9ef>uint8_t</span> val)<span style=color:#f92672>:</span> v{val} {}
+</span></span><span style=display:flex><span>  <span style=color:#66d9ef>uint8_t</span> v;
+</span></span><span style=display:flex><span>};
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>struct</span> <span style=color:#a6e22e>Number</span> {
+</span></span><span style=display:flex><span>  Number() <span style=color:#f92672>=</span> <span style=color:#66d9ef>default</span>;
+</span></span><span style=display:flex><span>  <span style=color:#66d9ef>explicit</span> <span style=color:#a6e22e>Number</span>(<span style=color:#66d9ef>uint8_t</span> val)<span style=color:#f92672>:</span> v{val} {}
+</span></span><span style=display:flex><span>  <span style=color:#66d9ef>uint8_t</span> v{};
+</span></span><span style=display:flex><span>};
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>using</span> CardCode <span style=color:#f92672>=</span> <span style=color:#66d9ef>uint8_t</span>;
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>CardCode <span style=color:#a6e22e>ConvertCardToCode</span>(Shape shape, Number number);
+</span></span></code></pre></div><p>此时，函数调用者如果传错了参数，就完全没法编译通过了：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style=display:flex><span><span style=color:#66d9ef>auto</span> <span style=color:#66d9ef>const</span> num <span style=color:#f92672>=</span> Number(<span style=color:#ae81ff>13</span>);
+</span></span><span style=display:flex><span><span style=color:#66d9ef>auto</span> <span style=color:#66d9ef>const</span> shp <span style=color:#f92672>=</span> Shape(<span style=color:#ae81ff>2</span>);
+</span></span><span style=display:flex><span><span style=color:#66d9ef>auto</span> <span style=color:#66d9ef>const</span> code <span style=color:#f92672>=</span> ConvertCardToCode(num, shp); <span style=color:#75715e>// 编译出错
+</span></span></span></code></pre></div><p>可以发现这两个类型是很类似的，我们会考虑用模板来使得这个过程更加便利：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style=display:flex><span><span style=color:#66d9ef>template</span><span style=color:#f92672>&lt;</span><span style=color:#66d9ef>class</span> <span style=color:#a6e22e>T</span><span style=color:#f92672>&gt;</span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>struct</span> <span style=color:#a6e22e>StrongAlias</span> {
+</span></span><span style=display:flex><span>  StrongAlias() <span style=color:#f92672>=</span> <span style=color:#66d9ef>default</span>;
+</span></span><span style=display:flex><span>  <span style=color:#66d9ef>explicit</span> <span style=color:#a6e22e>StrongAlias</span>(T val)<span style=color:#f92672>:</span> v{std<span style=color:#f92672>::</span>move(val)} {}
+</span></span><span style=display:flex><span>  T v{};
+</span></span><span style=display:flex><span>};
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>using</span> Shape <span style=color:#f92672>=</span> StrongAlias<span style=color:#f92672>&lt;</span><span style=color:#66d9ef>uint8_t</span><span style=color:#f92672>&gt;</span>;
+</span></span><span style=display:flex><span><span style=color:#66d9ef>using</span> Number <span style=color:#f92672>=</span> StrongAlias<span style=color:#f92672>&lt;</span><span style=color:#66d9ef>uint8_t</span><span style=color:#f92672>&gt;</span>;
+</span></span><span style=display:flex><span><span style=color:#66d9ef>using</span> CardCode <span style=color:#f92672>=</span> <span style=color:#66d9ef>uint8_t</span>;
+</span></span><span style=display:flex><span>CardCode <span style=color:#a6e22e>ConvertCardToCode</span>(Shape shape, Number number);
+</span></span></code></pre></div><p>但很可惜的是，这样并不能达到我们想要的效果，因为 <code>StrongAlias&lt;uint8_t></code> 和 <code>StrongAlias&lt;uint8_t></code> 是同一个类型，所以使用 <code>using</code> 来声明的 <code>Shape</code> 和 <code>Number</code> 也依然是同一个类型。因此我们需要用另一个标记将两个类型完全区分开来，我们可以在类型参数列表里加多一个类型参数来做到这一点，这个类型参数的唯一作用就是用来实现类型的区分：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style=display:flex><span><span style=color:#66d9ef>template</span><span style=color:#f92672>&lt;</span><span style=color:#66d9ef>class</span> <span style=color:#a6e22e>T</span>, <span style=color:#66d9ef>class</span> <span style=color:#a6e22e>Tag</span><span style=color:#f92672>&gt;</span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>struct</span> <span style=color:#a6e22e>StrongAlias</span> {
+</span></span><span style=display:flex><span>  StrongAlias() <span style=color:#f92672>=</span> <span style=color:#66d9ef>default</span>;
+</span></span><span style=display:flex><span>  <span style=color:#66d9ef>explicit</span> <span style=color:#a6e22e>StrongAlias</span>(T val)<span style=color:#f92672>:</span> v{std<span style=color:#f92672>::</span>move(val)} {}
+</span></span><span style=display:flex><span>  T v{};
+</span></span><span style=display:flex><span>};
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>using</span> Shape <span style=color:#f92672>=</span> StrongAlias<span style=color:#f92672>&lt;</span><span style=color:#66d9ef>uint8_t</span>, <span style=color:#66d9ef>struct</span> <span style=color:#a6e22e>ShapeTag</span><span style=color:#f92672>&gt;</span>;
+</span></span><span style=display:flex><span><span style=color:#66d9ef>using</span> Number <span style=color:#f92672>=</span> StrongAlias<span style=color:#f92672>&lt;</span><span style=color:#66d9ef>uint8_t</span>, <span style=color:#66d9ef>struct</span> <span style=color:#a6e22e>NumberTag</span><span style=color:#f92672>&gt;</span>;
+</span></span><span style=display:flex><span><span style=color:#66d9ef>using</span> CardCode <span style=color:#f92672>=</span> <span style=color:#66d9ef>uint8_t</span>;
+</span></span><span style=display:flex><span>CardCode <span style=color:#a6e22e>ConvertCardToCode</span>(Shape shape, Number number);
+</span></span></code></pre></div><p>这个实现已经很实用了，但是我们可以让它更好用一点，目前而言它的不足之处在于，我们包裹的类型往往是一些基础类型，这些基础类型自带了一些操作符，比如我们之前想比较两张牌是否相等的时候可以写：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style=display:flex><span><span style=color:#66d9ef>if</span> (card1.shape <span style=color:#f92672>==</span> card2.shape <span style=color:#f92672>&amp;&amp;</span> card1.number <span style=color:#f92672>==</span> card2.number) { ... }
+</span></span></code></pre></div><p>但现在需要写：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style=display:flex><span><span style=color:#66d9ef>if</span> (card1.shape.v <span style=color:#f92672>==</span> card2.shape.v <span style=color:#f92672>&amp;&amp;</span> card1.number.v <span style=color:#f92672>==</span> card2.number.v) { ... }
+</span></span></code></pre></div><p>更为麻烦的是，如果我们想将类型别名作为 <code>std::map</code> 的 key 时就会直接报错：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style=display:flex><span><span style=color:#75715e>// using Number = uint8_t;
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>std<span style=color:#f92672>::</span>map<span style=color:#f92672>&lt;</span>Number, <span style=color:#66d9ef>int</span><span style=color:#f92672>&gt;</span> cardNumCount{}; <span style=color:#75715e>// 编译通过
+</span></span></span></code></pre></div><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style=display:flex><span><span style=color:#75715e>// using Number = StrongAlias&lt;uint8_t, struct NumberTag&gt;;
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>std<span style=color:#f92672>::</span>map<span style=color:#f92672>&lt;</span>Number, <span style=color:#66d9ef>int</span><span style=color:#f92672>&gt;</span> cardNumCount{}; <span style=color:#75715e>// 编译出错
+</span></span></span></code></pre></div><p>这是因为 <code>std::map</code> 要求 key 能够使用 <code>&lt;</code> 进行比较，而当我们直接使用 <code>using</code> 起类型别名时，这个 <code>&lt;</code> 就是 <code>uint8_t</code> 的 <code>&lt;</code>，而 <code>StrongAlias&lt;uint8_t, struct NumberTag></code> 则没有这个运算符。我们当然可以对每一个类型别名都自己实现一次所需的运算符，但我们还可以做得更加简单：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style=display:flex><span><span style=color:#66d9ef>template</span><span style=color:#f92672>&lt;</span><span style=color:#66d9ef>class</span> <span style=color:#a6e22e>T</span>, <span style=color:#66d9ef>class</span> <span style=color:#a6e22e>Tag</span>, <span style=color:#66d9ef>template</span><span style=color:#f92672>&lt;</span><span style=color:#66d9ef>class</span><span style=color:#f92672>&gt;</span> <span style=color:#66d9ef>class</span> <span style=color:#a6e22e>Op</span><span style=color:#f92672>&gt;</span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>struct</span> <span style=color:#a6e22e>StrongAliasType</span><span style=color:#f92672>:</span> <span style=color:#66d9ef>public</span> Op<span style=color:#f92672>&lt;</span>StrongAliasType<span style=color:#f92672>&lt;</span>T, Tag, Op<span style=color:#f92672>&gt;&gt;</span> {
+</span></span><span style=display:flex><span>    StrongAliasType() <span style=color:#f92672>=</span> <span style=color:#66d9ef>default</span>;
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>explicit</span> <span style=color:#a6e22e>StrongAliasType</span>(T <span style=color:#66d9ef>const</span> <span style=color:#f92672>&amp;</span>value)<span style=color:#f92672>:</span> v(value) {}
+</span></span><span style=display:flex><span>    T v{};
+</span></span><span style=display:flex><span>};
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>template</span><span style=color:#f92672>&lt;</span><span style=color:#66d9ef>class</span> <span style=color:#a6e22e>T</span><span style=color:#f92672>&gt;</span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>struct</span> <span style=color:#a6e22e>Lt</span> { 
+</span></span><span style=display:flex><span>  <span style=color:#66d9ef>bool</span> <span style=color:#66d9ef>operator</span><span style=color:#f92672>&lt;</span>(T <span style=color:#66d9ef>const</span> <span style=color:#f92672>&amp;</span>other) <span style=color:#66d9ef>const</span> { 
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>return</span> <span style=color:#66d9ef>static_cast</span><span style=color:#f92672>&lt;</span>T <span style=color:#66d9ef>const</span> <span style=color:#f92672>&amp;&gt;</span>(<span style=color:#f92672>*</span><span style=color:#66d9ef>this</span>).v <span style=color:#f92672>&lt;</span> other.v; 
+</span></span><span style=display:flex><span>  } 
+</span></span><span style=display:flex><span>};
+</span></span></code></pre></div><p>这里用到了一个 C++ 里的一个惯用法——奇异递归模板模式，这个模式里派生类被作为基类的模板参数，这个声明看着有点吓人，但是它实现的效果是很妙的：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style=display:flex><span><span style=color:#66d9ef>using</span> Number <span style=color:#f92672>=</span> StrongAlias<span style=color:#f92672>&lt;</span><span style=color:#66d9ef>uint8_t</span>, <span style=color:#66d9ef>struct</span> <span style=color:#a6e22e>NumberTag</span>, Lt<span style=color:#f92672>&gt;</span>;
+</span></span></code></pre></div><p>可以看到 <code>StrongAlias&lt;uint8_t, struct NumberTag, Lt></code> 本身继承了 <code>Lt&lt;StrongAlias&lt;uint8_t, struct NumberTag, Lt>></code>，这意味着 <code>Number</code> 就继承了 <code>Lt</code> 中的 <code>&lt;</code> 运算符，而 <code>Lt</code> 的 <code>&lt;</code> 实现中，使用了 <code>T::v</code> 的 <code>&lt;</code> 运算符进行比较，因此 <code>Number</code> 就可以使用 <code>uint8_t</code> 的 <code>&lt;</code> 运算符了。</p><p>当然，有时候我们可能不止需要这一个运算符，所以 <code>Op</code> 可能不止一个，要想要支持更多运算符，这里可以使用模板参数包来实现，使用 <code>...</code> 来标识一个参数包，然后再用 <code>...</code> 展开：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style=display:flex><span><span style=color:#66d9ef>template</span><span style=color:#f92672>&lt;</span><span style=color:#66d9ef>class</span> <span style=color:#a6e22e>T</span>, <span style=color:#66d9ef>class</span> <span style=color:#a6e22e>Tag</span>, <span style=color:#66d9ef>template</span><span style=color:#f92672>&lt;</span><span style=color:#66d9ef>class</span><span style=color:#f92672>&gt;</span> <span style=color:#66d9ef>class</span><span style=color:#960050;background-color:#1e0010>... </span><span style=color:#a6e22e>Ops</span><span style=color:#f92672>&gt;</span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>struct</span> <span style=color:#a6e22e>StrongAliasType</span><span style=color:#f92672>:</span> <span style=color:#66d9ef>public</span> Ops<span style=color:#f92672>&lt;</span>StrongAliasType<span style=color:#f92672>&lt;</span>T, Tag, Ops...<span style=color:#f92672>&gt;&gt;</span>... {
+</span></span><span style=display:flex><span>    StrongAliasType() <span style=color:#f92672>=</span> <span style=color:#66d9ef>default</span>;
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>explicit</span> <span style=color:#a6e22e>StrongAliasType</span>(T <span style=color:#66d9ef>const</span> <span style=color:#f92672>&amp;</span>value)<span style=color:#f92672>:</span> v(value) {}
+</span></span><span style=display:flex><span>    T v{};
+</span></span><span style=display:flex><span>};
+</span></span></code></pre></div><p>这里的 <code>StrongAliasType</code> 继承了类型参数中的每一个 <code>Ops</code>。然后，类似上面 <code>Lt</code> 的实现，我们可以实现一组这样的运算符模板：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style=display:flex><span><span style=color:#66d9ef>template</span><span style=color:#f92672>&lt;</span><span style=color:#66d9ef>class</span> <span style=color:#a6e22e>T</span><span style=color:#f92672>&gt;</span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>struct</span> <span style=color:#a6e22e>Eq</span> { <span style=color:#66d9ef>bool</span> <span style=color:#66d9ef>operator</span><span style=color:#f92672>==</span>(T <span style=color:#66d9ef>const</span> <span style=color:#f92672>&amp;</span>other) <span style=color:#66d9ef>const</span> { <span style=color:#75715e>/*...*/</span> } };
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>template</span><span style=color:#f92672>&lt;</span><span style=color:#66d9ef>class</span> <span style=color:#a6e22e>T</span><span style=color:#f92672>&gt;</span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>struct</span> <span style=color:#a6e22e>Ne</span> { <span style=color:#66d9ef>bool</span> <span style=color:#66d9ef>operator</span><span style=color:#f92672>!=</span>(T <span style=color:#66d9ef>const</span> <span style=color:#f92672>&amp;</span>other) <span style=color:#66d9ef>const</span> { <span style=color:#75715e>/*...*/</span> } };
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>template</span><span style=color:#f92672>&lt;</span><span style=color:#66d9ef>class</span> <span style=color:#a6e22e>T</span><span style=color:#f92672>&gt;</span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>struct</span> <span style=color:#a6e22e>Lt</span> { <span style=color:#66d9ef>bool</span> <span style=color:#66d9ef>operator</span><span style=color:#f92672>&lt;</span>(T <span style=color:#66d9ef>const</span> <span style=color:#f92672>&amp;</span>other) <span style=color:#66d9ef>const</span> { <span style=color:#75715e>/*...*/</span> } };
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>template</span><span style=color:#f92672>&lt;</span><span style=color:#66d9ef>class</span> <span style=color:#a6e22e>T</span><span style=color:#f92672>&gt;</span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>struct</span> <span style=color:#a6e22e>Le</span> { <span style=color:#66d9ef>bool</span> <span style=color:#66d9ef>operator</span><span style=color:#f92672>&lt;=</span>(T <span style=color:#66d9ef>const</span> <span style=color:#f92672>&amp;</span>other) <span style=color:#66d9ef>const</span> { <span style=color:#75715e>/*...*/</span> } };
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>template</span><span style=color:#f92672>&lt;</span><span style=color:#66d9ef>class</span> <span style=color:#a6e22e>T</span><span style=color:#f92672>&gt;</span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>struct</span> <span style=color:#a6e22e>Gt</span> { <span style=color:#66d9ef>bool</span> <span style=color:#66d9ef>operator</span><span style=color:#f92672>&gt;</span>(T <span style=color:#66d9ef>const</span> <span style=color:#f92672>&amp;</span>other) <span style=color:#66d9ef>const</span> { <span style=color:#75715e>/*...*/</span> } };
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>template</span><span style=color:#f92672>&lt;</span><span style=color:#66d9ef>class</span> <span style=color:#a6e22e>T</span><span style=color:#f92672>&gt;</span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>struct</span> <span style=color:#a6e22e>Ge</span> { <span style=color:#66d9ef>bool</span> <span style=color:#66d9ef>operator</span><span style=color:#f92672>&gt;=</span>(T <span style=color:#66d9ef>const</span> <span style=color:#f92672>&amp;</span>other) <span style=color:#66d9ef>const</span> { <span style=color:#75715e>/*...*/</span> } };
+</span></span></code></pre></div><p>有了这些运算符模板，使用者就可以按需选择自己需要的来进行使用了，例如：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c++ data-lang=c++><span style=display:flex><span><span style=color:#66d9ef>using</span> Number <span style=color:#f92672>=</span> StrongAlias<span style=color:#f92672>&lt;</span><span style=color:#66d9ef>uint8_t</span>, <span style=color:#66d9ef>struct</span> <span style=color:#a6e22e>NumberTag</span>, Eq, Ne, Lt, Le, Gt, Ge<span style=color:#f92672>&gt;</span>;
+</span></span></code></pre></div><p>这样，我们就拥有了更加好用的强类型别名了。</p><h2 id=小结>小结</h2><p>在这篇文章里，我们看到了在实际工程中 C++ 模板的一些应用。很显然，这些功能脱离了模板的能力是非常难以实现的。对于 C++ 开发者而言，不应该盲目地拒绝模板，而是应该将它应用在正确的地方，以获得更好的性能和更清晰可靠的代码。</p></div><div class=pagination><div class=pagination__title><span class=pagination__title-h>Read other posts</span><hr></div><div class=pagination__buttons><span class="button previous"><a href=/posts/cpp-error-handling/><span class=button__icon>←</span>
+<span class=button__text>另一种 C++ 程序错误处理方式</span></a></span>
+<span class="button next"><a href=/posts/golang-design-study/><span class=button__text>从并发模型看 Go 的语言设计</span>
+<span class=button__icon>→</span></a></span></div></div><div id=disqus_thread></div><script type=application/javascript>window.disqus_config=function(){},function(){if(["localhost","127.0.0.1"].indexOf(window.location.hostname)!=-1){document.getElementById("disqus_thread").innerHTML="Disqus comments not available by default when the website is previewed locally.";return}var t=document,e=t.createElement("script");e.async=!0,e.src="//ZhiruiLi.disqus.com/embed.js",e.setAttribute("data-timestamp",+new Date),(t.head||t.body).appendChild(e)}()</script><noscript>Please enable JavaScript to view the <a href=https://disqus.com/?ref_noscript>comments powered by Disqus.</a></noscript><a href=https://disqus.com class=dsq-brlink>comments powered by <span class=logo-disqus>Disqus</span></a></div></div><footer class=footer><div class=footer__inner><div class="copyright copyright--user"><p>本网站采用 <a href=https://creativecommons.org/licenses/by-sa/4.0/>CC BY-SA 4.0</a> 协议进行授权</p><p>© 2021 Zhirui Li. All rights reserved.</p></div></div></footer><script src=/assets/main.js></script>
+<script src=/assets/prism.js></script><p style=color:#999>我的博客即将同步至腾讯云+社区，<a target=_blank href="https://cloud.tencent.com/developer/support-plan?invite_code=11dehb9vzutlx">邀请大家一同入驻</a>。</p></div><script type=application/javascript>var doNotTrack=!1;doNotTrack||(function(e,o,i,a,t,n,s){e.GoogleAnalyticsObject=t,e[t]=e[t]||function(){(e[t].q=e[t].q||[]).push(arguments)},e[t].l=1*new Date,n=o.createElement(i),s=o.getElementsByTagName(i)[0],n.async=1,n.src=a,s.parentNode.insertBefore(n,s)}(window,document,"script","https://www.google-analytics.com/analytics.js","ga"),ga("create","UA-80302213-1","auto"),ga("send","pageview"))</script></body></html>

@@ -1,0 +1,154 @@
+<!doctype html><html lang=cn><head><title>UE4 Module 新建与使用 ::
+简易现代魔法 — Zhirui Li's Blog</title><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><meta name=description content="概述 UE 的 module 是一堆 C++ 类和代码的集合，类似于 DLL，而 UE 本身也是由一堆 module 构成的。将代码拆分为 module 的目的是： 封装和功能分离 方便重用代码 降低编译链接时"><meta name=keywords content="编程,计算机图形学,游戏开发"><meta name=robots content="noodp"><link rel=canonical href=/posts/unreal-new-module/><link rel=stylesheet href=/assets/style.css><link rel=stylesheet href=/style.css><link rel=apple-touch-icon-precomposed sizes=144x144 href=/img/apple-touch-icon-144-precomposed.png><link rel="shortcut icon" href=/img/favicon.png><link href=/assets/fonts/Inter-Italic.woff2 rel=preload type=font/woff2 as=font crossorigin><link href=/assets/fonts/Inter-Regular.woff2 rel=preload type=font/woff2 as=font crossorigin><link href=/assets/fonts/Inter-Medium.woff2 rel=preload type=font/woff2 as=font crossorigin><link href=/assets/fonts/Inter-MediumItalic.woff2 rel=preload type=font/woff2 as=font crossorigin><link href=/assets/fonts/Inter-Bold.woff2 rel=preload type=font/woff2 as=font crossorigin><link href=/assets/fonts/Inter-BoldItalic.woff2 rel=preload type=font/woff2 as=font crossorigin><meta name=twitter:card content="summary"><meta name=twitter:title content="UE4 Module 新建与使用"><meta name=twitter:description content="记录 UE4 Module 的用法，并实现一个工具简化操作。"><meta property="og:title" content="UE4 Module 新建与使用"><meta property="og:description" content="记录 UE4 Module 的用法，并实现一个工具简化操作。"><meta property="og:type" content="article"><meta property="og:url" content="/posts/unreal-new-module/"><meta property="article:section" content="posts"><meta property="article:published_time" content="2022-04-30T00:00:00+00:00"><meta property="article:modified_time" content="2022-04-30T00:00:00+00:00"><meta property="og:site_name" content="简易现代魔法"><script>var posts=document.getElementById("posts-list");posts&&quicklink({el:posts,priority:!0})</script><script>MathJax={tex:{inlineMath:[["$","$"],["\\(","\\)"]]},svg:{fontCache:"global"}}</script><script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script id=MathJax-script async src=https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js></script></head><body><div class=container><header class=header><span class=header__inner><a href=/ class=logo style=text-decoration:none><span class=logo__mark><svg xmlns="http://www.w3.org/2000/svg" class="greater-icon" viewBox="0 0 44 44"><path fill="none" d="M15 8l14.729 14.382L15 35.367"/></svg></span><span class=logo__text>简易现代魔法</span>
+<span class=logo__cursor></span></a>
+<span class=header__right><nav class=menu><ul class="menu__inner menu__inner--desktop"><li><a href=/archive>Archive</a></li><li><a href=/tags>Tags</a></li><li><a href=https://www.github.com/zhiruili>Github</a></li><li><a href=/index.xml>RSS</a></li></ul><ul class="menu__inner menu__inner--mobile"><li><a href=/archive>Archive</a></li><li><a href=/tags>Tags</a></li><li><a href=https://www.github.com/zhiruili>Github</a></li><li><a href=/index.xml>RSS</a></li></ul></nav><span class=menu-trigger><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M0 0h24v24H0z" fill="none"/><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></svg></span><span class=theme-toggle><svg class="theme-toggler" width="24" height="24" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M22 41c10.4934.0 19-8.5066 19-19C41 11.5066 32.4934 3 22 3 11.5066 3 3 11.5066 3 22s8.5066 19 19 19zM7 22C7 13.7157 13.7157 7 22 7V37C13.7157 37 7 30.2843 7 22z"/></svg></span></span></span></header><div class=content><div class=post><h1 class=post-title>UE4 Module 新建与使用</h1><div class=post-meta><span class=post-date>2022-04-30</span></div><span class=post-tags><a href=/tags/unreal/>#Unreal</a>&nbsp;</span><div class=post-content><h1 id=概述>概述</h1><p>UE 的 module 是一堆 C++ 类和代码的集合，类似于 DLL，而 UE 本身也是由一堆
+module 构成的。将代码拆分为 module 的目的是：</p><ul><li>封装和功能分离</li><li>方便重用代码</li><li>降低编译链接时间，减小编译结果体积</li><li>允许控制加载 module 的时机</li></ul><h1 id=目录结构>目录结构</h1><p>假设需要创建一个名为 <code>FooBar</code> 的 module，那么首先需要在工程的
+Source 目录下创建一个与 module 同名的目录（此处为
+FooBar），然后在该目录下创建一个 FooBar.Build.cs
+文件，大致会有如下的目录结构：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span>ProjectFolder
+</span></span><span style=display:flex><span>└── Source
+</span></span><span style=display:flex><span>    └── FooBar  &lt;----------------- module 对应目录
+</span></span><span style=display:flex><span>        ├── FooBar.Build.cs  &lt;---- 构建描述文件
+</span></span><span style=display:flex><span>        ├── Private  &lt;------------ 私有文件目录
+</span></span><span style=display:flex><span>        └── Public  &lt;------------- 公开文件目录
+</span></span></code></pre></div><p>YouModuleName.Build.cs 文件的功能：</p><ul><li>声明 module 的构建方式</li><li>定义 module 的依赖</li><li>&mldr;&mldr;</li></ul><p>UE 基于 C# 实现了名为 UBT（Unreal Build Tool）的工具完成构建流程。UBT
+根据 .Target.cs 文件和 .Build.cs
+文件对一个工程进行构建。它不依赖于特定平台或特定 IDE 的构建描述（如
+Visual Studio 的 .sln 文件），因为 UE 要支持不同平台的编译。</p><p>在修改或移动 .Build.cs 文件后，最好重新生成一下 IDE 的 Solution
+文件，以便 IDE 能同步到最新构建信息，有几种方法可以生成 IDE 的 Solution
+文件：</p><ul><li>执行 GenerateProject.bat 脚本</li><li>右键点击 .uproject 文件，然后选择「Generate xxx Project Files」</li><li>在 UE 编辑器的菜单中选择 File - Refresh xxx Project</li></ul><p>最简单的 .Build.cs 文件：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-csharp data-lang=csharp><span style=display:flex><span><span style=color:#66d9ef>using</span> UnrealBuildTool;
+</span></span><span style=display:flex><span><span style=color:#66d9ef>public</span> <span style=color:#66d9ef>class</span> <span style=color:#a6e22e>FooBar</span> : ModuleRules {
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>public</span> FooBar(ReadOnlyTargetRules Target) : <span style=color:#66d9ef>base</span>(Target) {
+</span></span><span style=display:flex><span>        PublicDependencyModuleNames.AddRange(<span style=color:#66d9ef>new</span> <span style=color:#66d9ef>string</span>[] {
+</span></span><span style=display:flex><span>            <span style=color:#75715e>// UE 的 Engine 包含了一些常用的内容，例如 AActor</span>
+</span></span><span style=display:flex><span>            <span style=color:#e6db74>&#34;Engine&#34;</span> });
+</span></span><span style=display:flex><span>        PrivateDependencyModuleNames.AddRange(<span style=color:#66d9ef>new</span> <span style=color:#66d9ef>string</span>[] {
+</span></span><span style=display:flex><span>            <span style=color:#75715e>// UE 的 Core module 包含了处理 module 的代码，所以至少要包含它</span>
+</span></span><span style=display:flex><span>            <span style=color:#e6db74>&#34;Core&#34;</span> });
+</span></span><span style=display:flex><span>    }
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><p>这里 <code>PrivateDependencyModuleNames</code> 用于声明只在该 module
+内部依赖的 module，而 <code>PublicDependencyModuleNames</code>
+则用于声明在该 module 对外暴露的接口中依赖到的
+module，这个依赖关系会被依赖该 module 的 module 继承，这个关系和 C++
+类继承中的 <code>private</code> 与 <code>public</code>
+关键字的区别类似。例如本 module 对外暴露了一个继承自 <code>AActor</code>
+的类型，由于 <code>AActor</code> 被定义在 <code>Engine</code> module
+中，因此这里需要将 <code>Engine</code> 添加到
+<code>PublicDependencyModuleNames</code> 中。</p><h1 id=实现-module>实现 Module</h1><p>注意到上面的目录中源码文件被分别放在两个目录下，一个 Public 一个
+Private，其中，需要被其他 module include 的头文件放在 Public
+目录下，其他文件（包括源码文件和本 module 私有的头文件）都放在 Private
+目录下。</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span>ProjectFolder
+</span></span><span style=display:flex><span>└── Source
+</span></span><span style=display:flex><span>    └── FooBar
+</span></span><span style=display:flex><span>        ├── FooBar.Build.cs
+</span></span><span style=display:flex><span>        ├── Private
+</span></span><span style=display:flex><span>        │   └── FooBarModule.cpp
+</span></span><span style=display:flex><span>        └── Public
+</span></span><span style=display:flex><span>            └── FooBarModule.h
+</span></span></code></pre></div><p>在一个 Unreal 工程新建时会自动创建一个主游戏 module，这个 module
+不会被别的 module 依赖，因此一般也不会区分 Public/Private 目录。</p><p>每个 module 至少要包含一个 module 对应的 .h 和 .cpp 文件，用于实现对应
+module，这里的文件名可以是任意的，但一般会选用 YourModuleName.h/cpp 或
+YourModuleNameModule.h/cpp 这样的形式，例如这里的 FooBarModule.h 和
+FooBarModule.cpp。</p><p>其中 FooBarModule.h 中大致会有如下的内容：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-cpp data-lang=cpp><span style=display:flex><span><span style=color:#75715e>#include</span> <span style=color:#75715e>&#34;Modules/ModuleManager.h&#34;</span><span style=color:#75715e>
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span><span style=color:#66d9ef>class</span> <span style=color:#a6e22e>FFooBarModule</span> <span style=color:#f92672>:</span> <span style=color:#66d9ef>public</span> IModuleInterface {
+</span></span><span style=display:flex><span>    <span style=color:#75715e>// 可以通过 override 生命周期回调触发自定义逻辑，如：
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>    <span style=color:#75715e>// virtual void StartupModule() override;
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>    <span style=color:#75715e>// virtual void ShutdownModule() override;
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>    <span style=color:#75715e>// ...
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>};
+</span></span></code></pre></div><p>这里声明了一个 <code>FFooBarModule</code> 类继承了
+<code>IModuleInterface</code> 类。前面提到 <code>Core</code> module
+包含了处理 module 的代码，所以任何 module 的依赖中至少要包含它，这里
+include 的 ModuleManager.h 文件在就是 <code>Core</code> module
+中的一部分。</p><p>而在 FooBarModule.cpp 中，则需要至少包含一个类似这样的实现：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-cpp data-lang=cpp><span style=display:flex><span><span style=color:#75715e>#include</span> <span style=color:#75715e>&#34;FooBarModule.h&#34;</span><span style=color:#75715e>
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>IMPLEMENT_MODULE(FFooBarModule, FooBar)
+</span></span></code></pre></div><p>这里 <code>IMPLEMENT_MODULE</code>
+宏的第一个参数是对应的类，第二个参数是 module 名。对于游戏 module
+和主游戏 module，这里则改为使用 <code>IMPLEMENT_GAME_MODULE</code> 和
+<code>IMPLEMENT_PRIMARY_GAME_MODULE</code> 。</p><p>如果其他 module 想使用这个 module 类中的方法，可以使用
+<code>FModuleManager</code> 获取对应 module 类对象的引用：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-cpp data-lang=cpp><span style=display:flex><span>FModuleManager<span style=color:#f92672>::</span>Get().LoadModuleChecked<span style=color:#f92672>&lt;</span>FFooBarModule<span style=color:#f92672>&gt;</span>(TEXT(<span style=color:#e6db74>&#34;FooBar&#34;</span>)).SomeMethod();
+</span></span></code></pre></div><h1 id=暴露接口>暴露接口</h1><p>类似于 DLL，module
+对外暴露的接口都需要进行额外声明，否则默认情况下并不会暴露出去。例如下面是
+NicknamedActor.h 中的代码：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-cpp data-lang=cpp><span style=display:flex><span><span style=color:#75715e>#pragma once
+</span></span></span><span style=display:flex><span><span style=color:#75715e>#include</span> <span style=color:#75715e>&#34;GameFramework/Actor.h&#34;</span><span style=color:#75715e>
+</span></span></span><span style=display:flex><span><span style=color:#75715e>#include</span> <span style=color:#75715e>&#34;CoreMinimal.h&#34;</span><span style=color:#75715e>
+</span></span></span><span style=display:flex><span><span style=color:#75715e>#include</span> <span style=color:#75715e>&#34;NicknamedActor.generated.h&#34;</span><span style=color:#75715e>
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>UCLASS(Blueprintable)
+</span></span><span style=display:flex><span><span style=color:#66d9ef>class</span> <span style=color:#a6e22e>ANicknamedActor</span> <span style=color:#f92672>:</span> <span style=color:#66d9ef>public</span> AActor {
+</span></span><span style=display:flex><span>    GENERATED_BODY()
+</span></span><span style=display:flex><span>  <span style=color:#66d9ef>public</span><span style=color:#f92672>:</span>
+</span></span><span style=display:flex><span>    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+</span></span><span style=display:flex><span>    FString Nickname;
+</span></span><span style=display:flex><span>    UFUNCTION(BlueprintCallable)
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>void</span> SayNickname();
+</span></span><span style=display:flex><span>};
+</span></span></code></pre></div><p>它的声明和实现在目录中的位置如下：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span>ProjectFolder
+</span></span><span style=display:flex><span>└── Source
+</span></span><span style=display:flex><span>    └── FooBar
+</span></span><span style=display:flex><span>        ├── FooBar.Build.cs
+</span></span><span style=display:flex><span>        ├── Private
+</span></span><span style=display:flex><span>        │   ├── NicknamedActor.cpp
+</span></span><span style=display:flex><span>        │   └── FooBarModule.cpp
+</span></span><span style=display:flex><span>        └── Public
+</span></span><span style=display:flex><span>            ├── NicknamedActor.h
+</span></span><span style=display:flex><span>            └── FooBarModule.h
+</span></span></code></pre></div><p>此时，如果其他 module 添加了 <code>FooBar</code>
+的依赖，那么它能在代码中访问到 <code>ANicknamedActor</code>
+。但仍然无法链接到 <code>ANicknamedActor</code>
+中的方法。为了将其中的方法暴露给其他 module，需要手动声明。</p><p>如果仅仅是想将类型信息暴露出去，那么可以在 <code>UCLASS</code> 声明中加
+<code>MinimalAPI</code> ：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-cpp data-lang=cpp><span style=display:flex><span>UCLASS(Blueprintable, MinimalAPI)
+</span></span><span style=display:flex><span><span style=color:#66d9ef>class</span> <span style=color:#a6e22e>ANicknamedActor</span> <span style=color:#f92672>:</span> <span style=color:#66d9ef>public</span> AActor { <span style=color:#75715e>/* ... */</span> };
+</span></span></code></pre></div><p>这样一来，其他 module 可以：将别的类型转换到该类型；Spawn
+该类型的对象；继承该类型；使用该类型中的内联函数。</p><p>在此基础上，如果想额外暴露一些方法出去，则需要在对应方法声明前添加 API
+声明，形式为 <code>YOURMODULENAME_API</code> ，这个宏是 Unreal
+自动为每个 module 生成的。例如这里就是 <code>FOOBAR_API</code> ：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-cpp data-lang=cpp><span style=display:flex><span>UCLASS(Blueprintable, MinimalAPI)
+</span></span><span style=display:flex><span><span style=color:#66d9ef>class</span> <span style=color:#a6e22e>ANicknamedActor</span> <span style=color:#f92672>:</span> <span style=color:#66d9ef>public</span> AActor {
+</span></span><span style=display:flex><span>    <span style=color:#75715e>// ...
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>    UFUNCTION(BlueprintCallable)
+</span></span><span style=display:flex><span>    FOOBAR_API <span style=color:#66d9ef>void</span> SayNickname();
+</span></span><span style=display:flex><span>};
+</span></span></code></pre></div><p>当然，一种更为常见的情况是我们直接将这整个类型的信息都暴露出去，此时可以将
+API 声明放到类型名前面，例如：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-cpp data-lang=cpp><span style=display:flex><span>UCLASS(Blueprintable)
+</span></span><span style=display:flex><span><span style=color:#66d9ef>class</span> <span style=color:#a6e22e>FOOBAR_API</span> ANicknamedActor : <span style=color:#66d9ef>public</span> AActor {
+</span></span><span style=display:flex><span>    <span style=color:#75715e>// ...
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>};
+</span></span></code></pre></div><h1 id=添加-module-描述>添加 Module 描述</h1><p>每一个 module 都需要在工程的 meta 文件中进行声明，对于游戏工程而言是在
+.uproject 文件中，对于插件而言是在 .uplugin 文件中。这两个 meta 文件都是
+JSON 格式的，module 相关的描述在 <code>Module</code> 字段下：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-json data-lang=json><span style=display:flex><span>{
+</span></span><span style=display:flex><span>    <span style=color:#75715e>// Other meta data...
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>    <span style=color:#f92672>&#34;Module&#34;</span>: [
+</span></span><span style=display:flex><span>        {
+</span></span><span style=display:flex><span>            <span style=color:#f92672>&#34;Name&#34;</span>: <span style=color:#e6db74>&#34;FooBar&#34;</span>,
+</span></span><span style=display:flex><span>            <span style=color:#f92672>&#34;Type&#34;</span>: <span style=color:#e6db74>&#34;Runtime&#34;</span>,
+</span></span><span style=display:flex><span>            <span style=color:#f92672>&#34;LoadingPhase&#34;</span>: <span style=color:#e6db74>&#34;Default&#34;</span>
+</span></span><span style=display:flex><span>        },
+</span></span><span style=display:flex><span>        <span style=color:#75715e>// Other modules ...
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>    ]
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><p>显然，这里的 <code>Name</code> 字段对应 module 的名字。这里的
+<code>Type</code> 字段对应 module 被加载的环境，最常用的就是
+<code>Runtime</code> 和 <code>Editor</code>
+分别对应运行时（包括编辑器）和仅编辑器，完整列表可以参考
+<a href=https://docs.unrealengine.com/4.26/en-US/API/Runtime/Projects/EHostType__Type/>EHostType::Type</a>
+的内容。而 <code>LoadingPhase</code> 则对应于 module
+的加载阶段，最常见的是 <code>Default</code> ，如果是写一个包含 shader 的
+module，则会用到 <code>PostConfigInit</code> 这个阶段，因为 Unreal
+需要在引擎初始化前加载 shader，完整列表可以参考
+<a href=https://docs.unrealengine.com/4.26/en-US/API/Runtime/Projects/ELoadingPhase__Type/>ELoadingPhase::Type</a>。</p><h1 id=简化-module-操作>简化 Module 操作</h1><p>新建一个 module 的过程其实相当麻烦，一般为了避免出错，会复制一个现成的
+module，然后将内容删除再将名字改掉，不仅麻烦还容易出错，这里实现了一个简单的小工具，可以简化这个过程。项目地址在
+<a href=https://www.github.com/zhiruili/urem>urem</a>，这是个命令行工具，可以用 <code>go install</code>
+命令安装。</p><p>先将 <code>urem.exe</code> 所在的位置加入 <code>PATH</code>
+，然后就可以执行如下命令新建一个 module 了：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span><span style=color:#75715e># 新建一个属于工程的 module</span>
+</span></span><span style=display:flex><span>urem.exe new mod ModuleName YourPorjectRoot/Source
+</span></span><span style=display:flex><span><span style=color:#75715e># 新建一个属于插件的 module</span>
+</span></span><span style=display:flex><span>urem.exe new mod ModuleName YourPorjectRoot/Plugins/YourPlugin/Source
+</span></span></code></pre></div><p>这个过程会在 Source 目录下新建一个以 ModuleName 为名的目录，其中包含
+ModuleName.Build.cs 文件，以及对应的 ModuleNameModule.h/cpp
+文件。另外，为了方便日志打印，还会新建 Log.h/cpp 文件，包含 log category
+的声明。在新建文件后，会自动刷新 .sln 工程。</p><p>除了新建 module 之外，这个工具还集成了一堆便利的小功能，比如刷新 .sln
+工程，刷新 clangd 工程，新增 gitignore 模板、clang-format 模板等。使用
+<code>urem.exe --help</code> 查看帮助。</p><h1 id=references>References</h1><ul><li><a href=https://docs.google.com/presentation/d/1rSFFQk7RxNAHevROfVvUNviUfIntLkO_HpdvzHLkNEs>UE4 Modules - Ari Arnbjörnsson</a></li></ul></div><div class=pagination><div class=pagination__title><span class=pagination__title-h>Read other posts</span><hr></div><div class=pagination__buttons><span class="button next"><a href=/posts/real-time-pbr/><span class=button__text>实时渲染中的 PBR 材质</span>
+<span class=button__icon>→</span></a></span></div></div><div id=disqus_thread></div><script type=application/javascript>window.disqus_config=function(){},function(){if(["localhost","127.0.0.1"].indexOf(window.location.hostname)!=-1){document.getElementById("disqus_thread").innerHTML="Disqus comments not available by default when the website is previewed locally.";return}var t=document,e=t.createElement("script");e.async=!0,e.src="//ZhiruiLi.disqus.com/embed.js",e.setAttribute("data-timestamp",+new Date),(t.head||t.body).appendChild(e)}()</script><noscript>Please enable JavaScript to view the <a href=https://disqus.com/?ref_noscript>comments powered by Disqus.</a></noscript><a href=https://disqus.com class=dsq-brlink>comments powered by <span class=logo-disqus>Disqus</span></a></div></div><footer class=footer><div class=footer__inner><div class="copyright copyright--user"><p>本网站采用 <a href=https://creativecommons.org/licenses/by-sa/4.0/>CC BY-SA 4.0</a> 协议进行授权</p><p>© 2021 Zhirui Li. All rights reserved.</p></div></div></footer><script src=/assets/main.js></script>
+<script src=/assets/prism.js></script><p style=color:#999>我的博客即将同步至腾讯云+社区，<a target=_blank href="https://cloud.tencent.com/developer/support-plan?invite_code=11dehb9vzutlx">邀请大家一同入驻</a>。</p></div><script type=application/javascript>var doNotTrack=!1;doNotTrack||(function(e,o,i,a,t,n,s){e.GoogleAnalyticsObject=t,e[t]=e[t]||function(){(e[t].q=e[t].q||[]).push(arguments)},e[t].l=1*new Date,n=o.createElement(i),s=o.getElementsByTagName(i)[0],n.async=1,n.src=a,s.parentNode.insertBefore(n,s)}(window,document,"script","https://www.google-analytics.com/analytics.js","ga"),ga("create","UA-80302213-1","auto"),ga("send","pageview"))</script></body></html>
