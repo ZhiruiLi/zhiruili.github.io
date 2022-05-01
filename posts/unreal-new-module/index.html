@@ -3,7 +3,8 @@
 <script id=MathJax-script async src=https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js></script></head><body><div class=container><header class=header><span class=header__inner><a href=/ class=logo style=text-decoration:none><span class=logo__mark><svg xmlns="http://www.w3.org/2000/svg" class="greater-icon" viewBox="0 0 44 44"><path fill="none" d="M15 8l14.729 14.382L15 35.367"/></svg></span><span class=logo__text>简易现代魔法</span>
 <span class=logo__cursor></span></a>
 <span class=header__right><nav class=menu><ul class="menu__inner menu__inner--desktop"><li><a href=/archive>Archive</a></li><li><a href=/tags>Tags</a></li><li><a href=https://www.github.com/zhiruili>Github</a></li><li><a href=/index.xml>RSS</a></li></ul><ul class="menu__inner menu__inner--mobile"><li><a href=/archive>Archive</a></li><li><a href=/tags>Tags</a></li><li><a href=https://www.github.com/zhiruili>Github</a></li><li><a href=/index.xml>RSS</a></li></ul></nav><span class=menu-trigger><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M0 0h24v24H0z" fill="none"/><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></svg></span><span class=theme-toggle><svg class="theme-toggler" width="24" height="24" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M22 41c10.4934.0 19-8.5066 19-19C41 11.5066 32.4934 3 22 3 11.5066 3 3 11.5066 3 22s8.5066 19 19 19zM7 22C7 13.7157 13.7157 7 22 7V37C13.7157 37 7 30.2843 7 22z"/></svg></span></span></span></header><div class=content><div class=post><h1 class=post-title>UE4 Module 新建与使用</h1><div class=post-meta><span class=post-date>2022-04-30</span></div><span class=post-tags><a href=/tags/unreal/>#Unreal</a>&nbsp;</span><div class=post-content><p>UE 的 module 是一堆 C++ 类和代码的集合，类似于 DLL，而 UE 本身也是由一堆
-module 构成的。将代码拆分为 module 的目的是：</p><ul><li>封装和功能分离</li><li>方便重用代码</li><li>降低编译链接时间，减小编译结果体积</li><li>允许控制加载 module 的时机</li></ul><h2 id=目录结构>目录结构</h2><p>假设需要创建一个名为 <code>FooBar</code> 的 module，那么首先需要在工程的
+module 构成的。将代码拆分为 module 的目的是：</p><ul><li>封装和功能分离</li><li>方便重用代码</li><li>降低编译链接时间，减小编译结果体积</li><li>允许控制加载 module 的时机</li></ul><h2 id=目录结构>目录结构
+<a href=#%e7%9b%ae%e5%bd%95%e7%bb%93%e6%9e%84 class=h-anchor aria-hidden=true>#</a></h2><p>假设需要创建一个名为 <code>FooBar</code> 的 module，那么首先需要在工程的
 Source 目录下创建一个与 module 同名的目录（此处为
 FooBar），然后在该目录下创建一个 FooBar.Build.cs
 文件，大致会有如下的目录结构：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span>ProjectFolder
@@ -36,7 +37,8 @@ module，这个依赖关系会被依赖该 module 的 module 继承，这个关�
 关键字的区别类似。例如本 module 对外暴露了一个继承自 <code>AActor</code>
 的类型，由于 <code>AActor</code> 被定义在 <code>Engine</code> module
 中，因此这里需要将 <code>Engine</code> 添加到
-<code>PublicDependencyModuleNames</code> 中。</p><h2 id=实现-module>实现 Module</h2><p>注意到上面的目录中源码文件被分别放在两个目录下，一个 Public 一个
+<code>PublicDependencyModuleNames</code> 中。</p><h2 id=实现-module>实现 Module
+<a href=#%e5%ae%9e%e7%8e%b0-module class=h-anchor aria-hidden=true>#</a></h2><p>注意到上面的目录中源码文件被分别放在两个目录下，一个 Public 一个
 Private，其中，需要被其他 module include 的头文件放在 Public
 目录下，其他文件（包括源码文件和本 module 私有的头文件）都放在 Private
 目录下。</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span>ProjectFolder
@@ -69,7 +71,8 @@ include 的 ModuleManager.h 文件在就是 <code>Core</code> module
 和主游戏 module，这里则改为使用 <code>IMPLEMENT_GAME_MODULE</code> 和
 <code>IMPLEMENT_PRIMARY_GAME_MODULE</code> 。</p><p>如果其他 module 想使用这个 module 类中的方法，可以使用
 <code>FModuleManager</code> 获取对应 module 类对象的引用：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-cpp data-lang=cpp><span style=display:flex><span>FModuleManager<span style=color:#f92672>::</span>Get().LoadModuleChecked<span style=color:#f92672>&lt;</span>FFooBarModule<span style=color:#f92672>&gt;</span>(TEXT(<span style=color:#e6db74>&#34;FooBar&#34;</span>)).SomeMethod();
-</span></span></code></pre></div><h2 id=暴露接口>暴露接口</h2><p>类似于 DLL，module
+</span></span></code></pre></div><h2 id=暴露接口>暴露接口
+<a href=#%e6%9a%b4%e9%9c%b2%e6%8e%a5%e5%8f%a3 class=h-anchor aria-hidden=true>#</a></h2><p>类似于 DLL，module
 对外暴露的接口都需要进行额外声明，否则默认情况下并不会暴露出去。例如下面是
 NicknamedActor.h 中的代码：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-cpp data-lang=cpp><span style=display:flex><span><span style=color:#75715e>#pragma once
 </span></span></span><span style=display:flex><span><span style=color:#75715e>#include</span> <span style=color:#75715e>&#34;GameFramework/Actor.h&#34;</span><span style=color:#75715e>
@@ -114,7 +117,8 @@ API 声明放到类型名前面，例如：</p><div class=highlight><pre tabinde
 </span></span><span style=display:flex><span><span style=color:#66d9ef>class</span> <span style=color:#a6e22e>FOOBAR_API</span> ANicknamedActor : <span style=color:#66d9ef>public</span> AActor {
 </span></span><span style=display:flex><span>    <span style=color:#75715e>// ...
 </span></span></span><span style=display:flex><span><span style=color:#75715e></span>};
-</span></span></code></pre></div><h2 id=添加-module-描述>添加 Module 描述</h2><p>每一个 module 都需要在工程的 meta 文件中进行声明，对于游戏工程而言是在
+</span></span></code></pre></div><h2 id=添加-module-描述>添加 Module 描述
+<a href=#%e6%b7%bb%e5%8a%a0-module-%e6%8f%8f%e8%bf%b0 class=h-anchor aria-hidden=true>#</a></h2><p>每一个 module 都需要在工程的 meta 文件中进行声明，对于游戏工程而言是在
 .uproject 文件中，对于插件而言是在 .uplugin 文件中。这两个 meta 文件都是
 JSON 格式的，module 相关的描述在 <code>Module</code> 字段下：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-json data-lang=json><span style=display:flex><span>{
 </span></span><span style=display:flex><span>    <span style=color:#75715e>// Other meta data...
@@ -136,7 +140,8 @@ JSON 格式的，module 相关的描述在 <code>Module</code> 字段下：</p><
 的加载阶段，最常见的是 <code>Default</code> ，如果是写一个包含 shader 的
 module，则会用到 <code>PostConfigInit</code> 这个阶段，因为 Unreal
 需要在引擎初始化前加载 shader，完整列表可以参考
-<a href=https://docs.unrealengine.com/4.26/en-US/API/Runtime/Projects/ELoadingPhase__Type/>ELoadingPhase::Type</a>。</p><h2 id=简化-module-操作>简化 Module 操作</h2><p>新建一个 module 的过程其实相当麻烦，一般为了避免出错，会复制一个现成的
+<a href=https://docs.unrealengine.com/4.26/en-US/API/Runtime/Projects/ELoadingPhase__Type/>ELoadingPhase::Type</a>。</p><h2 id=简化-module-操作>简化 Module 操作
+<a href=#%e7%ae%80%e5%8c%96-module-%e6%93%8d%e4%bd%9c class=h-anchor aria-hidden=true>#</a></h2><p>新建一个 module 的过程其实相当麻烦，一般为了避免出错，会复制一个现成的
 module，然后将内容删除再将名字改掉，不仅麻烦还容易出错，这里实现了一个简单的小工具，可以简化这个过程。项目地址在
 <a href=https://www.github.com/zhiruili/urem>urem</a>，这是个命令行工具，可以用 <code>go install</code>
 命令安装。</p><p>先将 <code>urem.exe</code> 所在的位置加入 <code>PATH</code>
@@ -149,7 +154,8 @@ ModuleName.Build.cs 文件，以及对应的 ModuleNameModule.h/cpp
 文件。另外，为了方便日志打印，还会新建 Log.h/cpp 文件，包含 log category
 的声明。在新建文件后，会自动刷新 .sln 工程。</p><p>除了新建 module 之外，这个工具还集成了一堆便利的小功能，比如刷新 .sln
 工程，刷新 clangd 工程，新增 gitignore 模板、clang-format 模板等。使用
-<code>urem.exe --help</code> 查看帮助。</p><h2 id=参考资料>参考资料</h2><ul><li><a href=https://docs.google.com/presentation/d/1rSFFQk7RxNAHevROfVvUNviUfIntLkO_HpdvzHLkNEs>UE4 Modules - Ari Arnbjörnsson</a></li></ul></div><div class=pagination><div class=pagination__title><span class=pagination__title-h>Read other posts</span><hr></div><div class=pagination__buttons><span class="button previous"><a href=/posts/rbf-interpolation/><span class=button__icon>←</span>
+<code>urem.exe --help</code> 查看帮助。</p><h2 id=参考资料>参考资料
+<a href=#%e5%8f%82%e8%80%83%e8%b5%84%e6%96%99 class=h-anchor aria-hidden=true>#</a></h2><ul><li><a href=https://docs.google.com/presentation/d/1rSFFQk7RxNAHevROfVvUNviUfIntLkO_HpdvzHLkNEs>UE4 Modules - Ari Arnbjörnsson</a></li></ul></div><div class=pagination><div class=pagination__title><span class=pagination__title-h>Read other posts</span><hr></div><div class=pagination__buttons><span class="button previous"><a href=/posts/rbf-interpolation/><span class=button__icon>←</span>
 <span class=button__text>RBF 插值的理论与应用</span></a></span>
 <span class="button next"><a href=/posts/real-time-pbr/><span class=button__text>实时渲染中的 PBR 材质</span>
 <span class=button__icon>→</span></a></span></div></div><div id=disqus_thread></div><script type=application/javascript>window.disqus_config=function(){},function(){if(["localhost","127.0.0.1"].indexOf(window.location.hostname)!=-1){document.getElementById("disqus_thread").innerHTML="Disqus comments not available by default when the website is previewed locally.";return}var t=document,e=t.createElement("script");e.async=!0,e.src="//ZhiruiLi.disqus.com/embed.js",e.setAttribute("data-timestamp",+new Date),(t.head||t.body).appendChild(e)}()</script><noscript>Please enable JavaScript to view the <a href=https://disqus.com/?ref_noscript>comments powered by Disqus.</a></noscript><a href=https://disqus.com class=dsq-brlink>comments powered by <span class=logo-disqus>Disqus</span></a></div></div><footer class=footer><div class=footer__inner><div class="copyright copyright--user"><p>本网站采用 <a href=https://creativecommons.org/licenses/by-sa/4.0/>CC BY-SA 4.0</a> 协议进行授权</p><p>© 2021 Zhirui Li. All rights reserved.</p></div></div></footer><script src=/assets/main.js></script>
