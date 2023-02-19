@@ -1,0 +1,159 @@
+<!doctype html><html lang=cn><head><title>Unreal Slate UI 的使用 ::
+简易现代魔法 — Zhirui Li's Blog</title><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><meta name=description content="在开发 UE 工具的过程中，经常需要对功能封装一个 GUI 供用户使用，此时难免碰到 UE 的 Slate 框架。Slate UI 框架虽然强大，但使用起来不太直观，这篇文章将解"><meta name=keywords content="编程,计算机图形学,游戏开发"><meta name=robots content="noodp"><link rel=canonical href=/posts/unreal-slate-ui/><link rel=stylesheet href=/assets/style.css><link rel=stylesheet href=/style.css><link rel=apple-touch-icon-precomposed sizes=144x144 href=/img/apple-touch-icon-144-precomposed.png><link rel="shortcut icon" href=/img/favicon.png><link href=/assets/fonts/Inter-Italic.woff2 rel=preload type=font/woff2 as=font crossorigin><link href=/assets/fonts/Inter-Regular.woff2 rel=preload type=font/woff2 as=font crossorigin><link href=/assets/fonts/Inter-Medium.woff2 rel=preload type=font/woff2 as=font crossorigin><link href=/assets/fonts/Inter-MediumItalic.woff2 rel=preload type=font/woff2 as=font crossorigin><link href=/assets/fonts/Inter-Bold.woff2 rel=preload type=font/woff2 as=font crossorigin><link href=/assets/fonts/Inter-BoldItalic.woff2 rel=preload type=font/woff2 as=font crossorigin><meta name=twitter:card content="summary"><meta name=twitter:title content="Unreal Slate UI 的使用"><meta name=twitter:description content="使用 Unreal Slate 框架进行 GUI 开发"><meta property="og:title" content="Unreal Slate UI 的使用"><meta property="og:description" content="使用 Unreal Slate 框架进行 GUI 开发"><meta property="og:type" content="article"><meta property="og:url" content="/posts/unreal-slate-ui/"><meta property="article:section" content="posts"><meta property="article:published_time" content="2023-02-18T00:00:00+00:00"><meta property="article:modified_time" content="2023-02-19T00:00:00+00:00"><meta property="og:site_name" content="简易现代魔法"><script>var posts=document.getElementById("posts-list");posts&&quicklink({el:posts,priority:!0})</script><script>MathJax={tex:{inlineMath:[["$","$"],["\\(","\\)"]]},svg:{fontCache:"global"}}</script><script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script id=MathJax-script async src=https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js></script></head><body><div class=container><header class=header><span class=header__inner><a href=/ class=logo style=text-decoration:none><span class=logo__mark><svg xmlns="http://www.w3.org/2000/svg" class="greater-icon" viewBox="0 0 44 44"><path fill="none" d="M15 8l14.729 14.382L15 35.367"/></svg></span><span class=logo__text>简易现代魔法</span>
+<span class=logo__cursor></span></a>
+<span class=header__right><nav class=menu><ul class="menu__inner menu__inner--desktop"><li><a href=/archive>Archive</a></li><li><a href=/tags>Tags</a></li><li><a href=https://www.github.com/zhiruili>Github</a></li><li><a href=/index.xml>RSS</a></li></ul><ul class="menu__inner menu__inner--mobile"><li><a href=/archive>Archive</a></li><li><a href=/tags>Tags</a></li><li><a href=https://www.github.com/zhiruili>Github</a></li><li><a href=/index.xml>RSS</a></li></ul></nav><span class=menu-trigger><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M0 0h24v24H0z" fill="none"/><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></svg></span><span class=theme-toggle><svg class="theme-toggler" width="24" height="24" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M22 41c10.4934.0 19-8.5066 19-19C41 11.5066 32.4934 3 22 3 11.5066 3 3 11.5066 3 22s8.5066 19 19 19zM7 22C7 13.7157 13.7157 7 22 7V37C13.7157 37 7 30.2843 7 22z"/></svg></span></span></span></header><div class=content><div class=post><h1 class=post-title>Unreal Slate UI 的使用</h1><div class=post-meta><span class=post-date>2023-02-18</span></div><span class=post-tags><a href=/tags/unreal/>#Unreal</a>&nbsp;</span><div class=post-content><p>在开发 UE 工具的过程中，经常需要对功能封装一个 GUI 供用户使用，此时难免碰到 UE 的 Slate 框架。Slate UI 框架虽然强大，但使用起来不太直观，这篇文章将解析 Slate UI 的使用方法。</p><p>Slate 是一个跨平台的 UI 框架，它完全由 C++ 实现，UE 中的工具以及引擎编辑器本身都是用它实现的。它不依赖 Editor、Engine 模块，因此可以用来写一些独立的不依赖引擎的应用，不过大多数情况下我们主要还是用它开发 UE 的工具。</p><h2 id=hello-world>Hello World
+<a href=#hello-world class=h-anchor aria-hidden=true>#</a></h2><p>在工程中新建一个 <code>SExampleWidget.h</code> 文件，内容如下：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-cpp data-lang=cpp><span style=display:flex><span><span style=color:#66d9ef>class</span> <span style=color:#a6e22e>SExampleWidget</span> <span style=color:#f92672>:</span> <span style=color:#66d9ef>public</span> SCompoundWidget {
+</span></span><span style=display:flex><span><span style=color:#66d9ef>public</span><span style=color:#f92672>:</span>
+</span></span><span style=display:flex><span>    SLATE_BEGIN_ARGS(SExampleWidget) {}
+</span></span><span style=display:flex><span>    SLATE_END_ARGS()
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>void</span> Construct(<span style=color:#66d9ef>const</span> FArguments<span style=color:#f92672>&amp;</span> InArgs);
+</span></span><span style=display:flex><span>};
+</span></span></code></pre></div><p>再新建一个 <code>SExampleWidget.cpp</code> 文件，内容如下：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-cpp data-lang=cpp><span style=display:flex><span><span style=color:#75715e>#include</span> <span style=color:#75715e>&#34;SExampleWidget.h&#34;</span><span style=color:#75715e>
+</span></span></span><span style=display:flex><span><span style=color:#75715e>#include</span> <span style=color:#75715e>&#34;SlateBasics.h&#34;</span><span style=color:#75715e>
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>
+</span></span><span style=display:flex><span>BEGIN_SLATE_FUNCTION_BUILD_OPTIMIZATION
+</span></span><span style=display:flex><span><span style=color:#66d9ef>void</span> SExampleWidget<span style=color:#f92672>::</span>Construct(<span style=color:#66d9ef>const</span> FArguments<span style=color:#f92672>&amp;</span> InArgs) {
+</span></span><span style=display:flex><span>    ChildSlot
+</span></span><span style=display:flex><span>    [
+</span></span><span style=display:flex><span>        SNew(STextBlock)
+</span></span><span style=display:flex><span>        .Text(NSLOCTEXT(<span style=color:#e6db74>&#34;UIDemo&#34;</span>, <span style=color:#e6db74>&#34;HelloWorld&#34;</span>, <span style=color:#e6db74>&#34;Hello World!&#34;</span>))
+</span></span><span style=display:flex><span>    ];
+</span></span><span style=display:flex><span>}
+</span></span><span style=display:flex><span>END_SLATE_FUNCTION_BUILD_OPTIMIZATION
+</span></span></code></pre></div><p>这里使用 <code>BEGIN_SLATE_FUNCTION_BUILD_OPTIMIZATION</code> 和 <code>END_SLATE_FUNCTION_BUILD_OPTIMIZATION</code> 包裹 <code>Construct</code> 函数是为了加速编译，因为 Slate 框架的宏可能会生成较为复杂的代码，导致编译器花费大量时间来尝试对它进行优化。通过这两个宏来标记一个禁用这些优化的范围。</p><p>创建完这个控件后，我们新建一个 HUD Actor <code>ADemoHUD</code>，并在其中声明一个对 <code>SExampleWidget</code> 控件指针，注意这里使用 <code>TSharedPtr</code> 对其进行管理，Slate 框架并不依赖于 <code>UObject</code>：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-cpp data-lang=cpp><span style=display:flex><span>UCLASS()
+</span></span><span style=display:flex><span><span style=color:#66d9ef>class</span> <span style=color:#a6e22e>ADemoHUD</span> <span style=color:#f92672>:</span> <span style=color:#66d9ef>public</span> AHUD {
+</span></span><span style=display:flex><span>    GENERATED_BODY()
+</span></span><span style=display:flex><span><span style=color:#66d9ef>public</span><span style=color:#f92672>:</span>
+</span></span><span style=display:flex><span>    ADemoHUD(<span style=color:#66d9ef>const</span> FObjectInitializer<span style=color:#f92672>&amp;</span> ObjectInitializer);
+</span></span><span style=display:flex><span><span style=color:#66d9ef>protected</span><span style=color:#f92672>:</span>
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>virtual</span> <span style=color:#66d9ef>void</span> BeginPlay() <span style=color:#66d9ef>override</span>;
+</span></span><span style=display:flex><span>    TSharedPtr<span style=color:#f92672>&lt;</span><span style=color:#66d9ef>class</span> <span style=color:#a6e22e>SExampleWidget</span><span style=color:#f92672>&gt;</span> MyWidget;
+</span></span><span style=display:flex><span>};
+</span></span></code></pre></div><p>我们在 <code>BeginPlay</code> 的时候使用 <code>SNew</code> 创建对象，并通过 <code>UGameViewportClient</code> 将其添加到 viewport：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-cpp data-lang=cpp><span style=display:flex><span>ABUIHUD<span style=color:#f92672>::</span>ABUIHUD(<span style=color:#66d9ef>const</span> FObjectInitializer<span style=color:#f92672>&amp;</span> ObjectInitializer)
+</span></span><span style=display:flex><span>    <span style=color:#f92672>:</span> Super(ObjectInitializer) {}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>void</span> ABUIHUD<span style=color:#f92672>::</span>BeginPlay() {
+</span></span><span style=display:flex><span>    Super<span style=color:#f92672>::</span>BeginPlay();
+</span></span><span style=display:flex><span>    MyWidget <span style=color:#f92672>=</span> SNew(SExampleWidget);
+</span></span><span style=display:flex><span>    UGameViewportClient<span style=color:#f92672>*</span> ViewportClient <span style=color:#f92672>=</span> GetWorld()<span style=color:#f92672>-&gt;</span>GetGameViewport();
+</span></span><span style=display:flex><span>    ViewportClient<span style=color:#f92672>-&gt;</span>AddViewportWidgetContent(MyWidget.ToSharedRef());
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><p>之后，在 game mode 中设置该 HUD 类型，即可看到屏幕左上角显示「Hello World!」了。</p><h2 id=声明式语法>声明式语法
+<a href=#%e5%a3%b0%e6%98%8e%e5%bc%8f%e8%af%ad%e6%b3%95 class=h-anchor aria-hidden=true>#</a></h2><p>在定义了 widget 类型后，我们需要填充里面 UI 展示的内容。Slate 框架通过宏和运算符重载设计了一套声明式的 UI 描述方法，可以较为方便地描述静态结构的 UI。先通过 <code>SNew</code> 声明新建一个类型的控件，然后通过 <code>.ArgName</code> 来配置参数或者是绑定相关事件，然后再通过中括号填入该控件包含的子控件，例如：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-cpp data-lang=cpp><span style=display:flex><span>SNew(SBox)               <span style=color:#75715e>// 创建控件
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>.HAlign(HAlign_Center)   <span style=color:#75715e>// 设置参数
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>.VAlign(HAlign_Center)   <span style=color:#75715e>// 设置参数
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>[                        <span style=color:#75715e>// 子控件
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>    SNew(STextBlock)
+</span></span><span style=display:flex><span>    .Text(LOCTEXT(...))
+</span></span><span style=display:flex><span>]
+</span></span></code></pre></div><p>对于复合控件，使用 <code>+ Xxx::Slot()</code> 的形式添加 slot，容器控件一般会使用这种方式来声明被其管理的子控件，例如：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-cpp data-lang=cpp><span style=display:flex><span>SNew(SHorizontalBox)      <span style=color:#75715e>// 创建控件
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>.AutoWidth()              <span style=color:#75715e>// 设置参数
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>.Padding(<span style=color:#ae81ff>5</span>)               <span style=color:#75715e>// 设置参数
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span><span style=color:#f92672>+</span> SHorizontalBox<span style=color:#f92672>::</span>Slot()  <span style=color:#75715e>// 新增 slot
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>[                         <span style=color:#75715e>// 子控件
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>    SNew(SImage)
+</span></span><span style=display:flex><span>]
+</span></span><span style=display:flex><span><span style=color:#f92672>+</span> SHorizontalBox<span style=color:#f92672>::</span>Slot() [ ... ]
+</span></span></code></pre></div><p>这里的 slot 是 Slate 框架中的一个概念，如果一个控件能包含子控件，那么这个控件就会提供一个对应的 slot 类型，用来存放其包含的子控件，比如上面的 <code>SHorizontalBox::Slot</code> 间接继承自 <code>TSlotBase</code>，其中重载了 <code>[]</code> 运算符，其实现为：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-cpp data-lang=cpp><span style=display:flex><span><span style=color:#66d9ef>template</span><span style=color:#f92672>&lt;</span><span style=color:#66d9ef>typename</span> SlotType<span style=color:#f92672>&gt;</span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>class</span> <span style=color:#a6e22e>TSlotBase</span><span style=color:#f92672>:</span> <span style=color:#66d9ef>public</span> FSlotBase {
+</span></span><span style=display:flex><span>    <span style=color:#75715e>// ...
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>    SlotType<span style=color:#f92672>&amp;</span> <span style=color:#66d9ef>operator</span>[](<span style=color:#66d9ef>const</span> TSharedRef<span style=color:#f92672>&lt;</span>SWidget<span style=color:#f92672>&gt;&amp;</span> InChildWidget) {
+</span></span><span style=display:flex><span>        <span style=color:#66d9ef>this</span><span style=color:#f92672>-&gt;</span>AttachWidget(InChildWidget);
+</span></span><span style=display:flex><span>        <span style=color:#66d9ef>return</span> <span style=color:#66d9ef>static_cast</span><span style=color:#f92672>&lt;</span>SlotType<span style=color:#f92672>&amp;&gt;</span>(<span style=color:#f92672>*</span><span style=color:#66d9ef>this</span>);
+</span></span><span style=display:flex><span>    }
+</span></span><span style=display:flex><span>};
+</span></span></code></pre></div><p>这就是我们能用 <code>[SNew(SImage)]</code> 这样的语法为其添加子控件的原因。</p><p>至于用 <code>+</code> 符号来添加 slot，是基于 <code>SLATE_SUPPORTS_SLOT</code> 宏实现的，这个宏用于 Slate 控件的参数声明中：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-cpp data-lang=cpp><span style=display:flex><span><span style=color:#66d9ef>class</span> <span style=color:#a6e22e>SLATECORE_API</span> SHorizontalBox : <span style=color:#66d9ef>public</span> SBoxPanel {
+</span></span><span style=display:flex><span>  <span style=color:#66d9ef>public</span><span style=color:#f92672>:</span>
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>class</span> <span style=color:#a6e22e>FSlot</span> <span style=color:#f92672>:</span> <span style=color:#66d9ef>public</span> SBoxPanel<span style=color:#f92672>::</span>FSlot {};
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>static</span> FSlot<span style=color:#f92672>&amp;</span> Slot() { <span style=color:#66d9ef>return</span> <span style=color:#f92672>*</span>(<span style=color:#66d9ef>new</span> FSlot()); }
+</span></span><span style=display:flex><span>    SLATE_BEGIN_ARGS(SHorizontalBox) { <span style=color:#75715e>/* ... */</span> }
+</span></span><span style=display:flex><span>        SLATE_SUPPORTS_SLOT(SHorizontalBox<span style=color:#f92672>::</span>FSlot)
+</span></span><span style=display:flex><span>    SLATE_END_ARGS()
+</span></span><span style=display:flex><span>    <span style=color:#75715e>// ...
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>};
+</span></span></code></pre></div><p><code>SLATE_SUPPORTS_SLOT(SHorizontalBox::FSlot)</code> 重载了 <code>SHorizontalBox</code> 与 <code>SHorizontalBox::FSlot</code> 之间的 <code>+</code> 运算符。宏展开后大致为：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-cpp data-lang=cpp><span style=display:flex><span>TArray<span style=color:#f92672>&lt;</span>SHorizontalBox<span style=color:#f92672>::</span>FSlot<span style=color:#f92672>*&gt;</span> Slots;
+</span></span><span style=display:flex><span>WidgetArgsType<span style=color:#f92672>&amp;</span> <span style=color:#66d9ef>operator</span><span style=color:#f92672>+</span>(SHorizontalBox<span style=color:#f92672>::</span>FSlot<span style=color:#f92672>&amp;</span> SlotToAdd) {
+</span></span><span style=display:flex><span>    Slots.Add(<span style=color:#f92672>&amp;</span>SlotToAdd);
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>return</span> <span style=color:#f92672>*</span><span style=color:#66d9ef>this</span>;
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><p>我们前面实现的 <code>SExampleWidget</code> 继承自 <code>SCompoudWidget</code>，这是 Slate 框架内置的基础控件类型之一。Slate 框架中最基础的类是 <code>SWidget</code> ，基于 <code>SWidget</code> 的子类主要有三种，分别是 <code>SLeafWidget</code> <code>SPanel</code> <code>SCompoudWidget</code>，我们主要基于这三个类来构建我们的控件。他们三个最主要的区别在于附加子控件的能力：</p><table><thead><tr><th>父类型</th><th>子控件</th><th>例子</th></tr></thead><tbody><tr><td><code>SLeafWidget</code></td><td>无</td><td><code>SImage</code>, <code>STextBlock</code></td></tr><tr><td><code>SPanel</code></td><td>动态数量</td><td><code>SOverlay</code>, <code>SHorizontalBox</code></td></tr><tr><td><code>SCompoundWidget</code></td><td>显式命名、静态数量</td><td><code>SBorder</code>, <code>SButton</code></td></tr></tbody></table><h2 id=控件参数>控件参数
+<a href=#%e6%8e%a7%e4%bb%b6%e5%8f%82%e6%95%b0 class=h-anchor aria-hidden=true>#</a></h2><p>控件构造使用函数 <code>void Construct(const FArguments& InArgs)</code>，输入参数 <code>FArguments</code> 的类型通过 <code>SLATE_BEGIN_ARGS</code> <code>SLATE_END_ARGS</code> 声明。在参数声明区域中，可以声明不同的内容，包括属性 <code>SLATE_ATTRIBUTE</code> 、事件 <code>SLATE_EVENT</code> 、参数 <code>SLATE_ARGUMENT</code> 、插槽 <code>SLATE_NAMED_SLOT</code> 和 <code>SLATE_DEFAULT_SLOT</code> 等。</p><p>例如：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-cpp data-lang=cpp><span style=display:flex><span><span style=color:#66d9ef>class</span> <span style=color:#a6e22e>SExampleWidget</span> <span style=color:#f92672>:</span> <span style=color:#66d9ef>public</span> SCompoundWidget {
+</span></span><span style=display:flex><span>  <span style=color:#66d9ef>public</span><span style=color:#f92672>:</span>
+</span></span><span style=display:flex><span>    SLATE_BEGIN_ARGS(SExampleWidget) {}
+</span></span><span style=display:flex><span>        SLATE_ARGUMENT(FText, Text)
+</span></span><span style=display:flex><span>    SLATE_END_ARGS()
+</span></span><span style=display:flex><span>    <span style=color:#75715e>// ...
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>};
+</span></span></code></pre></div><p>此时，我们可以在 <code>Construct</code> 中访问：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-cpp data-lang=cpp><span style=display:flex><span><span style=color:#66d9ef>void</span> SExampleWidget<span style=color:#f92672>::</span>Construct(<span style=color:#66d9ef>const</span> FArguments<span style=color:#f92672>&amp;</span> InArgs) {
+</span></span><span style=display:flex><span>    ChildSlot
+</span></span><span style=display:flex><span>    [
+</span></span><span style=display:flex><span>        SNew(STextBlock)
+</span></span><span style=display:flex><span>        .Text(InArgs._Text)
+</span></span><span style=display:flex><span>    ];
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><p><code>SLATE_ARGUMENT</code> 声明出来的参数会在变量名前面自动加上一个下划线，<code>Text</code> 变为了 <code>_Text</code>，因此我们获取这个参数时使用的是 <code>InArgs._Text</code>。而对于使用侧，则是直接通过对应的名称进行参数值设置，如此处的 <code>Text</code>：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-cpp data-lang=cpp><span style=display:flex><span>MyWidget <span style=color:#f92672>=</span> SNew(SExampleWidget).Text(NSLOCTEXT(...));
+</span></span></code></pre></div><p>展开参数声明这几个宏，我们就能更清楚地看到这些变量和函数是如何被声明的了：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-cpp data-lang=cpp><span style=display:flex><span><span style=color:#75715e>/// start SLATE_BEGIN_ARGS(SExampleWidget)
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span><span style=color:#66d9ef>struct</span> <span style=color:#a6e22e>FArguments</span> <span style=color:#f92672>:</span> <span style=color:#66d9ef>public</span> TSlateBaseNamedArgs<span style=color:#f92672>&lt;</span>SExampleWidget<span style=color:#f92672>&gt;</span>
+</span></span><span style=display:flex><span>{
+</span></span><span style=display:flex><span>    FArguments()
+</span></span><span style=display:flex><span><span style=color:#75715e>/// end SLATE_BEGIN_ARGS
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>    {} <span style=color:#75715e>// &lt;-- 这个需要自己写
+</span></span></span><span style=display:flex><span><span style=color:#75715e>/// start SLATE_ARGUMENT(FText, Text)
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>    FText _Text;
+</span></span><span style=display:flex><span>    FText<span style=color:#f92672>&amp;</span> Text(FText InArgs)
+</span></span><span style=display:flex><span>    {
+</span></span><span style=display:flex><span>        _Text <span style=color:#f92672>=</span> InArg;
+</span></span><span style=display:flex><span>        <span style=color:#66d9ef>return</span> <span style=color:#66d9ef>static_cast</span><span style=color:#f92672>&lt;</span>WidgetArgsTepe<span style=color:#f92672>*&gt;</span>(<span style=color:#66d9ef>this</span>)<span style=color:#f92672>-&gt;</span>Me();
+</span></span><span style=display:flex><span>    }
+</span></span><span style=display:flex><span><span style=color:#75715e>/// end SLATE_ARGUMENT
+</span></span></span><span style=display:flex><span><span style=color:#75715e>/// start SLATE_END_ARGS()
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>};
+</span></span><span style=display:flex><span><span style=color:#75715e>/// end SLATE_END_ARGS
+</span></span></span></code></pre></div><p>注意这个参数声明并不是声明在这个控件内，而是生成在嵌套类 <code>FArguments</code> 中，而在使用 <code>SNew</code> 宏声明布局时会获取到这个对象：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-cpp data-lang=cpp><span style=display:flex><span><span style=color:#75715e>#define SNew( WidgetType, ... ) \
+</span></span></span><span style=display:flex><span><span style=color:#75715e>    MakeTDecl&lt;WidgetType&gt;( #WidgetType, __FILE__, __LINE__, RequiredArgs::MakeRequiredArgs(__VA_ARGS__) ) &lt;&lt;= TYPENAME_OUTSIDE_TEMPLATE WidgetType::FArguments()
+</span></span></span></code></pre></div><p>另外我们可以看到 <code>SLATE_BEGIN_ARGS</code> 其实添加了一个未实现的构造函数，了解了这一点后，我们就很容易理解为什么需要在 <code>SLATE_BEGIN_ARGS(SExampleWidget)</code> 加一对花括号 <code>{}</code> 了。显然，我们也可以像一般的构造函数一样在此处设置参数的默认值，例如：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-cpp data-lang=cpp><span style=display:flex><span>SLATE_BEGIN_ARGS(NewWidget) <span style=color:#f92672>:</span> _Focusable(true) {}
+</span></span><span style=display:flex><span>    SLATE_ARGUMENT(<span style=color:#66d9ef>bool</span>, Focusable)
+</span></span><span style=display:flex><span>SLATE_END_ARGS()
+</span></span></code></pre></div><h2 id=命令式语法>命令式语法
+<a href=#%e5%91%bd%e4%bb%a4%e5%bc%8f%e8%af%ad%e6%b3%95 class=h-anchor aria-hidden=true>#</a></h2><p>有时候声明式语法不足以描述所需控件，例如实现一个包含若干按钮的列表，此时就需要使用一般的命令式语法来添加子控件。</p><p>Slate 框架除了 <code>SNew</code> 之外还提供了一个 <code>SAssignNew</code> 宏用于在新建控件的同时获取其引用。例如这里在 <code>SExampleListWidget</code> 中声明了 <code>TSharedPtr&lt;SVerticalBox></code> 类型的成员变量，同时按照前面提到的方法，增加一个 <code>ButtonCount</code> 参数用于设定按钮的数量：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-cpp data-lang=cpp><span style=display:flex><span><span style=color:#66d9ef>class</span> <span style=color:#a6e22e>SExampleListWidget</span> <span style=color:#f92672>:</span> <span style=color:#66d9ef>public</span> SCompoundWidget {
+</span></span><span style=display:flex><span><span style=color:#66d9ef>public</span><span style=color:#f92672>:</span>
+</span></span><span style=display:flex><span>    SLATE_BEGIN_ARGS(SExampleListWidget) {}
+</span></span><span style=display:flex><span>        SLATE_ARGUMENT(int32, ButtonCount)
+</span></span><span style=display:flex><span>    SLATE_END_ARGS()
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>void</span> Construct(<span style=color:#66d9ef>const</span> FArguments<span style=color:#f92672>&amp;</span> InArgs);
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>void</span> <span style=color:#a6e22e>RebuildFromData</span>();
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>void</span> <span style=color:#a6e22e>SetButtonCount</span>(int32 ButtonCount);
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>protected</span><span style=color:#f92672>:</span>
+</span></span><span style=display:flex><span>    TSharedPtr<span style=color:#f92672>&lt;</span>SVerticalBox<span style=color:#f92672>&gt;</span> ListBox;
+</span></span><span style=display:flex><span>    int32 ButtonCount <span style=color:#f92672>=</span> <span style=color:#ae81ff>0</span>;
+</span></span><span style=display:flex><span>};
+</span></span></code></pre></div><p>在 <code>Construct</code> 函数的实现中，新建一个 <code>SVerticalBox</code> 并获取其引用：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-cpp data-lang=cpp><span style=display:flex><span><span style=color:#66d9ef>void</span> SExampleListWidget<span style=color:#f92672>::</span>Construct(<span style=color:#66d9ef>const</span> FArguments<span style=color:#f92672>&amp;</span> InArgs) {
+</span></span><span style=display:flex><span>    <span style=color:#75715e>// 记录参数
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>    ButtonCount <span style=color:#f92672>=</span> InArgs._ButtonCount;
+</span></span><span style=display:flex><span>    ChildSlot
+</span></span><span style=display:flex><span>    [
+</span></span><span style=display:flex><span>        <span style=color:#75715e>// 新建 SVerticalBox 并获取引用，赋值给 ListBox
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>        SAssignNew(ListBox, SVerticalBox)
+</span></span><span style=display:flex><span>    ];
+</span></span><span style=display:flex><span>    <span style=color:#75715e>// 刷新 UI
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>    RebuildFromData();
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><p>在 <code>RebuildFromData</code> 函数中则基于 <code>ButtonCount</code>，使用 <code>AddSlot</code> 接口动态添加子控件容器。在添加 slot 后，我们依然在 <code>[]</code> 中填入需要的子控件，这和前面使用声明式语法是一样的：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-cpp data-lang=cpp><span style=display:flex><span><span style=color:#66d9ef>void</span> SExampleListWidget<span style=color:#f92672>::</span>RebuildFromData() {
+</span></span><span style=display:flex><span>    <span style=color:#75715e>// 清除当前列表数据
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>    ListBox<span style=color:#f92672>-&gt;</span>ClearChildren();
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>for</span> (int32 i <span style=color:#f92672>=</span> <span style=color:#ae81ff>0</span>; i <span style=color:#f92672>&lt;</span> ButtonCount; <span style=color:#f92672>++</span>i) {
+</span></span><span style=display:flex><span>        <span style=color:#75715e>// 添加 slot 并设置子控件
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>        ListBox<span style=color:#f92672>-&gt;</span>AddSlot()
+</span></span><span style=display:flex><span>        [
+</span></span><span style=display:flex><span>            SNew(SButton)
+</span></span><span style=display:flex><span>            .Text(FText<span style=color:#f92672>::</span>FromString(FString<span style=color:#f92672>::</span>FromInt(i)))
+</span></span><span style=display:flex><span>        ];
+</span></span><span style=display:flex><span>    }
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><h1 id=references>References
+<a href=#references class=h-anchor aria-hidden=true>#</a></h1><ul><li><a href=https://benui.ca/unreal/slate-gamedevday-2022/>Making UIs with C++ in Unreal Engine</a></li><li><a href=https://docs.unrealengine.com/4.27/en-US/ProgrammingAndScripting/Slate/Overview/>Slate Overview - UE4 官方文档</a></li><li><a href=https://docs.unrealengine.com/4.27/en-US/ProgrammingAndScripting/Slate/Widgets/>Slate Widget Examples - UE4 官方文档</a></li><li><a href=https://benui.ca/>Unreal UI Tutorials</a></li></ul></div><div class=pagination><div class=pagination__title><span class=pagination__title-h>Read other posts</span><hr></div><div class=pagination__buttons><span class="button next"><a href=/posts/unreal-pose-assets/><span class=button__text>Unreal 基于 PoseAsset 捏人</span>
+<span class=button__icon>→</span></a></span></div></div></div></div><footer class=footer><div class=footer__inner><div class="copyright copyright--user"><p>本网站采用 <a href=https://creativecommons.org/licenses/by-sa/4.0/>CC BY-SA 4.0</a> 协议进行授权</p><p>© 2021 Zhirui Li. All rights reserved.</p></div></div></footer><script src=/assets/main.js></script>
+<script src=/assets/prism.js></script><p style=color:#999>我的博客即将同步至腾讯云+社区，<a target=_blank href="https://cloud.tencent.com/developer/support-plan?invite_code=11dehb9vzutlx">邀请大家一同入驻</a>。</p></div><script type=application/javascript>var doNotTrack=!1;doNotTrack||(function(e,t,n,s,o,i,a){e.GoogleAnalyticsObject=o,e[o]=e[o]||function(){(e[o].q=e[o].q||[]).push(arguments)},e[o].l=1*new Date,i=t.createElement(n),a=t.getElementsByTagName(n)[0],i.async=1,i.src=s,a.parentNode.insertBefore(i,a)}(window,document,"script","https://www.google-analytics.com/analytics.js","ga"),ga("create","UA-80302213-1","auto"),ga("send","pageview"))</script></body></html>
