@@ -39,7 +39,7 @@
 </span></span><span style=display:flex><span>    UGameViewportClient<span style=color:#f92672>*</span> ViewportClient <span style=color:#f92672>=</span> GetWorld()<span style=color:#f92672>-&gt;</span>GetGameViewport();
 </span></span><span style=display:flex><span>    ViewportClient<span style=color:#f92672>-&gt;</span>AddViewportWidgetContent(MyWidget.ToSharedRef());
 </span></span><span style=display:flex><span>}
-</span></span></code></pre></div><p>之后，在 game mode 中设置该 HUD 类型，即可看到屏幕左上角显示「Hello World!」了。</p><h2 id=声明式语法>声明式语法
+</span></span></code></pre></div><p>之后，在 game mode 中设置使用该 HUD 类型，即可看到屏幕左上角显示「Hello World!」了。</p><h2 id=声明式语法>声明式语法
 <a href=#%e5%a3%b0%e6%98%8e%e5%bc%8f%e8%af%ad%e6%b3%95 class=h-anchor aria-hidden=true>#</a></h2><p>在定义了 widget 类型后，我们需要填充里面 UI 展示的内容。Slate 框架通过宏和运算符重载设计了一套声明式的 UI 描述方法，可以较为方便地描述静态结构的 UI。先通过 <code>SNew</code> 声明新建一个类型的控件，然后通过 <code>.ArgName</code> 来配置参数或者是绑定相关事件，然后再通过中括号填入该控件包含的子控件，例如：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-cpp data-lang=cpp><span style=display:flex><span>SNew(SBox)               <span style=color:#75715e>// 创建控件
 </span></span></span><span style=display:flex><span><span style=color:#75715e></span>.HAlign(HAlign_Center)   <span style=color:#75715e>// 设置参数
 </span></span></span><span style=display:flex><span><span style=color:#75715e></span>.VAlign(HAlign_Center)   <span style=color:#75715e>// 设置参数
