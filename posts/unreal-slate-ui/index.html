@@ -39,7 +39,7 @@
 </span></span><span style=display:flex><span>    UGameViewportClient<span style=color:#f92672>*</span> ViewportClient <span style=color:#f92672>=</span> GetWorld()<span style=color:#f92672>-&gt;</span>GetGameViewport();
 </span></span><span style=display:flex><span>    ViewportClient<span style=color:#f92672>-&gt;</span>AddViewportWidgetContent(MyWidget.ToSharedRef());
 </span></span><span style=display:flex><span>}
-</span></span></code></pre></div><p>之后，在 game mode 中设置使用该 HUD 类型，即可看到屏幕左上角显示「Hello World!」了。</p><h2 id=声明式语法>声明式语法
+</span></span></code></pre></div><p>之后，在 game mode 中设置使用该 HUD 类型，运行游戏，即可看到屏幕左上角显示「Hello World!」了。</p><h2 id=声明式语法>声明式语法
 <a href=#%e5%a3%b0%e6%98%8e%e5%bc%8f%e8%af%ad%e6%b3%95 class=h-anchor aria-hidden=true>#</a></h2><p>在定义了 widget 类型后，我们需要填充里面 UI 展示的内容。Slate 框架通过宏和运算符重载设计了一套声明式的 UI 描述方法，可以较为方便地描述静态结构的 UI。先通过 <code>SNew</code> 声明新建一个类型的控件，然后通过 <code>.ArgName</code> 来配置参数或者是绑定相关事件，然后再通过中括号填入该控件包含的子控件，例如：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-cpp data-lang=cpp><span style=display:flex><span>SNew(SBox)               <span style=color:#75715e>// 创建控件
 </span></span></span><span style=display:flex><span><span style=color:#75715e></span>.HAlign(HAlign_Center)   <span style=color:#75715e>// 设置参数
 </span></span></span><span style=display:flex><span><span style=color:#75715e></span>.VAlign(HAlign_Center)   <span style=color:#75715e>// 设置参数
@@ -153,6 +153,40 @@
 </span></span><span style=display:flex><span>        ];
 </span></span><span style=display:flex><span>    }
 </span></span><span style=display:flex><span>}
+</span></span></code></pre></div><h2 id=在控件中嵌入-details-面板>在控件中嵌入 Details 面板
+<a href=#%e5%9c%a8%e6%8e%a7%e4%bb%b6%e4%b8%ad%e5%b5%8c%e5%85%a5-details-%e9%9d%a2%e6%9d%bf class=h-anchor aria-hidden=true>#</a></h2><p>在实现一个工具插件的时候，经常需要让用户填入一些设置数据，此时我们对 UI 的布局没有太高的要求。那么手动布局就没有太大必要了，它不仅麻烦，还要人工处理变量和显示的绑定关系。此时一个常用的套路是利用 UE 的反射机制来替我们进行简单布局。我们可以用 <code>UObject</code> 类型持有一些变量，然后使用 UE 自带的 details 面板生成对应的字段设置 UI，然后将这个 UI 嵌入到我们的控件中。</p><p>我们先定义一个 <code>UObject</code> 在其中放置所需的成员变量，注意这些成员用 <code>UPROPERTY</code> 修饰：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-cpp data-lang=cpp><span style=display:flex><span>UCLASS()
+</span></span><span style=display:flex><span><span style=color:#66d9ef>class</span> <span style=color:#a6e22e>UTestUserInput</span><span style=color:#f92672>:</span> <span style=color:#66d9ef>public</span> UObject {
+</span></span><span style=display:flex><span>    GENERATED_BODY()
+</span></span><span style=display:flex><span><span style=color:#66d9ef>public</span><span style=color:#f92672>:</span>
+</span></span><span style=display:flex><span>    UPROPERTY(EditAnywhere, category <span style=color:#f92672>=</span> <span style=color:#e6db74>&#34;Test&#34;</span>)
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>float</span> TestFloat;
+</span></span><span style=display:flex><span>    UPROPERTY(EditAnywhere, category <span style=color:#f92672>=</span> <span style=color:#e6db74>&#34;Test&#34;</span>)
+</span></span><span style=display:flex><span>    UTexture2D<span style=color:#f92672>*</span> TestTexture;
+</span></span><span style=display:flex><span>};
+</span></span></code></pre></div><p>在我们的控件中需要持有一个 <code>TSharedPtr&lt;IDetailsView></code> 用来指向对应对象的 details view：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-cpp data-lang=cpp><span style=display:flex><span><span style=color:#66d9ef>class</span> <span style=color:#a6e22e>SExampleWidget</span> <span style=color:#f92672>:</span> <span style=color:#66d9ef>public</span> SCompoundWidget {
+</span></span><span style=display:flex><span><span style=color:#66d9ef>public</span><span style=color:#f92672>:</span>
+</span></span><span style=display:flex><span>    SLATE_BEGIN_ARGS(SMyWidget) {}
+</span></span><span style=display:flex><span>    SLATE_END_ARGS()
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>void</span> Construct(<span style=color:#66d9ef>const</span> FArguments<span style=color:#f92672>&amp;</span> InArgs);
+</span></span><span style=display:flex><span>    <span style=color:#75715e>// 这里保存 details view 的指针
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>    TSharedPtr<span style=color:#f92672>&lt;</span>IDetailsView<span style=color:#f92672>&gt;</span> InputPanel;
+</span></span><span style=display:flex><span>};
+</span></span></code></pre></div><p>这里需要再次提醒的一点是 <code>SExampleWidget</code> 并直接或间接继承自 <code>UObject</code>，因此它并不受 UE 的 GC 管理，因此这里不要去保存 <code>UObject</code> 的指针，而应该用其他方式保存，例如使用可以将该对象直接挂到全局或者用 <code>TStrongObjectPtr</code> 来保存指针。另外由于这个对象一版只有一份，这里也可以直接使用对象的 default object：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-cpp data-lang=cpp><span style=display:flex><span><span style=color:#66d9ef>void</span> SExampleWidget<span style=color:#f92672>::</span>Construct(<span style=color:#66d9ef>const</span> FArguments<span style=color:#f92672>&amp;</span> InArgs) {
+</span></span><span style=display:flex><span>    <span style=color:#75715e>// 获取 PropertyEditor 模块
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>    <span style=color:#66d9ef>auto</span><span style=color:#f92672>&amp;</span> PropertyModule <span style=color:#f92672>=</span> FModuleManager<span style=color:#f92672>::</span>LoadModuleChecked<span style=color:#f92672>&lt;</span>FPropertyEditorModule<span style=color:#f92672>&gt;</span>(<span style=color:#e6db74>&#34;PropertyEditor&#34;</span>);
+</span></span><span style=display:flex><span>    <span style=color:#75715e>// 创建 details view
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>    FDetailsViewArgs <span style=color:#a6e22e>DetailsViewArgs</span>(false, false, true, FDetailsViewArgs<span style=color:#f92672>::</span>HideNameArea, true);
+</span></span><span style=display:flex><span>    InputPanel <span style=color:#f92672>=</span> PropertyModule.CreateDetailView(DetailsViewArgs);
+</span></span><span style=display:flex><span>    <span style=color:#75715e>// 注意，这里使用了 default object，这个不会被释放
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>    InputPanel<span style=color:#f92672>-&gt;</span>SetObject(UTestUserInput<span style=color:#f92672>::</span>StaticClass()<span style=color:#f92672>-&gt;</span>GetDefaultObject(true), true);
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    ChildSlot
+</span></span><span style=display:flex><span>    [
+</span></span><span style=display:flex><span>        <span style=color:#75715e>// 嵌入自定义的 detail panel
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>        InputPanel.ToSharedRef()
+</span></span><span style=display:flex><span>    ];
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><p>如果我们使用的是 defult object，后续需要获取用户输入的时候，直接从这个 default object 里拿数据即可：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-cpp data-lang=cpp><span style=display:flex><span><span style=color:#66d9ef>float</span> TestFloat <span style=color:#f92672>=</span> Cast<span style=color:#f92672>&lt;</span>UTestUserInput<span style=color:#f92672>&gt;</span>(UTestUserInput<span style=color:#f92672>::</span>StaticClass()<span style=color:#f92672>-&gt;</span>GetDefaultObject(true))<span style=color:#f92672>-&gt;</span>TestFloat;
 </span></span></code></pre></div><h1 id=references>References
 <a href=#references class=h-anchor aria-hidden=true>#</a></h1><ul><li><a href=https://benui.ca/unreal/slate-gamedevday-2022/>Making UIs with C++ in Unreal Engine</a></li><li><a href=https://docs.unrealengine.com/4.27/en-US/ProgrammingAndScripting/Slate/Overview/>Slate Overview - UE4 官方文档</a></li><li><a href=https://docs.unrealengine.com/4.27/en-US/ProgrammingAndScripting/Slate/Widgets/>Slate Widget Examples - UE4 官方文档</a></li><li><a href=https://benui.ca/>Unreal UI Tutorials</a></li></ul></div><div class=pagination><div class=pagination__title><span class=pagination__title-h>Read other posts</span><hr></div><div class=pagination__buttons><span class="button next"><a href=/posts/unreal-pose-assets/><span class=button__text>Unreal 基于 PoseAsset 捏人</span>
 <span class=button__icon>→</span></a></span></div></div></div></div><footer class=footer><div class=footer__inner><div class="copyright copyright--user"><p>本网站采用 <a href=https://creativecommons.org/licenses/by-sa/4.0/>CC BY-SA 4.0</a> 协议进行授权</p><p>© 2021 Zhirui Li. All rights reserved.</p></div></div></footer><script src=/assets/main.js></script>
