@@ -57,7 +57,11 @@ sync:
     mid-expression
     fast-expression
 expression1
-</code></pre><p>其执行顺序如下图所示：</p><p><img src=/images/2023-03-30-07-30-46.png alt></p><p>因为 <code>sync</code> 代码块会等待所有表达式的执行结果，因此其返回值为一个包含代码块中每个表达式返回值的 tuple。没错，在 Verse 中所有东西都是表达式，因此都会有值，包括前面提到的 <code>if</code> 等，<code>sync</code> 代码块和我们这里提到的所有代码块都是表达式，它们都有值。</p><p><code>branch</code> 会并行执行代码块中所有表达式，不等待它们结束就继续执行代码块后面的表达式。对于下面的情况而言：</p><pre tabindex=0><code class=language-verse data-lang=verse>expression0
+</code></pre><p>其执行顺序如下图所示：</p><p><img src=/images/2023-03-30-07-30-46.png alt></p><p>因为 <code>sync</code> 代码块会等待所有表达式的执行结果，因此其返回值为一个包含代码块中每个表达式返回值的 tuple。没错，在 Verse 中所有东西都是表达式，因此都会有值，包括前面提到的 <code>if</code> 等，<code>sync</code> 代码块和我们这里提到的所有代码块都是表达式，它们都有值。因此，下面这样的写法是合法的：</p><pre tabindex=0><code class=language-verse data-lang=verse>MyTup := sync:
+    Foo(0)
+    Foo(1)
+Print(&#34;MyTup = {MyTup(0)}, {MyTup(1)}&#34;)
+</code></pre><p><code>branch</code> 会并行执行代码块中所有表达式，不等待它们结束就继续执行代码块后面的表达式。对于下面的情况而言：</p><pre tabindex=0><code class=language-verse data-lang=verse>expression0
 branch:
     slow-expression
     mid-expression
