@@ -1,0 +1,461 @@
+<!doctype html><html lang=cn><head><title>Unreal 骨骼动画源码剖析 ::
+简易现代魔法 — Zhirui Li's Blog</title><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><meta name=description content="概览 # 在 UE 中，骨骼动画相关类型关系如下： 其中，USkeletalMesh 是骨架网格体模型数据对象。USkinnedMeshComponent"><meta name=keywords content="编程,计算机图形学,游戏开发"><meta name=robots content="noodp"><link rel=canonical href=/posts/unreal-skeletal-animation-source-code/><link rel=stylesheet href=/assets/style.css><link rel=stylesheet href=/style.css><link rel=apple-touch-icon-precomposed sizes=144x144 href=/img/apple-touch-icon-144-precomposed.png><link rel="shortcut icon" href=/img/favicon.png><link href=/assets/fonts/Inter-Italic.woff2 rel=preload type=font/woff2 as=font crossorigin><link href=/assets/fonts/Inter-Regular.woff2 rel=preload type=font/woff2 as=font crossorigin><link href=/assets/fonts/Inter-Medium.woff2 rel=preload type=font/woff2 as=font crossorigin><link href=/assets/fonts/Inter-MediumItalic.woff2 rel=preload type=font/woff2 as=font crossorigin><link href=/assets/fonts/Inter-Bold.woff2 rel=preload type=font/woff2 as=font crossorigin><link href=/assets/fonts/Inter-BoldItalic.woff2 rel=preload type=font/woff2 as=font crossorigin><meta name=twitter:card content="summary"><meta name=twitter:title content="Unreal 骨骼动画源码剖析"><meta name=twitter:description content="从源码看 UE5 的骨骼动画主流程"><meta property="og:title" content="Unreal 骨骼动画源码剖析"><meta property="og:description" content="从源码看 UE5 的骨骼动画主流程"><meta property="og:type" content="article"><meta property="og:url" content="/posts/unreal-skeletal-animation-source-code/"><meta property="article:section" content="posts"><meta property="article:published_time" content="2023-04-05T00:00:00+00:00"><meta property="article:modified_time" content="2023-04-05T00:00:00+00:00"><meta property="og:site_name" content="简易现代魔法"><script>var posts=document.getElementById("posts-list");posts&&quicklink({el:posts,priority:!0})</script><script>MathJax={tex:{inlineMath:[["$","$"],["\\(","\\)"]]},svg:{fontCache:"global"}}</script><script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script id=MathJax-script async src=https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js></script></head><body><div class=container><header class=header><span class=header__inner><a href=/ class=logo style=text-decoration:none><span class=logo__mark><svg xmlns="http://www.w3.org/2000/svg" class="greater-icon" viewBox="0 0 44 44"><path fill="none" d="M15 8l14.729 14.382L15 35.367"/></svg></span><span class=logo__text>简易现代魔法</span>
+<span class=logo__cursor></span></a>
+<span class=header__right><nav class=menu><ul class="menu__inner menu__inner--desktop"><li><a href=/archive>Archive</a></li><li><a href=/tags>Tags</a></li><li><a href=https://www.github.com/zhiruili>Github</a></li><li><a href=/index.xml>RSS</a></li></ul><ul class="menu__inner menu__inner--mobile"><li><a href=/archive>Archive</a></li><li><a href=/tags>Tags</a></li><li><a href=https://www.github.com/zhiruili>Github</a></li><li><a href=/index.xml>RSS</a></li></ul></nav><span class=menu-trigger><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M0 0h24v24H0z" fill="none"/><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></svg></span><span class=theme-toggle><svg class="theme-toggler" width="24" height="24" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M22 41c10.4934.0 19-8.5066 19-19C41 11.5066 32.4934 3 22 3 11.5066 3 3 11.5066 3 22s8.5066 19 19 19zM7 22C7 13.7157 13.7157 7 22 7V37C13.7157 37 7 30.2843 7 22z"/></svg></span></span></span></header><div class=content><div class=post><h1 class=post-title>Unreal 骨骼动画源码剖析</h1><div class=post-meta><span class=post-date>2023-04-05</span></div><span class=post-tags><a href=/tags/unreal/>#Unreal</a>&nbsp;
+<a href=/tags/animation/>#Animation</a>&nbsp;</span><div class=post-content><h2 id=概览>概览
+<a href=#%e6%a6%82%e8%a7%88 class=h-anchor aria-hidden=true>#</a></h2><p>在 UE 中，骨骼动画相关类型关系如下：</p><p><img src=/images/2023-04-06-00-44-35.png alt></p><p>其中，<code>USkeletalMesh</code> 是骨架网格体模型数据对象。<code>USkinnedMeshComponent</code> 支持了对骨架网格体的渲染，通过 <code>FSkeletalMeshObject</code> 将渲染所需数据发送到渲染线程，具体的渲染方式也由这个对象决定，例如使用 CPU 还是 GPU 进行渲染。 <code>USkeltalMeshComponent</code> 在此基础上支持了骨骼动画播放，具体动画播放逻辑由 <code>UAnimInstance</code> 实现。</p><p>在 <code>USkinnedMeshComponent</code> 的 <code>TickComponent</code> 中，会根据当前渲染状态和 tick 设置去决定是否要调用 <code>TickPose</code> 和 <code>RefreshBoneTransforms</code>。例如我们可以配置 Only Tick Pose When Rendered 来避免一个对象在不被渲染的时候 tick 动画。另外，当一个对象被配置了 master pose component 的时候，<code>RefreshBoneTransforms</code> 这个函数就不会被回调，引擎会直接使用 master pose component 的 transform 数据。</p><p>这里的 <code>RefreshBoneTransforms</code> 需要每个继承了 <code>USkinnedMeshComponent</code> 的类型自行实现，用以更新骨骼的位置。除此之外，<code>USkeltalMeshComponent</code> 也重写了 <code>TickPose</code>，在里面调用了 <code>TickAnimation</code> 函数更新动画。</p><h2 id=动画更新>动画更新
+<a href=#%e5%8a%a8%e7%94%bb%e6%9b%b4%e6%96%b0 class=h-anchor aria-hidden=true>#</a></h2><p><code>USkeletalMeshComponent</code> 的 <code>TickAnimation</code> 调用了 <code>TickAnimInstances</code>，这个是动画的主逻辑：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-cpp data-lang=cpp><span style=display:flex><span><span style=color:#66d9ef>void</span> USkeletalMeshComponent<span style=color:#f92672>::</span>TickAnimation(...) {
+</span></span><span style=display:flex><span>	<span style=color:#66d9ef>if</span> (<span style=color:#f92672>!</span>AreRequiredCurvesUpToDate()) {
+</span></span><span style=display:flex><span>		<span style=color:#75715e>// 基于 RequiredBones 计算所需要更新的曲线
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>		RecalcRequiredCurves();
+</span></span><span style=display:flex><span>	}
+</span></span><span style=display:flex><span>	TickAnimInstances(DeltaTime, bNeedsValidRootMotion);
+</span></span><span style=display:flex><span>	<span style=color:#75715e>// ...
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>}
+</span></span></code></pre></div><p><code>TickAnimInstances</code> 会触发 <code>UAnimInstance</code> 的 <code>UpdateAnimation</code> 以计算当前帧动画的变量、收集动画通知、更新动画曲线等，这里会分别调用几个 animation instance 的 <code>UpdateAnimation</code> 方法：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-cpp data-lang=cpp><span style=display:flex><span><span style=color:#66d9ef>void</span> USkeletalMeshComponent<span style=color:#f92672>::</span>TickAnimInstances(...) {
+</span></span><span style=display:flex><span>	<span style=color:#66d9ef>for</span> (UAnimInstance<span style=color:#f92672>*</span> LinkedInstance : LinkedInstances) {
+</span></span><span style=display:flex><span>		LinkedInstance<span style=color:#f92672>-&gt;</span>UpdateAnimation(...);
+</span></span><span style=display:flex><span>	}
+</span></span><span style=display:flex><span>	<span style=color:#66d9ef>if</span> (AnimScriptInstance <span style=color:#f92672>!=</span> <span style=color:#66d9ef>nullptr</span>) {
+</span></span><span style=display:flex><span>		AnimScriptInstance<span style=color:#f92672>-&gt;</span>UpdateAnimation(...);
+</span></span><span style=display:flex><span>	}
+</span></span><span style=display:flex><span>	<span style=color:#66d9ef>if</span>(ShouldUpdatePostProcessInstance()) {
+</span></span><span style=display:flex><span>		PostProcessAnimInstance<span style=color:#f92672>-&gt;</span>UpdateAnimation(...);
+</span></span><span style=display:flex><span>	}
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><p><code>UAnimInstance</code> 就是动画蓝图对象的类型。上面的 <code>LinkedInstances</code> 用于将动画模块化，具体使用可以参考 <a href=https://docs.unrealengine.com/5.0/en-US/animation-blueprint-linking-in-unreal-engine/>Animation Blueprint Linking</a>，<code>PostProcessAnimInstance</code> 主要用于进行 IK 计算、物理骨骼计算、表情动画叠加等。<code>AnimScriptInstance</code> 是主动画蓝图对象，主要的动画计算都在此完成。</p><p><code>UAnimInstance</code> 的 <code>UpdateAnimation</code> 这个过程分为几个阶段：</p><ul><li>Pre Update</li><li>Update</li><li>Parallel Update</li><li>Post Update</li></ul><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-cpp data-lang=cpp><span style=display:flex><span><span style=color:#66d9ef>void</span> UAnimInstance<span style=color:#f92672>::</span>UpdateAnimation(...) {
+</span></span><span style=display:flex><span>	<span style=color:#75715e>// 获取 proxy 对象
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>	FAnimInstanceProxy<span style=color:#f92672>&amp;</span> Proxy <span style=color:#f92672>=</span> GetProxyOnGameThread<span style=color:#f92672>&lt;</span>FAnimInstanceProxy<span style=color:#f92672>&gt;</span>();
+</span></span><span style=display:flex><span>	<span style=color:#75715e>// &gt; 主流程 1 Pre Update
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>	PreUpdateAnimation(DeltaSeconds);
+</span></span><span style=display:flex><span>	<span style=color:#75715e>// &gt; 主流程 2 Update
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>	NativeUpdateAnimation(DeltaSeconds);
+</span></span><span style=display:flex><span>	BlueprintUpdateAnimation(DeltaSeconds);
+</span></span><span style=display:flex><span>	<span style=color:#75715e>// 根据配置选择是否并行执行，如果无法并行，就在这里使用主线程来完成计算，
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>	<span style=color:#75715e>// 一般来说都会使用并行计算，不会在这里直接执行
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>	<span style=color:#66d9ef>bool</span> bShouldImmediateUpdate <span style=color:#f92672>=</span> <span style=color:#75715e>/* ... */</span>;
+</span></span><span style=display:flex><span>	<span style=color:#66d9ef>if</span>(bShouldImmediateUpdate) {
+</span></span><span style=display:flex><span>		<span style=color:#75715e>// &gt; 主流程 3 Parallel Update
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>		ParallelUpdateAnimation();
+</span></span><span style=display:flex><span>		<span style=color:#75715e>// &gt; 主流程 4 Post Update
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>		PostUpdateAnimation();
+</span></span><span style=display:flex><span>	}
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><p><code>FAnimInstanceProxy</code> 是一个用于多线程优化动画系统的结构体，它存放了大量有关 <code>UAnimInstance</code> 的数据，可以被多线程访问，用于在工作线程上执行动画图形节点的更新和计算。</p><p><code>UAnimInstance::PreUpdateAnimation</code> 对动画通知数据和 RootMotion 混合数据进行重置，然后调用 <code>FAnimInstanceProxy::PreUpdate</code> 进行代理更新，这个代理的更新其实就是进行常规赋值操作，比如给 <code>RootMotionMode</code>、<code>SkelMeshCompLocalToWorld</code>、<code>UngroupedActivePlayers</code>、<code>SyncGroups</code>、<code>ComponentTransform</code>、<code>ComponentRelativeTransform</code>、<code>ActorTransform</code> 等赋值。</p><p><code>UAnimInstance::NativeUpdateAnimation</code> 用于给子类增加 C++ 层的计算逻辑，一般会在这里实现数据收集工作，然后在 <code>UAnimInstance</code> 的 <code>NativeThreadSafeUpdateAnimation</code> 函数中具体进行动画处理。这个 <code>NativeThreadSafeUpdateAnimation</code> 会在工作线程中被 proxy 对象在 <code>UpdateAnimation_WithRoot</code> 中调用。这两个函数实现在 C++ 层，其蓝图对应为 <code>BlueprintUpdateAnimation</code> 和 <code>BlueprintThreadSafeUpdateAnimation</code> 。这两个蓝图的对应函数往往为实际使用最多的部分，蓝图中的状态机、动画节点均在此进行控制。</p><p>接下来会根据是否使用并行动画计算来决定是否在此处调用 <code>ParallelUpdateAnimation</code> 和 <code>PostUpdateAnimation</code>，一般来说，都不会在此进行。接下来应该就会进入前面提到的 <code>RefreshBoneTransforms</code> 这一步了。</p><h2 id=更新骨骼-transform>更新骨骼 Transform
+<a href=#%e6%9b%b4%e6%96%b0%e9%aa%a8%e9%aa%bc-transform class=h-anchor aria-hidden=true>#</a></h2><p><code>USkeletalMeshComponent</code> 的 <code>RefreshBoneTransforms</code> 中会确定当前帧是否需要更新骨骼 transform 数据，例如在执行 URO 的时候，可能这一帧会被跳过，在需要更新时，根据配置确定是并行更新还是串行更新（一般都是并行）：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-cpp data-lang=cpp><span style=display:flex><span><span style=color:#66d9ef>void</span> USkeletalMeshComponent<span style=color:#f92672>::</span>RefreshBoneTransforms(...) {
+</span></span><span style=display:flex><span>	<span style=color:#75715e>// 更新 reuqired bones 和 required curves
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>	<span style=color:#66d9ef>if</span> (<span style=color:#f92672>!</span>bRequiredBonesUpToDate) {
+</span></span><span style=display:flex><span>		RecalcRequiredBones(GetPredictedLODLevel());
+</span></span><span style=display:flex><span>	}
+</span></span><span style=display:flex><span>	<span style=color:#66d9ef>else</span> <span style=color:#a6e22e>if</span> (<span style=color:#f92672>!</span>AreRequiredCurvesUpToDate()) {
+</span></span><span style=display:flex><span>		RecalcRequiredCurves();
+</span></span><span style=display:flex><span>	}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>	<span style=color:#75715e>// 当没有执行 URO 的时候重置数据，后续进行填充
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>	<span style=color:#66d9ef>if</span> (<span style=color:#f92672>!</span>bDoEvaluationRateOptimization) {
+</span></span><span style=display:flex><span>		CachedBoneSpaceTransforms.Reset();
+</span></span><span style=display:flex><span>		CachedComponentSpaceTransforms.Reset();
+</span></span><span style=display:flex><span>		CachedCurve.Empty();
+</span></span><span style=display:flex><span>		CachedAttributes.Empty();
+</span></span><span style=display:flex><span>	}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>	<span style=color:#66d9ef>if</span> (bDoParallelEvaluation) {
+</span></span><span style=display:flex><span>		<span style=color:#75715e>// 派发并行计算任务
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>		DispatchParallelEvaluationTasks(TickFunction);
+</span></span><span style=display:flex><span>	} <span style=color:#66d9ef>else</span> {
+</span></span><span style=display:flex><span>		<span style=color:#75715e>// 同步计算动画的分支，一般不会执行 ...
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>	}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>	<span style=color:#66d9ef>if</span> (TickFunction <span style=color:#f92672>==</span> <span style=color:#66d9ef>nullptr</span> <span style=color:#f92672>&amp;&amp;</span> ShouldBlendPhysicsBones()) {
+</span></span><span style=display:flex><span>		<span style=color:#75715e>// 结束骨骼 transform 变换，在这个调用之后，获取到的骨骼信息应该都是最新的
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>		FinalizeBoneTransform();
+</span></span><span style=display:flex><span>	}
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><p>前面提到的并行计算任务会通过 <code>DispatchParallelEvaluationTasks</code> 间接调用，这里会新建类型为 <code>FParallelAnimationEvaluationTask</code> 的任务来实现并行计算，然后，还会新建类型为 <code>FParallelAnimationCompletionTask</code> 的任务，来等待计算结束：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-cpp data-lang=cpp><span style=display:flex><span><span style=color:#66d9ef>void</span> USkeletalMeshComponent<span style=color:#f92672>::</span>DispatchParallelEvaluationTasks(...) {
+</span></span><span style=display:flex><span>	SwapEvaluationContextBuffers();
+</span></span><span style=display:flex><span>	<span style=color:#75715e>// 触发并行计算
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>	ParallelAnimationEvaluationTask <span style=color:#f92672>=</span> 
+</span></span><span style=display:flex><span>	  TGraphTask<span style=color:#f92672>&lt;</span>FParallelAnimationEvaluationTask<span style=color:#f92672>&gt;::</span>CreateTask()
+</span></span><span style=display:flex><span>	  .ConstructAndDispatchWhenReady(<span style=color:#66d9ef>this</span>);
+</span></span><span style=display:flex><span>	<span style=color:#75715e>// 设置计算结果依赖关系，等待计算任务结束后触发后续计算
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>	FGraphEventArray Prerequistes;
+</span></span><span style=display:flex><span>	Prerequistes.Add(ParallelAnimationEvaluationTask);
+</span></span><span style=display:flex><span>	FGraphEventRef TickCompletionEvent <span style=color:#f92672>=</span>
+</span></span><span style=display:flex><span>	  TGraphTask<span style=color:#f92672>&lt;</span>FParallelAnimationCompletionTask<span style=color:#f92672>&gt;::</span>CreateTask(<span style=color:#f92672>&amp;</span>Prerequistes)
+</span></span><span style=display:flex><span>	  .ConstructAndDispatchWhenReady(<span style=color:#66d9ef>this</span>);
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><p><code>FParallelAnimationEvaluationTask</code> 的 <code>DoTask</code> 中会调用 <code>USkeletalMeshComponent</code> 中的 <code>ParallelAnimationEvaluation</code>。这里会通过调用 <code>PerformAnimationProcessing</code> 间接调用到 <code>UAnimInstance</code> 的 <code>ParallelUpdateAnimation</code>：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-cpp data-lang=cpp><span style=display:flex><span><span style=color:#66d9ef>void</span> USkeletalMeshComponent<span style=color:#f92672>::</span>PerformAnimationProcessing(...) {
+</span></span><span style=display:flex><span>	<span style=color:#75715e>// 并行更新主动画蓝图和后处理动画蓝图中动画所需的参数
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>	<span style=color:#66d9ef>if</span>(InAnimInstance <span style=color:#f92672>&amp;&amp;</span> InAnimInstance<span style=color:#f92672>-&gt;</span>NeedsUpdate()) {
+</span></span><span style=display:flex><span>		InAnimInstance<span style=color:#f92672>-&gt;</span>ParallelUpdateAnimation();
+</span></span><span style=display:flex><span>	}
+</span></span><span style=display:flex><span>	<span style=color:#66d9ef>if</span>(ShouldPostUpdatePostProcessInstance()) {
+</span></span><span style=display:flex><span>		PostProcessAnimInstance<span style=color:#f92672>-&gt;</span>ParallelUpdateAnimation();
+</span></span><span style=display:flex><span>	}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>	<span style=color:#75715e>// 动画计算，求出骨骼位置
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>	<span style=color:#66d9ef>if</span>(bInDoEvaluation <span style=color:#f92672>&amp;&amp;</span> OutSpaceBases.Num() <span style=color:#f92672>&gt;</span> <span style=color:#ae81ff>0</span>) {
+</span></span><span style=display:flex><span>		<span style=color:#75715e>// 分别计算主动画蓝图和后处理动画蓝图
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>		EvaluateAnimation(...);
+</span></span><span style=display:flex><span>		EvaluatePostProcessMeshInstance(...);
+</span></span><span style=display:flex><span>		<span style=color:#75715e>// 计算 local space transform
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>		FinalizePoseEvaluationResult(...);
+</span></span><span style=display:flex><span>		<span style=color:#75715e>// 计算 component space transform
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>		FillComponentSpaceTransforms(...);
+</span></span><span style=display:flex><span>	}
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><p><code>UAnimInstance</code> 的 <code>ParallelUpdateAnimation</code> 就是在调用 proxy 的 <code>UpdateAnimation</code>：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-cpp data-lang=cpp><span style=display:flex><span><span style=color:#66d9ef>void</span> UAnimInstance<span style=color:#f92672>::</span>ParallelUpdateAnimation() {
+</span></span><span style=display:flex><span>	GetProxyOnAnyThread<span style=color:#f92672>&lt;</span>FAnimInstanceProxy<span style=color:#f92672>&gt;</span>().UpdateAnimation();
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><p>这里面主要是从 root 节点开始，去遍历动画蓝图的节点，并进行状态更新：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-cpp data-lang=cpp><span style=display:flex><span><span style=color:#66d9ef>void</span> FAnimInstanceProxy<span style=color:#f92672>::</span>UpdateAnimation() {
+</span></span><span style=display:flex><span>	<span style=color:#75715e>// 调用 UpdateAnimation_WithRoot
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>	UpdateAnimation_WithRoot(Context, RootNode, NAME_AnimGraph);
+</span></span><span style=display:flex><span>}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>void</span> FAnimInstanceProxy<span style=color:#f92672>::</span>UpdateAnimation_WithRoot(...) {
+</span></span><span style=display:flex><span>	<span style=color:#75715e>// 进行一些计算，触发对 bone 的 cache，CacheBone 内部会进行缓存状态判断，
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>	<span style=color:#75715e>// 只有在缓存失效的时候才会调用节点的 CacheBone_AnyThread
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>	<span style=color:#66d9ef>if</span>(InRootNode <span style=color:#f92672>==</span> RootNode) {
+</span></span><span style=display:flex><span>		CacheBones();
+</span></span><span style=display:flex><span>	} <span style=color:#66d9ef>else</span> {
+</span></span><span style=display:flex><span>		CacheBones_WithRoot(InRootNode);
+</span></span><span style=display:flex><span>	}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>	<span style=color:#75715e>// 前面提到的 ThreadSaveUpdateAnimation 函数
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>	GetAnimInstanceObject()<span style=color:#f92672>-&gt;</span>
+</span></span><span style=display:flex><span>		NativeThreadSafeUpdateAnimation(CurrentDeltaSeconds);
+</span></span><span style=display:flex><span>	GetAnimInstanceObject()<span style=color:#f92672>-&gt;</span>
+</span></span><span style=display:flex><span>		BlueprintThreadSafeUpdateAnimation(CurrentDeltaSeconds);
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>	Update(CurrentDeltaSeconds);
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>	<span style=color:#75715e>// Update 节点
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>	<span style=color:#75715e>// 内部调用 InRootNode-&gt;Update_AnyThread(InContext);
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>	<span style=color:#66d9ef>if</span>(InRootNode <span style=color:#f92672>==</span> RootNode) {
+</span></span><span style=display:flex><span>		UpdateAnimationNode(InContext);
+</span></span><span style=display:flex><span>	} <span style=color:#66d9ef>else</span> {
+</span></span><span style=display:flex><span>		UpdateAnimationNode_WithRoot(InContext, InRootNode, InLayerName);
+</span></span><span style=display:flex><span>	}
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><p>在调用 <code>UAnimInstance</code> 的 <code>ParallelUpdateAnimation</code> 更新动画状态之后，就是调用 <code>USkeletalMeshComponent</code> 的 <code>EvaluateAnimation</code> 进行动画计算，其中调用 <code>UAnimInstance</code> 的 <code>ParallelEvaluateAnimation</code>：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-cpp data-lang=cpp><span style=display:flex><span><span style=color:#66d9ef>void</span> USkeletalMeshComponent<span style=color:#f92672>::</span>EvaluateAnimation(...) <span style=color:#66d9ef>const</span> {
+</span></span><span style=display:flex><span>	<span style=color:#66d9ef>if</span>( InSkeletalMesh<span style=color:#f92672>-&gt;</span>GetSkeleton() <span style=color:#f92672>&amp;&amp;</span> 
+</span></span><span style=display:flex><span>		InAnimInstance <span style=color:#f92672>&amp;&amp;</span>
+</span></span><span style=display:flex><span>		InAnimInstance<span style=color:#f92672>-&gt;</span>ParallelCanEvaluate(InSkeletalMesh)) {
+</span></span><span style=display:flex><span>		FParallelEvaluationData EvaluationData <span style=color:#f92672>=</span> { 
+</span></span><span style=display:flex><span>			OutCurve, OutPose, OutAttributes };
+</span></span><span style=display:flex><span>		InAnimInstance<span style=color:#f92672>-&gt;</span>ParallelEvaluateAnimation(
+</span></span><span style=display:flex><span>			bForceRefpose, InSkeletalMesh, EvaluationData);
+</span></span><span style=display:flex><span>	} <span style=color:#66d9ef>else</span> {
+</span></span><span style=display:flex><span>		OutCurve.InitFrom(<span style=color:#f92672>&amp;</span>CachedCurveUIDList);
+</span></span><span style=display:flex><span>	}
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><p><code>ParallelEvaluateAnimation</code> 中会调用 proxy 的 <code>EvaluateAnimation</code> 进行计算，然后把计算结果复制出去：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-cpp data-lang=cpp><span style=display:flex><span><span style=color:#66d9ef>void</span> UAnimInstance<span style=color:#f92672>::</span>ParallelEvaluateAnimation(...) {
+</span></span><span style=display:flex><span>	FAnimInstanceProxy<span style=color:#f92672>&amp;</span> Proxy <span style=color:#f92672>=</span> GetProxyOnAnyThread<span style=color:#f92672>&lt;</span>FAnimInstanceProxy<span style=color:#f92672>&gt;</span>();
+</span></span><span style=display:flex><span>	OutEvaluationData.OutPose.SetBoneContainer(<span style=color:#f92672>&amp;</span>Proxy.GetRequiredBones());
+</span></span><span style=display:flex><span>	FPoseContext <span style=color:#a6e22e>EvaluationContext</span>(<span style=color:#f92672>&amp;</span>Proxy);
+</span></span><span style=display:flex><span>	EvaluationContext.ResetToRefPose();
+</span></span><span style=display:flex><span>	<span style=color:#75715e>// 具体 EvaluateAnimation
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>	Proxy.EvaluateAnimation(EvaluationContext);
+</span></span><span style=display:flex><span>	<span style=color:#75715e>// 复制数据
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>	OutEvaluationData.OutCurve.CopyFrom(EvaluationContext.Curve);
+</span></span><span style=display:flex><span>	OutEvaluationData.OutPose.CopyBonesFrom(EvaluationContext.Pose);
+</span></span><span style=display:flex><span>	<span style=color:#75715e>// ...
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>}
+</span></span></code></pre></div><p>到了 proxy 的 <code>EvaluateAnimation</code> 这里，就是调用节点的 <code>Evaluate_AnyThread</code> 来进行动画计算：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-cpp data-lang=cpp><span style=display:flex><span><span style=color:#66d9ef>void</span> FAnimInstanceProxy<span style=color:#f92672>::</span>EvaluateAnimation(FPoseContext<span style=color:#f92672>&amp;</span> Output) {
+</span></span><span style=display:flex><span>	EvaluateAnimation_WithRoot(Output, RootNode);
+</span></span><span style=display:flex><span>}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>void</span> FAnimInstanceProxy<span style=color:#f92672>::</span>EvaluateAnimation_WithRoot(...) {
+</span></span><span style=display:flex><span>	<span style=color:#75715e>// 这里同样也可能会触发 cache bone 的计算
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>	<span style=color:#66d9ef>if</span>(InRootNode <span style=color:#f92672>==</span> RootNode) {
+</span></span><span style=display:flex><span>		CacheBones();
+</span></span><span style=display:flex><span>	} <span style=color:#66d9ef>else</span> {
+</span></span><span style=display:flex><span>		CacheBones_WithRoot(InRootNode);
+</span></span><span style=display:flex><span>	}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>	<span style=color:#75715e>// 默认情况下，Evaluate_WithRoot 返回 false，
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>	<span style=color:#75715e>// 如果有 native 实现，则在此返回 true，可避免执行节点的 eval
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>	<span style=color:#66d9ef>if</span> (<span style=color:#f92672>!</span>Evaluate_WithRoot(Output, InRootNode)) {
+</span></span><span style=display:flex><span>		<span style=color:#75715e>// 内部就是调用节点的 Evaluate_AnyThread
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>		EvaluateAnimationNode_WithRoot(Output, InRootNode);
+</span></span><span style=display:flex><span>	}
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><p>前面这几个过程涉及了 <code>FAnimNode_Base</code> 中几个需要子类实现的接口：</p><ul><li><code>CacheBone_AnyThread</code> 一般在一开始或者是 LOD 切换的时候被调用，用于给动画节点缓存骨骼信息，例如调用 <code>FBoneReference</code> 的 <code>Initialize</code>，记录下引用骨骼的下标，后续查找的时候可以加速。</li><li><code>Update_AnyThread</code> 用于更新影响骨骼计算的参数数据，例如 blend weight。</li><li><code>Evaluate_AnyThread</code> 是主要计算发生的地方，根据前面 <code>Update_AnyThread</code> 计算更新的参数来计算出 local space 的骨骼 transform，并输出到 pose，结果之后会被缓存到 component。</li></ul><p><code>USkeletalMeshComponent</code> 的 <code>PerformAnimationProcessing</code> 在执行完动画计算后，接下来会调用 <code>FinalizePoseEvaluationResult</code> 复制骨骼的 local space transform 到 component 里：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-cpp data-lang=cpp><span style=display:flex><span><span style=color:#66d9ef>void</span> USkeletalMeshComponent<span style=color:#f92672>::</span>FinalizePoseEvaluationResult(...) <span style=color:#66d9ef>const</span> {
+</span></span><span style=display:flex><span>	OutBoneSpaceTransforms <span style=color:#f92672>=</span> InMesh<span style=color:#f92672>-&gt;</span>GetRefSkeleton().GetRefBonePose();
+</span></span><span style=display:flex><span>	InFinalPose.NormalizeRotations();
+</span></span><span style=display:flex><span>	<span style=color:#66d9ef>for</span>(<span style=color:#66d9ef>auto</span> BoneIndex : InFinalPose.ForEachBoneIndex()) {
+</span></span><span style=display:flex><span>		FMeshPoseBoneIndex MeshPoseIndex <span style=color:#f92672>=</span> 
+</span></span><span style=display:flex><span>			InFinalPose.GetBoneContainer().MakeMeshPoseIndex(BoneIndex);
+</span></span><span style=display:flex><span>		OutBoneSpaceTransforms[MeshPoseIndex.GetInt()] <span style=color:#f92672>=</span> InFinalPose[BoneIndex];
+</span></span><span style=display:flex><span>	}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>	OutRootBoneTranslation <span style=color:#f92672>=</span> 
+</span></span><span style=display:flex><span>		OutBoneSpaceTransforms[<span style=color:#ae81ff>0</span>].GetTranslation() <span style=color:#f92672>-</span> 
+</span></span><span style=display:flex><span>			InMesh<span style=color:#f92672>-&gt;</span>GetRefSkeleton().GetRefBonePose()[<span style=color:#ae81ff>0</span>].GetTranslation();
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><p>这里的输出数组在之前的 <code>ParallelAnimationEvaluation</code> 中传入：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-cpp data-lang=cpp><span style=display:flex><span><span style=color:#66d9ef>if</span> (AnimEvaluationContext.bDoInterpolation) {
+</span></span><span style=display:flex><span>	PerformAnimationProcessing(..., 
+</span></span><span style=display:flex><span>		AnimEvaluationContext.CachedBoneSpaceTransforms, ...);
+</span></span><span style=display:flex><span>} <span style=color:#66d9ef>else</span> {
+</span></span><span style=display:flex><span>	PerformAnimationProcessing(..., 
+</span></span><span style=display:flex><span>		AnimEvaluationContext.BoneSpaceTransforms, ...);
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><p>在获得了骨骼的 local space transform 之后，就调用 <code>FillComponentSpaceTransforms</code> 来基于 local space 计算 component space transform：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-cpp data-lang=cpp><span style=display:flex><span><span style=color:#66d9ef>void</span> USkeletalMeshComponent<span style=color:#f92672>::</span>FillComponentSpaceTransforms(...) <span style=color:#66d9ef>const</span> {
+</span></span><span style=display:flex><span>	<span style=color:#66d9ef>const</span> int32 NumBones <span style=color:#f92672>=</span> InBoneSpaceTransforms.Num();
+</span></span><span style=display:flex><span>	<span style=color:#66d9ef>const</span> FTransform<span style=color:#f92672>*</span> LocalTransformsData <span style=color:#f92672>=</span> InBoneSpaceTransforms.GetData();
+</span></span><span style=display:flex><span>	FTransform<span style=color:#f92672>*</span> ComponentSpaceData <span style=color:#f92672>=</span> OutComponentSpaceTransforms.GetData();
+</span></span><span style=display:flex><span>	<span style=color:#75715e>// 复制根节点数据
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>	OutComponentSpaceTransforms[<span style=color:#ae81ff>0</span>] <span style=color:#f92672>=</span> InBoneSpaceTransforms[<span style=color:#ae81ff>0</span>];
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>	<span style=color:#66d9ef>if</span> (bAnim_SkeletalMesh_ISPC_Enabled) {
+</span></span><span style=display:flex><span>		<span style=color:#75715e>// 这个分支使用 Intel ISPC 来实现，在 Intel CPU 上可以加速，参考：
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>		<span style=color:#75715e>// https://www.gdcvault.com/play/1026686/Intel-ISPC-in-Unreal-Engine
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span><span style=color:#75715e>#if INTEL_ISPC
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>		ispc<span style=color:#f92672>::</span>FillComponentSpaceTransforms(...);
+</span></span><span style=display:flex><span><span style=color:#75715e>#endif
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>	} <span style=color:#66d9ef>else</span> {
+</span></span><span style=display:flex><span>		<span style=color:#75715e>// 一般的逻辑，0 是根骨骼，所以这里从 1 开始遍历
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>		<span style=color:#66d9ef>for</span> (int32 i <span style=color:#f92672>=</span> <span style=color:#ae81ff>1</span>; i <span style=color:#f92672>&lt;</span> RequireBonesNum; i<span style=color:#f92672>++</span>) {
+</span></span><span style=display:flex><span>			<span style=color:#66d9ef>const</span> int32 BoneIndex <span style=color:#f92672>=</span> RequiredBones[i];
+</span></span><span style=display:flex><span>			FTransform<span style=color:#f92672>*</span> SpaceBase <span style=color:#f92672>=</span> ComponentSpaceData <span style=color:#f92672>+</span> BoneIndex;
+</span></span><span style=display:flex><span>			FPlatformMisc<span style=color:#f92672>::</span>Prefetch(SpaceBase);
+</span></span><span style=display:flex><span>			<span style=color:#75715e>// 计算每一个骨骼的 component space transform
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>			<span style=color:#75715e>// 也就是对应骨骼的父骨骼的 component space transform 乘以该骨骼
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>			<span style=color:#75715e>// 的 local space transform
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>			<span style=color:#66d9ef>const</span> int32 ParentIndex <span style=color:#f92672>=</span> 
+</span></span><span style=display:flex><span>				InSkeletalMesh<span style=color:#f92672>-&gt;</span>GetRefSkeleton().GetParentIndex(BoneIndex);
+</span></span><span style=display:flex><span>			FTransform<span style=color:#f92672>*</span> ParentSpaceBase <span style=color:#f92672>=</span> ComponentSpaceData <span style=color:#f92672>+</span> ParentIndex;
+</span></span><span style=display:flex><span>			FTransform<span style=color:#f92672>::</span>Multiply(
+</span></span><span style=display:flex><span>				SpaceBase, LocalTransformsData <span style=color:#f92672>+</span> BoneIndex, ParentSpaceBase);
+</span></span><span style=display:flex><span>			SpaceBase<span style=color:#f92672>-&gt;</span>NormalizeRotation();
+</span></span><span style=display:flex><span>		}
+</span></span><span style=display:flex><span>	}
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><p><code>FParallelAnimationEvaluationTask</code> 中的 <code>DoTask</code> 到此就结束了，接下来是看到 <code>FParallelAnimationCompletionTask</code> 的 <code>DoTask</code> 逻辑，这里会等待计算结束，然后调用 <code>USkeletalMeshComponent</code> 的 <code>CompleteParallelAnimationEvaluation</code> 进行后置处理：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-cpp data-lang=cpp><span style=display:flex><span><span style=color:#66d9ef>void</span> USkeletalMeshComponent<span style=color:#f92672>::</span>CompleteParallelAnimationEvaluation(...) {
+</span></span><span style=display:flex><span>	ParallelAnimationEvaluationTask.SafeRelease();
+</span></span><span style=display:flex><span>	<span style=color:#66d9ef>if</span> (...) {
+</span></span><span style=display:flex><span>		SwapEvaluationContextBuffers();
+</span></span><span style=display:flex><span>		PostAnimEvaluation(AnimEvaluationContext);
+</span></span><span style=display:flex><span>	}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>	AnimEvaluationContext.Clear();
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><p><code>PostAnimEvaluation</code> 会调用 <code>UAnimInstance</code> 的 <code>PostUpdateAnimation</code>，这个函数会进一步调用到 proxy 的 <code>PostUpdate</code> 完成通知发送之类的后置工作。</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-cpp data-lang=cpp><span style=display:flex><span><span style=color:#66d9ef>void</span> USkeletalMeshComponent<span style=color:#f92672>::</span>PostAnimEvaluation(...) {
+</span></span><span style=display:flex><span>	<span style=color:#75715e>// 调用 anim instance 的 PostUpdateAnimation
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>	<span style=color:#66d9ef>if</span> (EvaluationContext.AnimInstance) {
+</span></span><span style=display:flex><span>		EvaluationContext.AnimInstance<span style=color:#f92672>-&gt;</span>PostUpdateAnimation();
+</span></span><span style=display:flex><span>	}
+</span></span><span style=display:flex><span>	<span style=color:#66d9ef>if</span> (ShouldPostUpdatePostProcessInstance()) {
+</span></span><span style=display:flex><span>		PostProcessAnimInstance<span style=color:#f92672>-&gt;</span>PostUpdateAnimation();
+</span></span><span style=display:flex><span>	}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>	<span style=color:#75715e>// 检查当前是否更新过骨骼 transform
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>	<span style=color:#75715e>// 在使用了 skeletal mesh budget 时，可能会出现跳过骨骼更新的情况，
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>	<span style=color:#75715e>// 此时，下面这段代码就不会执行
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>	<span style=color:#66d9ef>if</span> (EvaluationContext.bDoEvaluation<span style=color:#f92672>||</span>EvaluationContext.bDoInterpolation) {
+</span></span><span style=display:flex><span>		<span style=color:#75715e>// 更新曲线
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>		AnimScriptInstance<span style=color:#f92672>-&gt;</span>UpdateCurvesPostEvaluation();
+</span></span><span style=display:flex><span>		<span style=color:#66d9ef>for</span>(UAnimInstance<span style=color:#f92672>*</span> LinkedInstance : LinkedInstances) {
+</span></span><span style=display:flex><span>			LinkedInstance<span style=color:#f92672>-&gt;</span>CopyCurveValues(<span style=color:#f92672>*</span>AnimScriptInstance);
+</span></span><span style=display:flex><span>		}
+</span></span><span style=display:flex><span>		
+</span></span><span style=display:flex><span>		<span style=color:#75715e>// 判断是否执行过动画计算，如果执行过，则需要执行 PostEvaluateAnimation
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>		<span style=color:#66d9ef>if</span> (EvaluationContext.bDoEvaluation) {
+</span></span><span style=display:flex><span>			DoInstancePostEvaluation();
+</span></span><span style=display:flex><span>		}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>		<span style=color:#75715e>// 更新物理
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>		UpdateKinematicBonesToAnim(...);
+</span></span><span style=display:flex><span>		UpdateRBJointMotors();
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>		<span style=color:#75715e>// 内部会调用 ConditionallyDispatchQueuedAnimEvents 发送通知
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>		<span style=color:#75715e>// 这里还会完成 buffer swap、更新包围盒等工作
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>		FinalizeAnimationUpdate();
+</span></span><span style=display:flex><span>	} <span style=color:#66d9ef>else</span>  {
+</span></span><span style=display:flex><span>		<span style=color:#75715e>// 这个分支是在没有发生骨骼更新的时候调用的，依然可能发送通知
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>		ConditionallyDispatchQueuedAnimEvents();
+</span></span><span style=display:flex><span>	}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>	AnimEvaluationContext.Clear();
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><h2 id=蒙皮计算>蒙皮计算
+<a href=#%e8%92%99%e7%9a%ae%e8%ae%a1%e7%ae%97 class=h-anchor aria-hidden=true>#</a></h2><p>蒙皮计算通过 <code>USkinnedMeshComponent</code> 中持有的 <code>MeshObject</code> 实现，分为 CPU Skinning 和 GPU Skinning，分别对应于 <code>FSkeletalMeshObjectCPUSkin</code> 和 <code>FSkeletalMeshObjectGPUSkin</code>，他们都继承自 <code>FSkeletalMeshObject</code>，在 <code>USkinnedMeshComponent</code> 的 <code>CreateRenderState_Concurrent</code> 中进行初始化，然后调用 <code>MeshObject</code> 的 <code>Update</code> 函数更新动态数据：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-cpp data-lang=cpp><span style=display:flex><span><span style=color:#66d9ef>void</span> USkinnedMeshComponent<span style=color:#f92672>::</span>CreateRenderState_Concurrent(...) {
+</span></span><span style=display:flex><span>	<span style=color:#75715e>// 初始化 LOD
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>	InitLODInfos();
+</span></span><span style=display:flex><span>	<span style=color:#75715e>// 如果用户指定了自己的 mesh object 构造器，就优先使用
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>	<span style=color:#66d9ef>if</span> (MeshObjectFactory) {
+</span></span><span style=display:flex><span>		MeshObject <span style=color:#f92672>=</span> MeshObjectFactory(...);
+</span></span><span style=display:flex><span>	}
+</span></span><span style=display:flex><span>	<span style=color:#75715e>// 如果用户没有指定构造器，或者构造失败，就选择默认的
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>	<span style=color:#66d9ef>if</span> (<span style=color:#f92672>!</span>MeshObject) {
+</span></span><span style=display:flex><span>		<span style=color:#66d9ef>if</span> (bRenderStatic) {
+</span></span><span style=display:flex><span>			MeshObject <span style=color:#f92672>=</span> <span style=color:#f92672>::</span><span style=color:#66d9ef>new</span> FSkeletalMeshObjectStatic(...);
+</span></span><span style=display:flex><span>		} <span style=color:#66d9ef>else</span> <span style=color:#a6e22e>if</span> (ShouldCPUSkin()) {
+</span></span><span style=display:flex><span>			MeshObject <span style=color:#f92672>=</span> <span style=color:#f92672>::</span><span style=color:#66d9ef>new</span> FSkeletalMeshObjectCPUSkin(...);
+</span></span><span style=display:flex><span>		<span style=color:#75715e>// 这里要确认数据符合 GPU skinning 的约束条件。
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>		<span style=color:#75715e>// 如果不满足，就直接不显示了，UE 不会自动将其换为 CPU 蒙皮。
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>		<span style=color:#75715e>// 这里会要求一个材质 section 所能使用的最大蒙皮骨骼数，
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>		<span style=color:#75715e>// 断点看到在 PC 平台和 Anroid 平台上，这个约束值为 256。
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>		<span style=color:#75715e>// 注意这里的骨骼数不是总骨骼数，而是实际有蒙皮的骨骼，
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>		<span style=color:#75715e>// 例如 A 骨骼有 B C 两个子骨骼，然后只有 B C 上刷了蒙皮权重，
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>		<span style=color:#75715e>// 那么虽然 A 也要参与动画计算，但并不影响此处的判定。
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>		} <span style=color:#66d9ef>else</span> <span style=color:#a6e22e>if</span> (<span style=color:#f92672>!</span>SkelMeshRenderData<span style=color:#f92672>-&gt;</span>RequiresCPUSkinning(...)) {
+</span></span><span style=display:flex><span>			MeshObject <span style=color:#f92672>=</span> <span style=color:#f92672>::</span><span style=color:#66d9ef>new</span> FSkeletalMeshObjectGPUSkin(...);
+</span></span><span style=display:flex><span>		} <span style=color:#66d9ef>else</span> {
+</span></span><span style=display:flex><span>			UE_LOG(LogSkinnedMeshComp, Warning, TEXT(...));
+</span></span><span style=display:flex><span>		}
+</span></span><span style=display:flex><span>	}
+</span></span><span style=display:flex><span>	PostInitMeshObject(MeshObject);
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>	Super<span style=color:#f92672>::</span>CreateRenderState_Concurrent(Context);
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>	<span style=color:#75715e>// 计算 LOD 等级
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>	int32 ModifiedLODLevel <span style=color:#f92672>=</span> GetPredictedLODLevel();
+</span></span><span style=display:flex><span>	ModifiedLODLevel <span style=color:#f92672>=</span> FMath<span style=color:#f92672>::</span>Clamp(ModifiedLODLevel, ...);
+</span></span><span style=display:flex><span>	<span style=color:#75715e>// 计算动态数据并发送到渲染线程
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>	<span style=color:#66d9ef>if</span>(SkeletalMesh<span style=color:#f92672>-&gt;</span>IsValidLODIndex(ModifiedLODLevel)) {
+</span></span><span style=display:flex><span>		MeshObject<span style=color:#f92672>-&gt;</span>Update(ModifiedLODLevel, <span style=color:#66d9ef>this</span>, ...);
+</span></span><span style=display:flex><span>	}
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><p><code>Update</code> 需要先在主线程计算动态数据，然后发送到渲染线程：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-cpp data-lang=cpp><span style=display:flex><span><span style=color:#66d9ef>void</span> FSkeletalMeshObjectGPUSkin<span style=color:#f92672>::</span>Update(...) {
+</span></span><span style=display:flex><span>	<span style=color:#75715e>// ...
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>	<span style=color:#75715e>// 构造新的用于发往渲染线程的临时动态数据
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>	<span style=color:#75715e>// 这些数据在下一次 update 的时候会释放掉
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>	FDynamicSkelMeshObjectDataGPUSkin<span style=color:#f92672>*</span> NewDynamicData <span style=color:#f92672>=</span> <span style=color:#75715e>/*...*/</span>;
+</span></span><span style=display:flex><span>	NewDynamicData<span style=color:#f92672>-&gt;</span>InitDynamicSkelMeshObjectDataGPUSkin(...);
+</span></span><span style=display:flex><span>	<span style=color:#75715e>// 将数据发往渲染线程
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>	FSkeletalMeshObjectGPUSkin<span style=color:#f92672>*</span> MeshObject <span style=color:#f92672>=</span> <span style=color:#66d9ef>this</span>;
+</span></span><span style=display:flex><span>	ENQUEUE_RENDER_COMMAND(SkelMeshObjectUpdateDataCommand)(
+</span></span><span style=display:flex><span>		[...](FRHICommandListImmediate<span style=color:#f92672>&amp;</span> RHICmdList) {
+</span></span><span style=display:flex><span>			MeshObject<span style=color:#f92672>-&gt;</span>UpdateDynamicData_RenderThread(...);
+</span></span><span style=display:flex><span>		}
+</span></span><span style=display:flex><span>	);
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><p>在 <code>InitDynamicSkelMeshObjectDataGPUSkin</code> 中，会分别计算所有骨骼的 ref to local 矩阵，以及 local to world 矩阵。其中，ref to local 矩阵是到 local space 的蒙皮矩阵。叠加上 local to world 矩阵的变化后，就是完整的 world space 蒙皮矩阵。给定一个顶点和蒙皮权重，可以计算出动画播放后，该顶点在 world space 下的位置：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-cpp data-lang=cpp><span style=display:flex><span><span style=color:#66d9ef>void</span> 
+</span></span><span style=display:flex><span>FDynamicSkelMeshObjectDataGPUSkin<span style=color:#f92672>::</span>InitDynamicSkelMeshObjectDataGPUSkin(...) {
+</span></span><span style=display:flex><span>	LODIndex <span style=color:#f92672>=</span> InLODIndex;
+</span></span><span style=display:flex><span>	<span style=color:#75715e>// 一些额外需要计算的骨骼
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>	<span style=color:#66d9ef>const</span> TArray<span style=color:#f92672>&lt;</span>FBoneIndexType<span style=color:#f92672>&gt;*</span> ExtraRequiredBoneIndices <span style=color:#f92672>=</span> <span style=color:#75715e>/*...*/</span>;
+</span></span><span style=display:flex><span>	<span style=color:#75715e>// 更新 ref to local 矩阵
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>	UpdateRefToLocalMatrices(..., LODIndex, ExtraRequiredBoneIndices);
+</span></span><span style=display:flex><span>	<span style=color:#75715e>// ...
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>	<span style=color:#75715e>// 更新 local to world 矩阵
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>	LocalToWorld <span style=color:#f92672>=</span> InMeshComponent <span style=color:#f92672>?</span> InMeshComponent<span style=color:#f92672>-&gt;</span>GetComponentTransform().ToMatrixWithScale() <span style=color:#f92672>:</span> FMatrix<span style=color:#f92672>::</span>Identity;
+</span></span><span style=display:flex><span>	<span style=color:#75715e>// ...
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>}
+</span></span></code></pre></div><p><code>UpdateRefToLocalMatrices</code> 会将矩阵计算结果输出到传入的 <code>ReferenceToLocal</code> 数组中引用。需要注意的是，由于每一次 <code>Update</code> 都会申请新的 dynamic data，因此这个 <code>ReferenceToLocal</code> 数组每次调用都需要申请内存，如果骨骼数量过多，这里效率会比较低：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-cpp data-lang=cpp><span style=display:flex><span><span style=color:#66d9ef>void</span> <span style=color:#a6e22e>UpdateRefToLocalMatrices</span>(TArray<span style=color:#f92672>&lt;</span>FMatrix44f<span style=color:#f92672>&gt;&amp;</span> ReferenceToLocal, ...) {
+</span></span><span style=display:flex><span>	<span style=color:#66d9ef>const</span> USkeletalMesh<span style=color:#f92672>*</span> <span style=color:#66d9ef>const</span> ThisMesh <span style=color:#f92672>=</span> InMeshComponent<span style=color:#f92672>-&gt;</span>SkeletalMesh;
+</span></span><span style=display:flex><span>	<span style=color:#75715e>// Ref pose 矩阵的逆矩阵
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>	<span style=color:#66d9ef>const</span> TArray<span style=color:#f92672>&lt;</span>FMatrix44f<span style=color:#f92672>&gt;*</span> RefBasesInvMatrix <span style=color:#f92672>=</span>
+</span></span><span style=display:flex><span>		<span style=color:#f92672>&amp;</span>ThisMesh<span style=color:#f92672>-&gt;</span>GetRefBasesInvMatrix();
+</span></span><span style=display:flex><span>	<span style=color:#75715e>// 如果用户设置了 ref pose 数据的 override，就在此处更改
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>	<span style=color:#66d9ef>if</span>( InMeshComponent<span style=color:#f92672>-&gt;</span>GetRefPoseOverride() <span style=color:#75715e>/*...*/</span> ) {
+</span></span><span style=display:flex><span>		RefBasesInvMatrix <span style=color:#f92672>=</span>
+</span></span><span style=display:flex><span>			<span style=color:#f92672>&amp;</span>InMeshComponent<span style=color:#f92672>-&gt;</span>GetRefPoseOverride()<span style=color:#f92672>-&gt;</span>RefBasesInvMatrix;
+</span></span><span style=display:flex><span>	}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>	<span style=color:#75715e>// 这里申请内存，事实上对于内置的 skinning，这里传入的数组总是空的
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>	<span style=color:#66d9ef>if</span>(ReferenceToLocal.Num() <span style=color:#f92672>!=</span> RefBasesInvMatrix<span style=color:#f92672>-&gt;</span>Num()) {
+</span></span><span style=display:flex><span>		ReferenceToLocal.Empty(RefBasesInvMatrix<span style=color:#f92672>-&gt;</span>Num());
+</span></span><span style=display:flex><span>		ReferenceToLocal.AddUninitialized(RefBasesInvMatrix<span style=color:#f92672>-&gt;</span>Num());
+</span></span><span style=display:flex><span>		<span style=color:#66d9ef>for</span> (int32 Index <span style=color:#f92672>=</span> <span style=color:#ae81ff>0</span>; Index <span style=color:#f92672>&lt;</span> ReferenceToLocal.Num(); <span style=color:#f92672>++</span>Index) {
+</span></span><span style=display:flex><span>			ReferenceToLocal[Index] <span style=color:#f92672>=</span> FMatrix44f<span style=color:#f92672>::</span>Identity;
+</span></span><span style=display:flex><span>		}
+</span></span><span style=display:flex><span>	}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>	<span style=color:#75715e>// 具体计算 ref to local 矩阵
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>	UpdateRefToLocalMatricesInner(ReferenceToLocal, ComponentTransform, ...);
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><p>具体计算 ref to local 矩阵的逻辑在 <code>UpdateRefToLocalMatricesInner</code> 中实现，这里会先遍历所有会对蒙皮产生影响的骨骼，获取其 component space bone transform 对应的矩阵（即从 bone space 变到当前的 local space），对于不对蒙皮产生影响的骨骼，这里会保持为 identity 矩阵。然后，遍历所有骨骼，乘上 ref pose 下，bone space 到 local space 的变化矩阵的逆矩阵（即从 local space 变回 bone space）。</p><p>如果对骨骼蒙皮动画不了解的话，这里解释一下。我们假设一个顶点只会受一根骨骼影响，那么对于这根骨骼来说，动画前后顶点的相对位置是不变的，也就是说，这个顶点在这根骨骼的 bone space 下是静止的，所以我们先计算原始顶点从 local space 变到 bone space 下的位置，然后再应用从 bone space 到新 local space 的变化矩阵，得到动画播放后顶点的位置。对于多根骨骼影响一个顶点的情况，我们则是分别计算这几根骨骼的影响，并根据权重进行混合。</p><p>总之，这两个矩阵相乘的结果就是将顶点从 local space 下 ref pose 状态的原始位置变到 local space 下当前状态的实际位置：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-cpp data-lang=cpp><span style=display:flex><span><span style=color:#66d9ef>void</span> <span style=color:#a6e22e>UpdateRefToLocalMatricesInner</span>(...) {
+</span></span><span style=display:flex><span>	<span style=color:#66d9ef>const</span> FSkeletalMeshLODRenderData<span style=color:#f92672>&amp;</span> LOD <span style=color:#f92672>=</span> 
+</span></span><span style=display:flex><span>		InSkeletalMeshRenderData<span style=color:#f92672>-&gt;</span>LODRenderData[LODIndex];
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>	<span style=color:#75715e>// 注意这里只会处理 active bones 和传入的 extra bones
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>	<span style=color:#66d9ef>const</span> TArray<span style=color:#f92672>&lt;</span>FBoneIndexType<span style=color:#f92672>&gt;*</span> RequiredBoneSets[<span style=color:#ae81ff>3</span>] <span style=color:#f92672>=</span> { <span style=color:#f92672>&amp;</span>LOD.ActiveBoneIndices, ExtraRequiredBoneIndices, NULL };
+</span></span><span style=display:flex><span>	<span style=color:#75715e>// 遍历所有骨骼集合
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>	<span style=color:#66d9ef>for</span> (RequiredBoneIndices : RequiredBoneSets) {
+</span></span><span style=display:flex><span>		<span style=color:#75715e>// 遍历每个骨骼集合中的所有骨骼，计算矩阵当前的变化矩阵，
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>		<span style=color:#75715e>// 对于非 master pose 的情况，这里的计算比较简单
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>		<span style=color:#66d9ef>for</span>(BoneIndex<span style=color:#f92672>=</span><span style=color:#ae81ff>0</span>; BoneIndex<span style=color:#f92672>&lt;</span>RequiredBoneIndices.Num(); BoneIndex<span style=color:#f92672>++</span>) {
+</span></span><span style=display:flex><span>			ThisBoneIndex <span style=color:#f92672>=</span> RequiredBoneIndices[BoneIndex];
+</span></span><span style=display:flex><span>			ReferenceToLocal[ThisBoneIndex] <span style=color:#f92672>=</span> 
+</span></span><span style=display:flex><span>				(FMatrix44f)ComponentTransform[ThisBoneIndex].
+</span></span><span style=display:flex><span>					ToMatrixWithScale();
+</span></span><span style=display:flex><span>		}
+</span></span><span style=display:flex><span>	}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>	<span style=color:#75715e>// 将每个矩阵乘上从 ref pose 的逆矩阵
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>	<span style=color:#75715e>// 得到从 ref pose 到当前 local 的变化矩阵
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>	<span style=color:#66d9ef>for</span>(BoneIndex<span style=color:#f92672>=</span><span style=color:#ae81ff>0</span>; BoneIndex<span style=color:#f92672>&lt;</span>ReferenceToLocal.Num(); <span style=color:#f92672>++</span>BoneIndex) {
+</span></span><span style=display:flex><span>		ReferenceToLocal[BoneIndex] <span style=color:#f92672>=</span> 
+</span></span><span style=display:flex><span>			(<span style=color:#f92672>*</span>RefBasesInvMatrix)[BoneIndex] <span style=color:#f92672>*</span> ReferenceToLocal[BoneIndex];
+</span></span><span style=display:flex><span>	}
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><p>注意到在 LOD RenderData 中，有两个数据会影响骨骼动画的计算量，一个是 <code>ActiveBoneIndices</code> 一个是 <code>RequiredBones</code>，其中，前者是被蒙皮的骨骼的下标，后者是参与到动画计算的骨骼的下标。</p><p>我们可以参考 <code>FMeshUtilities::BuildSkeletalModelFromChunks</code> 来看一下这二者的区别：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-cpp data-lang=cpp><span style=display:flex><span><span style=color:#66d9ef>void</span> FMeshUtilities<span style=color:#f92672>::</span>BuildSkeletalModelFromChunks(...) {
+</span></span><span style=display:flex><span>	<span style=color:#75715e>// 计算 active bones
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>	<span style=color:#66d9ef>for</span> (int32 ChunkIndex <span style=color:#f92672>=</span> <span style=color:#ae81ff>0</span>; ChunkIndex <span style=color:#f92672>&lt;</span> Chunks.Num(); <span style=color:#f92672>++</span>ChunkIndex) {
+</span></span><span style=display:flex><span>		<span style=color:#75715e>// ...
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>		<span style=color:#75715e>// 这里 bone map 就是用来给顶点蒙皮下标做映射的，
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>		<span style=color:#75715e>// 因此这里记录的就是参与了蒙皮的骨骼下标
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>		<span style=color:#66d9ef>for</span> (int32 BoneIndex <span style=color:#f92672>=</span> <span style=color:#ae81ff>0</span>; BoneIndex <span style=color:#f92672>&lt;</span> BoneMap.Num(); <span style=color:#f92672>++</span>BoneIndex) {
+</span></span><span style=display:flex><span>			LODModel.ActiveBoneIndices.AddUnique(Section.BoneMap[BoneIndex]);
+</span></span><span style=display:flex><span>		}
+</span></span><span style=display:flex><span>	}
+</span></span><span style=display:flex><span>	<span style=color:#75715e>// 这里确保父骨骼也在 active bone indices 中
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>	RefSkeleton.EnsureParentsExistAndSort(LODModel.ActiveBoneIndices);
+</span></span><span style=display:flex><span>	<span style=color:#75715e>// ...
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>	<span style=color:#75715e>// 计算 required bones
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>	USkeletalMesh<span style=color:#f92672>::</span>CalculateRequiredBones(LODModel, RefSkeleton, NULL);
+</span></span><span style=display:flex><span>}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>void</span> USkeletalMesh<span style=color:#f92672>::</span>CalculateRequiredBones(...) {
+</span></span><span style=display:flex><span>	int32 RequiredBoneCount <span style=color:#f92672>=</span> InRefSkeleton.GetRawBoneNum();
+</span></span><span style=display:flex><span>	LODModel.RequiredBones.Empty(RequiredBoneCount);
+</span></span><span style=display:flex><span>	<span style=color:#75715e>// 用户在 LOD 设置里填入想要裁剪的骨骼后，
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>	<span style=color:#75715e>// bones to remove 中会记录这些骨骼以及他们的所有子孙骨骼
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>	<span style=color:#66d9ef>for</span>(int32 i<span style=color:#f92672>=</span><span style=color:#ae81ff>0</span>; i<span style=color:#f92672>&lt;</span>RequiredBoneCount; i<span style=color:#f92672>++</span>) {
+</span></span><span style=display:flex><span>		<span style=color:#66d9ef>if</span> (<span style=color:#f92672>!</span>BonesToRemove <span style=color:#f92672>||</span> BonesToRemove<span style=color:#f92672>-&gt;</span>Find(i) <span style=color:#f92672>==</span> NULL) {
+</span></span><span style=display:flex><span>			LODModel.RequiredBones.Add(i);
+</span></span><span style=display:flex><span>		}
+</span></span><span style=display:flex><span>	}
+</span></span><span style=display:flex><span>	LODModel.RequiredBones.Shrink();	
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><p>即一根骨骼如果被加入了 <code>BonesToRemove</code> 列表，那么它就会被从 <code>RequiredBones</code> 中移除，不会参与到动画计算。但不参与动画计算仅仅意味着这根骨骼在 bone space 下的位置不被更新，只要它会影响到被蒙上了顶点，那么它就会被加入 <code>ActiveBoneIndices</code> 列表中，牵动被它影响的顶点。</p><p>接下来，<code>UpdateDynamicData_RenderThread</code> 会在渲染线程中处理具体的数据传输：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-cpp data-lang=cpp><span style=display:flex><span><span style=color:#66d9ef>void</span> FSkeletalMeshObjectGPUSkin<span style=color:#f92672>::</span>UpdateDynamicData_RenderThread(...) {
+</span></span><span style=display:flex><span>	WaitForRHIThreadFenceForDynamicData();
+</span></span><span style=display:flex><span>	<span style=color:#66d9ef>if</span> (DynamicData) {
+</span></span><span style=display:flex><span>		<span style=color:#75715e>// 前面提到每一次都会新建一份动态数据，上一次的数据在这里释放
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>		FreeDynamicSkelMeshObjectDataGPUSkin(DynamicData);
+</span></span><span style=display:flex><span>	}
+</span></span><span style=display:flex><span>	<span style=color:#75715e>// 更新为新的数据
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>	DynamicData <span style=color:#f92672>=</span> InDynamicData;
+</span></span><span style=display:flex><span>	<span style=color:#75715e>// 具体处理数据传输
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>	ProcessUpdatedDynamicData(EGPUSkinCacheEntryMode<span style=color:#f92672>::</span>Raster, GPUSkinCache, RHICmdList, FrameNumberToPrepare, RevisionNumber, bMorphNeedsUpdate, DynamicData<span style=color:#f92672>-&gt;</span>LODIndex);
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><p><code>ProcessUpdatedDynamicData</code> 会将数据更新到顶点工厂的 shader data 中：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-cpp data-lang=cpp><span style=display:flex><span><span style=color:#66d9ef>void</span> FSkeletalMeshObjectGPUSkin<span style=color:#f92672>::</span>ProcessUpdatedDynamicData(...) {
+</span></span><span style=display:flex><span>	FSkeletalMeshObjectLOD<span style=color:#f92672>&amp;</span> LOD <span style=color:#f92672>=</span> LODs[LODIndex];
+</span></span><span style=display:flex><span>	<span style=color:#66d9ef>const</span> FSkeletalMeshLODRenderData<span style=color:#f92672>&amp;</span> LODData <span style=color:#f92672>=</span> 
+</span></span><span style=display:flex><span>		SkeletalMeshRenderData<span style=color:#f92672>-&gt;</span>LODRenderData[LODIndex];
+</span></span><span style=display:flex><span>	<span style=color:#66d9ef>const</span> TArray<span style=color:#f92672>&lt;</span>FSkelMeshRenderSection<span style=color:#f92672>&gt;&amp;</span> Sections <span style=color:#f92672>=</span> 
+</span></span><span style=display:flex><span>		GetRenderSections(LODIndex);
+</span></span><span style=display:flex><span>	<span style=color:#75715e>// LOD 顶点工厂列表
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>	FVertexFactoryData<span style=color:#f92672>&amp;</span> VertexFactoryData <span style=color:#f92672>=</span> LOD.GPUSkinVertexFactories;
+</span></span><span style=display:flex><span>	<span style=color:#66d9ef>bool</span> bSkinCacheResult <span style=color:#f92672>=</span> true;
+</span></span><span style=display:flex><span>	<span style=color:#66d9ef>for</span> (int32 SectionIdx <span style=color:#f92672>=</span> <span style=color:#ae81ff>0</span>; SectionIdx <span style=color:#f92672>&lt;</span> Sections.Num(); SectionIdx<span style=color:#f92672>++</span>) {
+</span></span><span style=display:flex><span>		<span style=color:#66d9ef>const</span> FSkelMeshRenderSection<span style=color:#f92672>&amp;</span> Section <span style=color:#f92672>=</span> Sections[SectionIdx];
+</span></span><span style=display:flex><span>		<span style=color:#75715e>// 当前 section 的顶点工厂
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>		FGPUBaseSkinVertexFactory<span style=color:#f92672>*</span> VertexFactory;
+</span></span><span style=display:flex><span>		VertexFactory <span style=color:#f92672>=</span> VertexFactoryData.VertexFactories[SectionIdx].Get();
+</span></span><span style=display:flex><span>		<span style=color:#75715e>// 更新 shader 数据
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>		FGPUBaseSkinVertexFactory<span style=color:#f92672>::</span>FShaderDataType<span style=color:#f92672>&amp;</span> ShaderData <span style=color:#f92672>=</span>
+</span></span><span style=display:flex><span>			VertexFactory<span style=color:#f92672>-&gt;</span>GetShaderData();
+</span></span><span style=display:flex><span>		<span style=color:#66d9ef>bool</span> bNeedFence <span style=color:#f92672>=</span> ShaderData.UpdateBoneData(...);
+</span></span><span style=display:flex><span>		<span style=color:#66d9ef>if</span> (bNeedFence) {
+</span></span><span style=display:flex><span>			RHIThreadFenceForDynamicData <span style=color:#f92672>=</span> RHICmdList.RHIThreadFence(true);
+</span></span><span style=display:flex><span>		}
+</span></span><span style=display:flex><span>	}
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><p>再往后就是 GPU 内部计算顶点位置的事情了。</p><h2 id=references>References
+<a href=#references class=h-anchor aria-hidden=true>#</a></h2><ul><li><a href=https://zhuanlan.zhihu.com/p/405437842>UE4动画系统更新源码分析 - 知乎</a></li><li><a href=https://zhuanlan.zhihu.com/p/35686607>Exploring in UE 4 物理模块浅析 - 知乎</a></li><li><a href=https://zhuanlan.zhihu.com/p/446851284>UE4 图解动画系统源码 - 知乎</a></li><li><a href=https://zhuanlan.zhihu.com/p/62401630>UE4动画系统的那些事（一）：UE4动画系统基础 - 知乎</a></li></ul></div><div class=pagination><div class=pagination__title><span class=pagination__title-h>Read other posts</span><hr></div><div class=pagination__buttons><span class="button next"><a href=/posts/verse-lang/><span class=button__text>Epic 新语言 Verse 介绍</span>
+<span class=button__icon>→</span></a></span></div></div></div></div><footer class=footer><div class=footer__inner><div class="copyright copyright--user"><p>本网站采用 <a href=https://creativecommons.org/licenses/by-sa/4.0/>CC BY-SA 4.0</a> 协议进行授权</p><p>© 2021 Zhirui Li. All rights reserved.</p></div></div></footer><script src=/assets/main.js></script>
+<script src=/assets/prism.js></script><p style=color:#999>我的博客即将同步至腾讯云+社区，<a target=_blank href="https://cloud.tencent.com/developer/support-plan?invite_code=11dehb9vzutlx">邀请大家一同入驻</a>。</p></div><script type=application/javascript>var doNotTrack=!1;doNotTrack||(function(e,t,n,s,o,i,a){e.GoogleAnalyticsObject=o,e[o]=e[o]||function(){(e[o].q=e[o].q||[]).push(arguments)},e[o].l=1*new Date,i=t.createElement(n),a=t.getElementsByTagName(n)[0],i.async=1,i.src=s,a.parentNode.insertBefore(i,a)}(window,document,"script","https://www.google-analytics.com/analytics.js","ga"),ga("create","UA-80302213-1","auto"),ga("send","pageview"))</script></body></html>
