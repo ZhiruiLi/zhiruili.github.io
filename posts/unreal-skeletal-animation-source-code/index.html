@@ -375,8 +375,8 @@
 </span></span></span><span style=display:flex><span><span style=color:#75715e></span>	<span style=color:#66d9ef>const</span> TArray<span style=color:#f92672>&lt;</span>FBoneIndexType<span style=color:#f92672>&gt;*</span> RequiredBoneSets[<span style=color:#ae81ff>3</span>] <span style=color:#f92672>=</span> { <span style=color:#f92672>&amp;</span>LOD.ActiveBoneIndices, ExtraRequiredBoneIndices, NULL };
 </span></span><span style=display:flex><span>	<span style=color:#75715e>// 遍历所有骨骼集合
 </span></span></span><span style=display:flex><span><span style=color:#75715e></span>	<span style=color:#66d9ef>for</span> (RequiredBoneIndices : RequiredBoneSets) {
-</span></span><span style=display:flex><span>		<span style=color:#75715e>// 遍历每个骨骼集合中的所有骨骼，计算矩阵当前的变化矩阵，
-</span></span></span><span style=display:flex><span><span style=color:#75715e></span>		<span style=color:#75715e>// 对于非 master pose 的情况，这里的计算比较简单
+</span></span><span style=display:flex><span>		<span style=color:#75715e>// 遍历每个骨骼集合中的所有骨骼，乘上当前的变化矩阵（初始值是 identity 矩阵）
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>		<span style=color:#75715e>// 这里保留的是非 master pose 下的计算分支
 </span></span></span><span style=display:flex><span><span style=color:#75715e></span>		<span style=color:#66d9ef>for</span>(BoneIndex<span style=color:#f92672>=</span><span style=color:#ae81ff>0</span>; BoneIndex<span style=color:#f92672>&lt;</span>RequiredBoneIndices.Num(); BoneIndex<span style=color:#f92672>++</span>) {
 </span></span><span style=display:flex><span>			ThisBoneIndex <span style=color:#f92672>=</span> RequiredBoneIndices[BoneIndex];
 </span></span><span style=display:flex><span>			ReferenceToLocal[ThisBoneIndex] <span style=color:#f92672>=</span> 
