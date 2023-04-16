@@ -377,6 +377,28 @@ FSkeletalMeshObject --o USkinnedMeshComponent</div><p>其中，<code>USkeletalMe
 </span></span><span style=display:flex><span>	<span style=color:#75715e>// 具体计算 ref to local 矩阵
 </span></span></span><span style=display:flex><span><span style=color:#75715e></span>	UpdateRefToLocalMatricesInner(ReferenceToLocal, ComponentTransform, ...);
 </span></span><span style=display:flex><span>}
+</span></span></code></pre></div><p>这个 <code>RefBaseInvMatrix</code> 的数量由原始骨架中骨骼的数量决定：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-cpp data-lang=cpp><span style=display:flex><span><span style=color:#66d9ef>void</span> USkeletalMesh<span style=color:#f92672>::</span>CalculateInvRefMatrices() {
+</span></span><span style=display:flex><span>	<span style=color:#75715e>// 数量是 raw bone num，即原始骨架中的骨骼数
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>	<span style=color:#66d9ef>const</span> int32 NumRealBones <span style=color:#f92672>=</span> GetRefSkeleton().GetRawBoneNum();
+</span></span><span style=display:flex><span>	<span style=color:#66d9ef>if</span> (GetRefBasesInvMatrix().Num() <span style=color:#f92672>!=</span> NumRealBones) {
+</span></span><span style=display:flex><span>		GetRefBasesInvMatrix().Empty(NumRealBones);
+</span></span><span style=display:flex><span>		GetRefBasesInvMatrix().AddUninitialized(NumRealBones);
+</span></span><span style=display:flex><span>		<span style=color:#66d9ef>for</span>( int32 b<span style=color:#f92672>=</span><span style=color:#ae81ff>0</span>; b<span style=color:#f92672>&lt;</span>NumRealBones; b<span style=color:#f92672>++</span>) {
+</span></span><span style=display:flex><span>			<span style=color:#75715e>// 获取 bone space 的 ref pose 矩阵
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>			ComposedRefPoseMatrices[b] <span style=color:#f92672>=</span> GetRefPoseMatrix(b);
+</span></span><span style=display:flex><span>			<span style=color:#75715e>// 如果不是根骨骼，那么 ref pose local space 矩阵是
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>			<span style=color:#75715e>// 自身的 bone space 和父骨骼的 local space 矩阵相乘
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>			<span style=color:#66d9ef>if</span>( b<span style=color:#f92672>&gt;</span><span style=color:#ae81ff>0</span> ) {
+</span></span><span style=display:flex><span>				int32 Parent <span style=color:#f92672>=</span> GetRefSkeleton().GetRawParentIndex(b);
+</span></span><span style=display:flex><span>				ComposedRefPoseMatrices[b] <span style=color:#f92672>=</span>
+</span></span><span style=display:flex><span>				  ComposedRefPoseMatrices[b] <span style=color:#f92672>*</span> ComposedRefPoseMatrices[Parent];
+</span></span><span style=display:flex><span>			}
+</span></span><span style=display:flex><span>			<span style=color:#75715e>// 计算逆矩阵
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>			GetRefBasesInvMatrix()[b] <span style=color:#f92672>=</span>
+</span></span><span style=display:flex><span>			  FMatrix44f(ComposedRefPoseMatrices[b].Inverse());
+</span></span><span style=display:flex><span>		}
+</span></span><span style=display:flex><span>	}
+</span></span><span style=display:flex><span>}
 </span></span></code></pre></div><p>具体计算 ref to local 矩阵的逻辑在 <code>UpdateRefToLocalMatricesInner</code> 中实现，这里会先遍历所有会对蒙皮产生影响的骨骼，获取其 component space bone transform 对应的矩阵（即从 bone space 变到当前的 local space），对于不对蒙皮产生影响的骨骼，这里会保持为 identity 矩阵。然后，遍历所有骨骼，乘上 ref pose 下，bone space 到 local space 的变化矩阵的逆矩阵（即从 local space 变回 bone space）。</p><p>如果对骨骼蒙皮动画不了解的话，这里解释一下。我们假设一个顶点只会受一根骨骼影响，那么对于这根骨骼来说，动画前后顶点的相对位置是不变的，也就是说，这个顶点在这根骨骼的 bone space 下是静止的，所以我们先计算原始顶点从 local space 变到 bone space 下的位置，然后再应用从 bone space 到新 local space 的变化矩阵，得到动画播放后顶点的位置。过程如下图所示：</p><p><img src=/images/skinning_example.drawio.png alt></p><p>这里的紫色顶点跟随其中一根骨骼移动，对于多根骨骼影响一个顶点的情况，我们则是分别计算这几根骨骼的影响，并根据权重进行混合。其实这里 UE 的命名有点误导人，蒙皮矩阵计算前后都是 local space，只是一个是 ref pose，一个是当前 pose，也就是叠加动画后的 pose，但他将其命名为 ref to local，容易让人迷惑。总之，这两个矩阵相乘的结果就是将顶点从 local space 下 ref pose 状态的原始位置变到 local space 下当前状态的实际位置：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-cpp data-lang=cpp><span style=display:flex><span><span style=color:#66d9ef>void</span> <span style=color:#a6e22e>UpdateRefToLocalMatricesInner</span>(...) {
 </span></span><span style=display:flex><span>	<span style=color:#66d9ef>const</span> FSkeletalMeshLODRenderData<span style=color:#f92672>&amp;</span> LOD <span style=color:#f92672>=</span> 
 </span></span><span style=display:flex><span>		InSkeletalMeshRenderData<span style=color:#f92672>-&gt;</span>LODRenderData[LODIndex];
