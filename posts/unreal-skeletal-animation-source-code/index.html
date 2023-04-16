@@ -465,6 +465,57 @@ FSkeletalMeshObject --o USkinnedMeshComponent</div><p>其中，<code>USkeletalMe
 </span></span><span style=display:flex><span>		}
 </span></span><span style=display:flex><span>	}
 </span></span><span style=display:flex><span>}
+</span></span></code></pre></div><p>在 <code>UpdateBoneData</code> 中，UE 并不会将蒙皮矩阵全部传到 GPU，对于任意一个 section，UE 只会传递这个 section 用到的骨骼。这里传送的矩阵数量就是前面提到的 bone map 的长度，传送的具体蒙皮矩阵和 bone map 下标一一对应：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-cpp data-lang=cpp><span style=display:flex><span><span style=color:#66d9ef>bool</span> FGPUBaseSkinVertexFactory<span style=color:#f92672>::</span>FShaderDataType<span style=color:#f92672>::</span>UpdateBoneData(...) {
+</span></span><span style=display:flex><span>	FMatrix3x4<span style=color:#f92672>*</span> ChunkMatrices <span style=color:#f92672>=</span> <span style=color:#66d9ef>nullptr</span>;
+</span></span><span style=display:flex><span>	uint32 NumBones <span style=color:#f92672>=</span> BoneMap.Num();
+</span></span><span style=display:flex><span>	uint32 NumVectors <span style=color:#f92672>=</span> NumBones<span style=color:#f92672>*</span><span style=color:#ae81ff>3</span>;
+</span></span><span style=display:flex><span>	<span style=color:#75715e>// 计算总蒙皮矩阵 buffer 大小
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>	uint32 VectorArraySize <span style=color:#f92672>=</span> NumVectors <span style=color:#f92672>*</span> <span style=color:#66d9ef>sizeof</span>(FVector4f);
+</span></span><span style=display:flex><span>	ChunkMatrices <span style=color:#f92672>=</span> (FMatrix3x4<span style=color:#f92672>*</span>)RHILockBuffer(...VectorArraySize...);
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>	<span style=color:#66d9ef>if</span> (bGPUSkin_CopyBones_ISPC_Enabled) {
+</span></span><span style=display:flex><span>		<span style=color:#75715e>// Intel ISPC 优化分支
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span><span style=color:#75715e>#if INTEL_ISPC
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>		ispc<span style=color:#f92672>::</span>UpdateBoneData_CopyBones(...);
+</span></span><span style=display:flex><span><span style=color:#75715e>#endif
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>	} <span style=color:#66d9ef>else</span> {
+</span></span><span style=display:flex><span>		<span style=color:#66d9ef>for</span> (uint32 BoneIdx <span style=color:#f92672>=</span> <span style=color:#ae81ff>0</span>; BoneIdx <span style=color:#f92672>&lt;</span> NumBones; BoneIdx<span style=color:#f92672>++</span>) {
+</span></span><span style=display:flex><span>			<span style=color:#75715e>// 找到蒙皮骨骼本来的下标
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>			FBoneIndexType RefToLocalIdx <span style=color:#f92672>=</span> BoneMap[BoneIdx];
+</span></span><span style=display:flex><span>			FMatrix3x4<span style=color:#f92672>&amp;</span> BoneMat <span style=color:#f92672>=</span> ChunkMatrices[BoneIdx];
+</span></span><span style=display:flex><span>			FMatrix44f<span style=color:#f92672>&amp;</span> RefToLocal <span style=color:#f92672>=</span>
+</span></span><span style=display:flex><span>			    ReferenceToLocalMatrices[RefToLocalIdx];
+</span></span><span style=display:flex><span>			<span style=color:#75715e>// 拷贝骨骼蒙皮矩阵数据
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>			RefToLocal.To3x4MatrixTranspose((<span style=color:#66d9ef>float</span><span style=color:#f92672>*</span>)BoneMat.M);
+</span></span><span style=display:flex><span>		}
+</span></span><span style=display:flex><span>	}
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><p>在 UE 中，每个 LOD 的渲染数据都包含了这个 LOD 下所有顶点的全部信息，包括顶点位置、UV、顶点颜色和蒙皮信息等等。这些数据按材质被划分成不同的 render section，每一个 render section 中，都带有一个 bone map。每一个顶点的蒙皮信息中，<code>InfluenceBones</code> 数组记录的并不是骨骼下标，而是 bone map 的下标，bone map 中记录的才是具体的骨骼下标。结合上面 <code>UpdateBoneData</code> 的实现，我们才能理解为什么 UE 使用这样一个间接的蒙皮骨骼下标表示方法：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-cpp data-lang=cpp><span style=display:flex><span><span style=color:#75715e>// 每个 LOD 的数据
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span><span style=color:#66d9ef>class</span> <span style=color:#a6e22e>FSkeletalMeshLODRenderData</span> <span style=color:#f92672>:</span> <span style=color:#66d9ef>public</span> FRefCountBase {
+</span></span><span style=display:flex><span>	<span style=color:#75715e>// 持有该 LOD 下每个 section 的渲染数据
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>	TArray<span style=color:#f92672>&lt;</span>FSkelMeshRenderSection<span style=color:#f92672>&gt;</span> RenderSections;
+</span></span><span style=display:flex><span>	<span style=color:#75715e>// 持有顶点权重 buffer
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>	FSkinWeightVertexBuffer SkinWeightVertexBuffer;
+</span></span><span style=display:flex><span>};
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#75715e>// 一个 LOD 下每个材质 section 的数据
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span><span style=color:#66d9ef>struct</span> <span style=color:#a6e22e>FSkelMeshRenderSection</span> {
+</span></span><span style=display:flex><span>	TArray<span style=color:#f92672>&lt;</span>FBoneIndexType<span style=color:#f92672>&gt;</span> BoneMap;
+</span></span><span style=display:flex><span>};
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#75715e>// 顶点蒙皮信息 buffer
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span><span style=color:#66d9ef>class</span> <span style=color:#a6e22e>FSkinWeightVertexBuffer</span> {
+</span></span><span style=display:flex><span>	<span style=color:#66d9ef>void</span> <span style=color:#a6e22e>GetSkinWeights</span>(TArray<span style=color:#f92672>&lt;</span>FSkinWeightInfo<span style=color:#f92672>&gt;&amp;</span> OutVertices) <span style=color:#66d9ef>const</span>;
+</span></span><span style=display:flex><span>	FSkinWeightInfo <span style=color:#a6e22e>GetVertexSkinWeights</span>(uint32 VertexIndex) <span style=color:#66d9ef>const</span>;
+</span></span><span style=display:flex><span>};
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#75715e>// 一个顶点的蒙皮权重数据
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span><span style=color:#66d9ef>struct</span> <span style=color:#a6e22e>FSkinWeightInfo</span> {
+</span></span><span style=display:flex><span>	<span style=color:#75715e>// 蒙皮骨骼在 bone map 中的下标
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>	FBoneIndexType InfluenceBones[MAX_TOTAL_INFLUENCES];
+</span></span><span style=display:flex><span>	<span style=color:#75715e>// 对应骨骼的蒙皮权重
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>	uint8          InfluenceWeights[MAX_TOTAL_INFLUENCES];
+</span></span><span style=display:flex><span>};
 </span></span></code></pre></div><p>再往后就是 GPU 内部计算顶点位置的事情了。</p><h2 id=references>References
 <a href=#references class=h-anchor aria-hidden=true>#</a></h2><ul><li><a href=https://zhuanlan.zhihu.com/p/405437842>UE4动画系统更新源码分析 - 知乎</a></li><li><a href=https://zhuanlan.zhihu.com/p/35686607>Exploring in UE 4 物理模块浅析 - 知乎</a></li><li><a href=https://zhuanlan.zhihu.com/p/446851284>UE4 图解动画系统源码 - 知乎</a></li><li><a href=https://zhuanlan.zhihu.com/p/62401630>UE4动画系统的那些事（一）：UE4动画系统基础 - 知乎</a></li></ul></div><div class=pagination><div class=pagination__title><span class=pagination__title-h>Read other posts</span><hr></div><div class=pagination__buttons><span class="button next"><a href=/posts/verse-lang/><span class=button__text>Epic 新语言 Verse 介绍</span>
 <span class=button__icon>→</span></a></span></div></div></div></div><footer class=footer><div class=footer__inner><div class="copyright copyright--user"><p>本网站采用 <a href=https://creativecommons.org/licenses/by-sa/4.0/>CC BY-SA 4.0</a> 协议进行授权</p><p>© 2021 Zhirui Li. All rights reserved.</p></div></div></footer><script src=/assets/main.js></script>
